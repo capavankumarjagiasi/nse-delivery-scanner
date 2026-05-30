@@ -716,12 +716,14 @@ async function loadIndexFiles(mwFiles) {
   await Promise.all(toLoad.map(async f => {
     try {
       const csv = await fetchDriveFile(f.id);
-      const rows = Papa.parse(csv, { header: true, skipEmptyLines: true }).data;
+      const rows = Papa.parse(csv, { header: true, skipEmptyLines: true, transformHeader: h => h.trim() }).data;
       // MW files: column "Symbol" contains the stock symbols
+      // NSE MW files have column named "Symbol" (sometimes with leading space)
+      const symCol = Object.keys(rows[0] || {}).find(k => k.trim().toUpperCase() === 'SYMBOL') || 'Symbol';
       const symbols = new Set(
-        rows.map(r => (r['Symbol'] || r['SYMBOL'] || '').trim().toUpperCase())
-            .filter(Boolean)
+        rows.map(r => (r[symCol] || '').trim().toUpperCase()).filter(Boolean)
       );
+      console.log(`Index ${f.name}: ${symbols.size} symbols, col="${symCol}"`);
       // Derive display name: MW-NIFTY-50 → NIFTY-50
       const m = f.name.match(/^MW-(.+?)-\d{2}-[A-Za-z]+-\d{4}\.csv$/);
       const dispName = m ? m[1] : f.name.replace(/^MW-/,'').replace(/\.csv$/,'');
@@ -784,7 +786,15 @@ async function loadBhavcopy(fileInfo) {
     DELIV_QTY:    num(r, 'DELIV_QTY',  'DELIVERABLE_QTY'),
     DELIV_PER:    num(r, 'DELIV_PER',  '% DELY QT TO TRADED QTY', 'DELIV_PER'),
     NO_OF_TRADES: num(r, 'NO_OF_TRADES','TOTALTRADES','NUMBER_OF_TRADES'),
-    TURNOVER_LACS: num(r, 'TURNOVER_LACS','TOTTRDVAL') / (r['TURNOVER_LACS'] !== undefined ? 1 : 100000),
+    TURNOVER_LACS: (() => {
+      // sec_bhavdata_full: TURNOVER_LACS is already in lacs
+      // older format TOTTRDVAL is in rupees — divide by 100000
+      const v1 = parseFloat(r['TURNOVER_LACS']);
+      if (!isNaN(v1) && v1 > 0) return v1;
+      const v2 = parseFloat(r['TOTTRDVAL']);
+      if (!isNaN(v2) && v2 > 0) return v2 / 100000;
+      return 0;
+    })(),
   }));
 }
 
