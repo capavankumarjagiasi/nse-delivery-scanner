@@ -1,0 +1,26 @@
+{
+  "name": "NSE Delivery Scanner — SDK Fintech",
+  "short_name": "NSE Scanner",
+  "description": "NSE Delivery Volume Scanner by SDK Fintech. Scan NSE EQ stocks by delivery %, volume ratio and price action.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#185FA5",
+  "theme_color": "#185FA5",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity"],
+  "lang": "en-IN"
+}
