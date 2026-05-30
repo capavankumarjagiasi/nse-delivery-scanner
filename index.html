@@ -338,9 +338,9 @@ tbody td.indices { text-align: left; font-size: 0.70rem; color: var(--muted); ma
     <ol>
       <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console → Credentials</a></li>
       <li>Click <strong>+ Create Credentials → API Key</strong></li>
-      <li>Click <strong>Edit API Key</strong> → under "API restrictions" select <strong>Google Drive API</strong></li>
-      <li>Under "Website restrictions" add: <code>https://capavankumarjagiasi.github.io/*</code></li>
-      <li>Copy the key and paste below</li>
+      <li>Click <strong>Edit API Key</strong> → under "API restrictions" → select <strong>Restrict key</strong> → choose <strong>Google Drive API</strong></li>
+      <li>Under "Application restrictions" → leave as <strong>None</strong> (or select Websites and add <code>https://capavankumarjagiasi.github.io/*</code>)</li>
+      <li>Click <strong>Save</strong> → copy the key (starts with AIza…) and paste below</li>
     </ol>
     <div id="setup-error">⚠ Could not verify key. Please check and try again.</div>
     <input id="api-key-input" type="text" placeholder="AIzaSy...your-api-key-here" autocomplete="off" spellcheck="false"/>
@@ -581,11 +581,15 @@ async function saveApiKey() {
   // Test the key with a minimal Drive API call
   setStatus('Verifying API key…', 'loading');
   try {
-    const url = `${DRIVE_API_BASE}/files/${DRIVE_FOLDER_ID}?fields=id,name&key=${key}`;
+    const url = `https://www.googleapis.com/drive/v3/files/${DRIVE_FOLDER_ID}?fields=id,name&key=${key}`;
     const resp = await fetch(url);
+    if (resp.status === 400 || resp.status === 403) {
+      const err = await resp.json().catch(() => ({}));
+      showSetupError(`Google says: ${err.error?.message || 'Key rejected (check API restrictions)'}`);
+      setStatus('Setup required', 'error'); return;
+    }
     if (!resp.ok) {
-      const err = await resp.json();
-      showSetupError(`Google says: ${err.error?.message || resp.status}`);
+      showSetupError(`HTTP ${resp.status} — check key and try again`);
       setStatus('Setup required', 'error'); return;
     }
     // Key works
@@ -594,8 +598,13 @@ async function saveApiKey() {
     document.getElementById('setup-overlay').style.display = 'none';
     await loadAllData();
   } catch(e) {
-    showSetupError('Network error. Check internet connection.');
-    setStatus('Network error', 'error');
+    // "Failed to fetch" usually means CORS / referrer restriction mismatch
+    // Try saving the key anyway and attempt load — sometimes CORS only affects preflight
+    console.warn('Fetch error during key verify:', e.message);
+    localStorage.setItem(STORAGE_KEY_APIKEY, key);
+    API_KEY = key;
+    document.getElementById('setup-overlay').style.display = 'none';
+    await loadAllData();
   }
 }
 
@@ -649,8 +658,16 @@ async function loadAllData() {
     document.getElementById('btn-scan').disabled = false;
     toggleConfig(true); // auto-open config on first load
   } catch(e) {
-    setStatus('Error loading data: ' + e.message, 'error');
-    console.error(e);
+    let msg = e.message || String(e);
+    if (msg.includes('fetch') || msg.includes('network') || msg.toLowerCase().includes('failed')) {
+      msg = 'Network/CORS error — check that your API key has NO "Website restrictions" set, or add this site to allowed referrers. Details: ' + msg;
+    }
+    setStatus('Error: ' + msg, 'error');
+    console.error('loadAllData error:', e);
+    // Show reset button so user can re-enter key
+    document.getElementById('setup-overlay').style.display = 'flex';
+    document.getElementById('api-key-input').value = localStorage.getItem(STORAGE_KEY_APIKEY) || '';
+    showSetupError('Connection failed: ' + (e.message || 'unknown error') + ' — verify your API key settings below.');
   }
 }
 
