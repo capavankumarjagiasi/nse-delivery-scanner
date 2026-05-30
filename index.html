@@ -529,6 +529,12 @@ const STORAGE_KEY_APIKEY   = 'nse_scanner_apikey';
 const STORAGE_KEY_CACHE    = 'nse_scanner_cache_v2';
 const CACHE_TTL_MS         = 4 * 60 * 60 * 1000; // 4 hours
 
+// CORS proxy — wraps any URL to bypass browser CORS restrictions
+// allorigins.win is a free, open-source proxy for public APIs
+function proxied(url) {
+  return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+}
+
 // ETF / index exclusion keywords (mirrors Python scanner)
 const EXCLUDE_KEYWORDS = [
   'NIFTY','SENSEX','BANK','GOLDBEES','LIQUIDBEES','SETFNN50',
@@ -581,8 +587,8 @@ async function saveApiKey() {
   // Test the key with a minimal Drive API call
   setStatus('Verifying API key…', 'loading');
   try {
-    const url = `https://www.googleapis.com/drive/v3/files/${DRIVE_FOLDER_ID}?fields=id,name&key=${key}&_t=${Date.now()}`;
-    const resp = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-store' });
+    const apiUrl = `https://www.googleapis.com/drive/v3/files/${DRIVE_FOLDER_ID}?fields=id,name&key=${key}&_t=${Date.now()}`;
+    const resp = await fetch(proxied(apiUrl), { cache: 'no-store' });
     if (resp.status === 400 || resp.status === 403) {
       const err = await resp.json().catch(() => ({}));
       showSetupError(`Google says: ${err.error?.message || 'Key rejected (check API restrictions)'}`);
@@ -662,6 +668,11 @@ async function loadAllData() {
     const isCors = msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('failed to fetch');
     if (isCors) {
       setStatus('⚠ Connection error — API key propagating (wait 2-3 min) or check key restrictions', 'error');
+      const debugUrl = `https://www.googleapis.com/drive/v3/files/${DRIVE_FOLDER_ID}?fields=id,name&key=${API_KEY}`;
+      setTimeout(() => {
+        const el = document.getElementById('debug-url');
+        if (el) { el.href = debugUrl; el.textContent = debugUrl; }
+      }, 500);
       // Show retry button inline instead of re-showing setup
       const retryDiv = document.createElement('div');
       retryDiv.style.cssText = 'text-align:center;padding:20px';
@@ -688,16 +699,11 @@ async function loadAllData() {
 async function listDriveFiles() {
   let files = [], pageToken = '';
   do {
-    let url = `${DRIVE_API_BASE}/files?q='${DRIVE_FOLDER_ID}'+in+parents+and+trashed=false`
+    let apiUrl = `${DRIVE_API_BASE}/files?q='${DRIVE_FOLDER_ID}'+in+parents+and+trashed=false`
             + `&fields=nextPageToken,files(id,name,modifiedTime)`
             + `&pageSize=200&key=${API_KEY}&_t=${Date.now()}`;
-    if (pageToken) url += `&pageToken=${encodeURIComponent(pageToken)}`;
-    const resp = await fetch(url, {
-      method: 'GET',
-      mode: 'cors',
-      cache: 'no-store',
-      headers: { 'Accept': 'application/json' }
-    });
+    if (pageToken) apiUrl += `&pageToken=${encodeURIComponent(pageToken)}`;
+    const resp = await fetch(proxied(apiUrl), { cache: 'no-store' });
     if (!resp.ok) {
       let errMsg = `HTTP ${resp.status}`;
       try { const e = await resp.json(); errMsg = e.error?.message || errMsg; } catch(_) {}
@@ -795,9 +801,8 @@ async function loadHistoricalBhav(numDays) {
 }
 
 async function fetchDriveFile(fileId) {
-  // Drive API media fetch — works for files with 'anyone reader' permission
-  const url = `${DRIVE_API_BASE}/files/${fileId}?alt=media&key=${API_KEY}&_t=${Date.now()}`;
-  const resp = await fetch(url, { mode: 'cors', cache: 'no-store' });
+  const apiUrl = `${DRIVE_API_BASE}/files/${fileId}?alt=media&key=${API_KEY}&_t=${Date.now()}`;
+  const resp = await fetch(proxied(apiUrl), { cache: 'no-store' });
   if (!resp.ok) throw new Error(`HTTP ${resp.status} fetching file ${fileId}`);
   return resp.text();
 }
