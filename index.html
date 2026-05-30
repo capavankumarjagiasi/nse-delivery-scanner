@@ -334,21 +334,22 @@ tbody td.indices { text-align: left; font-size: 0.70rem; color: var(--muted); ma
 <div id="setup-overlay">
   <div id="setup-card">
     <h2>📡 One-Time Setup Required</h2>
-    <p>This app reads NSE data from Google Drive. A free <strong>API Key</strong> is needed to list files. This is a one-time setup — the key is saved on your device.</p>
+    <p>This app uses a <strong>Google Apps Script</strong> proxy to read NSE data from your Drive. Setup takes 3 minutes and is done only once.</p>
     <ol>
-      <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console → Credentials</a></li>
-      <li>Click <strong>+ Create Credentials → API Key</strong></li>
-      <li>Click <strong>Edit API Key</strong> → under "API restrictions" → select <strong>Restrict key</strong> → choose <strong>Google Drive API</strong></li>
-      <li>Under "Application restrictions" → leave as <strong>None</strong> (or select Websites and add <code>https://capavankumarjagiasi.github.io/*</code>)</li>
-      <li>Click <strong>Save</strong> → copy the key (starts with AIza…) and paste below</li>
+      <li>Go to <a href="https://script.google.com" target="_blank">script.google.com</a> → click <strong>New Project</strong></li>
+      <li>Delete all existing code → paste the code from <strong>AppScript.gs</strong> (shared with you)</li>
+      <li>Click <strong>Deploy → New deployment</strong></li>
+      <li>Type: <strong>Web app</strong> → Execute as: <strong>Me</strong> → Who has access: <strong>Anyone</strong></li>
+      <li>Click <strong>Deploy</strong> → copy the Web App URL</li>
+      <li>Paste the URL below and click Save</li>
     </ol>
-    <div id="setup-error">⚠ Could not verify key. Please check and try again.</div>
-    <input id="api-key-input" type="text" placeholder="AIzaSy...your-api-key-here" autocomplete="off" spellcheck="false"/>
+    <div id="setup-error">⚠ Could not connect. Check the URL and try again.</div>
+    <input id="api-key-input" type="text" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" spellcheck="false"/>
     <div style="display:flex;gap:8px">
       <button class="btn btn-primary" style="flex:1" onclick="saveApiKey()">Save &amp; Connect →</button>
     </div>
     <p style="margin-top:12px;font-size:0.72rem;color:var(--muted)">
-      ℹ The key is stored only on this device (localStorage). It is restricted to this website and the Drive API only — safe to use.
+      ℹ The URL is stored only on this device. The Apps Script runs under your Google account and only reads files from your NSE_Scanner_Data folder.
     </p>
   </div>
 </div>
@@ -523,17 +524,13 @@ tbody td.indices { text-align: left; font-size: 0.70rem; color: var(--muted); ma
 // ════════════════════════════════════════════════════════
 //  CONFIG
 // ════════════════════════════════════════════════════════
-const DRIVE_FOLDER_ID = '1uX1UGhOJg51dazjdwiiPmdn-EpIE0fvv';
-const DRIVE_API_BASE  = 'https://www.googleapis.com/drive/v3';
-const STORAGE_KEY_APIKEY   = 'nse_scanner_apikey';
+const DRIVE_FOLDER_ID      = '1uX1UGhOJg51dazjdwiiPmdn-EpIE0fvv';
+const STORAGE_KEY_PROXY    = 'nse_scanner_proxy_url';
 const STORAGE_KEY_CACHE    = 'nse_scanner_cache_v2';
-const CACHE_TTL_MS         = 4 * 60 * 60 * 1000; // 4 hours
+const CACHE_TTL_MS         = 4 * 60 * 60 * 1000;
 
-// CORS proxy — wraps any URL to bypass browser CORS restrictions
-// allorigins.win is a free, open-source proxy for public APIs
-function proxied(url) {
-  return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-}
+// Apps Script proxy URL — set once by user
+let PROXY_URL = localStorage.getItem(STORAGE_KEY_PROXY) || '';
 
 // ETF / index exclusion keywords (mirrors Python scanner)
 const EXCLUDE_KEYWORDS = [
@@ -546,7 +543,6 @@ const EXCLUDE_KEYWORDS = [
 // ════════════════════════════════════════════════════════
 //  STATE
 // ════════════════════════════════════════════════════════
-let API_KEY         = '';
 let bhavFiles       = [];   // [{name, id, date}] sorted newest first
 let indexMap        = {};   // { 'NIFTY-50': Set(['RELIANCE',...]) }
 let todayData       = [];   // parsed rows from latest bhavcopy
@@ -565,13 +561,13 @@ let configOpen      = false;
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
-  // Check for saved API key
-  API_KEY = localStorage.getItem(STORAGE_KEY_APIKEY) || '';
-  if (API_KEY) {
+  // Check for saved proxy URL
+  PROXY_URL = localStorage.getItem(STORAGE_KEY_PROXY) || '';
+  if (PROXY_URL) {
     document.getElementById('setup-overlay').style.display = 'none';
     await loadAllData();
   } else {
-    setStatus('Setup required — enter your Google API key', 'loading');
+    setStatus('Setup required — configure Apps Script proxy', 'loading');
   }
 })();
 
@@ -579,38 +575,32 @@ let configOpen      = false;
 //  API KEY SETUP
 // ════════════════════════════════════════════════════════
 async function saveApiKey() {
-  const key = document.getElementById('api-key-input').value.trim();
-  if (!key || !key.startsWith('AIza')) {
-    showSetupError('Key must start with "AIza". Please check and retry.');
+  const url = document.getElementById('api-key-input').value.trim();
+  if (!url || !url.includes('script.google.com')) {
+    showSetupError('Please paste the full Apps Script Web App URL.');
     return;
   }
-  // Test the key with a minimal Drive API call
-  setStatus('Verifying API key…', 'loading');
+  setStatus('Verifying connection…', 'loading');
   try {
-    const apiUrl = `https://www.googleapis.com/drive/v3/files/${DRIVE_FOLDER_ID}?fields=id,name&key=${key}&_t=${Date.now()}`;
-    const resp = await fetch(proxied(apiUrl), { cache: 'no-store' });
-    if (resp.status === 400 || resp.status === 403) {
-      const err = await resp.json().catch(() => ({}));
-      showSetupError(`Google says: ${err.error?.message || 'Key rejected (check API restrictions)'}`);
-      setStatus('Setup required', 'error'); return;
-    }
+    const testUrl = `${url}?action=list&_t=${Date.now()}`;
+    const resp = await fetch(testUrl, { cache: 'no-store' });
     if (!resp.ok) {
-      showSetupError(`HTTP ${resp.status} — check key and try again`);
+      showSetupError(`HTTP ${resp.status} — check the URL and try again`);
       setStatus('Setup required', 'error'); return;
     }
-    // Key works
-    localStorage.setItem(STORAGE_KEY_APIKEY, key);
-    API_KEY = key;
+    const data = await resp.json();
+    if (!Array.isArray(data)) {
+      showSetupError('Unexpected response. Make sure the script is deployed correctly.');
+      setStatus('Setup required', 'error'); return;
+    }
+    // Connection works
+    localStorage.setItem(STORAGE_KEY_PROXY, url);
+    PROXY_URL = url;
     document.getElementById('setup-overlay').style.display = 'none';
     await loadAllData();
   } catch(e) {
-    // "Failed to fetch" usually means CORS / referrer restriction mismatch
-    // Try saving the key anyway and attempt load — sometimes CORS only affects preflight
-    console.warn('Fetch error during key verify:', e.message);
-    localStorage.setItem(STORAGE_KEY_APIKEY, key);
-    API_KEY = key;
-    document.getElementById('setup-overlay').style.display = 'none';
-    await loadAllData();
+    showSetupError('Connection failed: ' + e.message);
+    setStatus('Setup required', 'error');
   }
 }
 
@@ -668,11 +658,7 @@ async function loadAllData() {
     const isCors = msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('failed to fetch');
     if (isCors) {
       setStatus('⚠ Connection error — API key propagating (wait 2-3 min) or check key restrictions', 'error');
-      const debugUrl = `https://www.googleapis.com/drive/v3/files/${DRIVE_FOLDER_ID}?fields=id,name&key=${API_KEY}`;
-      setTimeout(() => {
-        const el = document.getElementById('debug-url');
-        if (el) { el.href = debugUrl; el.textContent = debugUrl; }
-      }, 500);
+
       // Show retry button inline instead of re-showing setup
       const retryDiv = document.createElement('div');
       retryDiv.style.cssText = 'text-align:center;padding:20px';
@@ -697,23 +683,10 @@ async function loadAllData() {
 }
 
 async function listDriveFiles() {
-  let files = [], pageToken = '';
-  do {
-    let apiUrl = `${DRIVE_API_BASE}/files?q='${DRIVE_FOLDER_ID}'+in+parents+and+trashed=false`
-            + `&fields=nextPageToken,files(id,name,modifiedTime)`
-            + `&pageSize=200&key=${API_KEY}&_t=${Date.now()}`;
-    if (pageToken) apiUrl += `&pageToken=${encodeURIComponent(pageToken)}`;
-    const resp = await fetch(proxied(apiUrl), { cache: 'no-store' });
-    if (!resp.ok) {
-      let errMsg = `HTTP ${resp.status}`;
-      try { const e = await resp.json(); errMsg = e.error?.message || errMsg; } catch(_) {}
-      throw new Error(errMsg);
-    }
-    const data = await resp.json();
-    files = files.concat(data.files || []);
-    pageToken = data.nextPageToken || '';
-  } while (pageToken);
-  return files;
+  const url = `${PROXY_URL}?action=list&_t=${Date.now()}`;
+  const resp = await fetch(url, { cache: 'no-store' });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} listing files`);
+  return await resp.json(); // returns [{id, name, date}]
 }
 
 async function loadIndexFiles(mwFiles) {
@@ -801,8 +774,8 @@ async function loadHistoricalBhav(numDays) {
 }
 
 async function fetchDriveFile(fileId) {
-  const apiUrl = `${DRIVE_API_BASE}/files/${fileId}?alt=media&key=${API_KEY}&_t=${Date.now()}`;
-  const resp = await fetch(proxied(apiUrl), { cache: 'no-store' });
+  const url = `${PROXY_URL}?action=file&id=${fileId}&_t=${Date.now()}`;
+  const resp = await fetch(url, { cache: 'no-store' });
   if (!resp.ok) throw new Error(`HTTP ${resp.status} fetching file ${fileId}`);
   return resp.text();
 }
@@ -1094,8 +1067,8 @@ function toggleConfig(forceOpen) {
 }
 
 function resetApiKey() {
-  localStorage.removeItem(STORAGE_KEY_APIKEY);
-  API_KEY = '';
+  localStorage.removeItem(STORAGE_KEY_PROXY);
+  PROXY_URL = '';
   document.getElementById('api-key-input').value = '';
   document.getElementById('setup-error').style.display = 'none';
   document.getElementById('setup-overlay').style.display = 'flex';
