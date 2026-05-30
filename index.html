@@ -582,7 +582,7 @@ async function saveApiKey() {
   setStatus('Verifying API key…', 'loading');
   try {
     const url = `https://www.googleapis.com/drive/v3/files/${DRIVE_FOLDER_ID}?fields=id,name&key=${key}`;
-    const resp = await fetch(url);
+    const resp = await fetch(url, { method: 'GET', mode: 'cors' });
     if (resp.status === 400 || resp.status === 403) {
       const err = await resp.json().catch(() => ({}));
       showSetupError(`Google says: ${err.error?.message || 'Key rejected (check API restrictions)'}`);
@@ -658,16 +658,30 @@ async function loadAllData() {
     document.getElementById('btn-scan').disabled = false;
     toggleConfig(true); // auto-open config on first load
   } catch(e) {
-    let msg = e.message || String(e);
-    if (msg.includes('fetch') || msg.includes('network') || msg.toLowerCase().includes('failed')) {
-      msg = 'Network/CORS error — check that your API key has NO "Website restrictions" set, or add this site to allowed referrers. Details: ' + msg;
+    const msg = e.message || String(e);
+    const isCors = msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('failed to fetch');
+    if (isCors) {
+      setStatus('⚠ Connection error — API key propagating (wait 2-3 min) or check key restrictions', 'error');
+      // Show retry button inline instead of re-showing setup
+      const retryDiv = document.createElement('div');
+      retryDiv.style.cssText = 'text-align:center;padding:20px';
+      retryDiv.innerHTML = `
+        <div style="font-size:1.5rem;margin-bottom:8px">⏳</div>
+        <div style="margin-bottom:6px;font-weight:700">Connection failed — API key may still be propagating</div>
+        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:14px">
+          Google API keys can take up to 5 minutes after saving.<br>
+          Error: ${msg}
+        </div>
+        <button class="btn btn-primary" onclick="reloadData()" style="margin-right:8px">🔄 Retry Now</button>
+        <button class="btn btn-outline" onclick="resetApiKey()" style="font-size:0.78rem">🔑 Change API Key</button>
+      `;
+      document.getElementById('empty-state').innerHTML = '';
+      document.getElementById('empty-state').appendChild(retryDiv);
+      document.getElementById('empty-state').style.display = 'block';
+    } else {
+      setStatus('Error: ' + msg, 'error');
     }
-    setStatus('Error: ' + msg, 'error');
     console.error('loadAllData error:', e);
-    // Show reset button so user can re-enter key
-    document.getElementById('setup-overlay').style.display = 'flex';
-    document.getElementById('api-key-input').value = localStorage.getItem(STORAGE_KEY_APIKEY) || '';
-    showSetupError('Connection failed: ' + (e.message || 'unknown error') + ' — verify your API key settings below.');
   }
 }
 
@@ -677,11 +691,16 @@ async function listDriveFiles() {
     let url = `${DRIVE_API_BASE}/files?q='${DRIVE_FOLDER_ID}'+in+parents+and+trashed=false`
             + `&fields=nextPageToken,files(id,name,modifiedTime)`
             + `&pageSize=200&key=${API_KEY}`;
-    if (pageToken) url += `&pageToken=${pageToken}`;
-    const resp = await fetch(url);
+    if (pageToken) url += `&pageToken=${encodeURIComponent(pageToken)}`;
+    const resp = await fetch(url, {
+      method: 'GET',
+      mode: 'cors',
+      headers: { 'Accept': 'application/json' }
+    });
     if (!resp.ok) {
-      const e = await resp.json();
-      throw new Error(e.error?.message || `HTTP ${resp.status}`);
+      let errMsg = `HTTP ${resp.status}`;
+      try { const e = await resp.json(); errMsg = e.error?.message || errMsg; } catch(_) {}
+      throw new Error(errMsg);
     }
     const data = await resp.json();
     files = files.concat(data.files || []);
@@ -776,7 +795,11 @@ async function loadHistoricalBhav(numDays) {
 
 async function fetchDriveFile(fileId) {
   const url = `${DRIVE_API_BASE}/files/${fileId}?alt=media&key=${API_KEY}`;
-  const resp = await fetch(url);
+  const resp = await fetch(url, {
+    method: 'GET',
+    mode: 'cors',
+    headers: { 'Accept': 'text/csv,text/plain,*/*' }
+  });
   if (!resp.ok) throw new Error(`HTTP ${resp.status} for file ${fileId}`);
   return resp.text();
 }
@@ -1065,6 +1088,14 @@ function toggleConfig(forceOpen) {
     label.textContent  = '▼ tap to expand';
     configOpen = false;
   }
+}
+
+function resetApiKey() {
+  localStorage.removeItem(STORAGE_KEY_APIKEY);
+  API_KEY = '';
+  document.getElementById('api-key-input').value = '';
+  document.getElementById('setup-error').style.display = 'none';
+  document.getElementById('setup-overlay').style.display = 'flex';
 }
 
 function clearResults() {
