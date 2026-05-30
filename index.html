@@ -794,13 +794,10 @@ async function loadHistoricalBhav(numDays) {
 }
 
 async function fetchDriveFile(fileId) {
+  // Drive API media fetch — works for files with 'anyone reader' permission
   const url = `${DRIVE_API_BASE}/files/${fileId}?alt=media&key=${API_KEY}`;
-  const resp = await fetch(url, {
-    method: 'GET',
-    mode: 'cors',
-    headers: { 'Accept': 'text/csv,text/plain,*/*' }
-  });
-  if (!resp.ok) throw new Error(`HTTP ${resp.status} for file ${fileId}`);
+  const resp = await fetch(url, { mode: 'cors' });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} fetching file ${fileId}`);
   return resp.text();
 }
 
