@@ -650,9 +650,13 @@ async function loadAllData() {
     setStatus(`Loading bhavcopy ${latest.dateStr}…`, 'loading');
     todayData = await loadBhavcopy(latest);
 
-    setStatus(`✓ Ready — ${todayData.length} EQ stocks loaded for ${latest.dateStr}`, 'ok');
-    document.getElementById('btn-scan').disabled = false;
-    toggleConfig(true); // auto-open config on first load
+    if (todayData.length === 0) {
+      setStatus(`⚠ 0 EQ stocks parsed — check console (F12) for column debug info`, 'error');
+    } else {
+      setStatus(`✓ Ready — ${todayData.length} EQ stocks loaded for ${latest.dateStr}`, 'ok');
+      document.getElementById('btn-scan').disabled = false;
+      toggleConfig(true);
+    }
   } catch(e) {
     const msg = e.message || String(e);
     const isCors = msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('failed to fetch');
@@ -731,27 +735,56 @@ async function loadIndexFiles(mwFiles) {
 }
 
 async function loadBhavcopy(fileInfo) {
-  const csv = await fetchDriveFile(fileInfo.id);
-  const rows = Papa.parse(csv, { header: true, skipEmptyLines: true }).data;
+  let csv = await fetchDriveFile(fileInfo.id);
 
-  return rows.filter(r => {
-    const series = (r['SERIES'] || '').trim().toUpperCase();
+  // Strip BOM and leading whitespace/newlines that Apps Script may add
+  csv = csv.replace(/^﻿/, '').trim();
+
+  const parsed = Papa.parse(csv, {
+    header: true,
+    skipEmptyLines: true,
+    transformHeader: h => h.trim().toUpperCase()   // normalise all headers
+  });
+
+  const rows = parsed.data;
+  console.log('Bhavcopy columns:', parsed.meta.fields);
+  console.log('Total rows:', rows.length);
+
+  // Find the SERIES column key (handles any casing/spacing)
+  const seriesKey = (parsed.meta.fields || []).find(k => k.includes('SERIES')) || 'SERIES';
+  const symbolKey = (parsed.meta.fields || []).find(k => k.includes('SYMBOL')) || 'SYMBOL';
+
+  const filtered = rows.filter(r => {
+    const series = (r[seriesKey] || '').trim().toUpperCase();
     if (series !== 'EQ') return false;
-    const sym = (r['SYMBOL'] || '').trim().toUpperCase();
+    const sym = (r[symbolKey] || '').trim().toUpperCase();
     return !EXCLUDE_KEYWORDS.some(k => sym.includes(k));
-  }).map(r => ({
-    SYMBOL:       (r['SYMBOL'] || '').trim().toUpperCase(),
-    SERIES:       (r['SERIES'] || '').trim(),
-    OPEN:         parseFloat(r['OPEN_PRICE'] || r['OPEN'] || 0),
-    HIGH:         parseFloat(r['HIGH_PRICE'] || r['HIGH'] || 0),
-    LOW:          parseFloat(r['LOW_PRICE']  || r['LOW']  || 0),
-    CLOSE:        parseFloat(r['CLOSE_PRICE']|| r['CLOSE']|| 0),
-    PREV_CLOSE:   parseFloat(r['PREV_CLOSE'] || 0),
-    TTL_TRD_QNTY: parseFloat(r['TTL_TRD_QNTY'] || r['TOTTRDQTY'] || 0),
-    DELIV_QTY:    parseFloat(r['DELIV_QTY']  || 0),
-    DELIV_PER:    parseFloat(r['DELIV_PER']  || 0),
-    NO_OF_TRADES: parseFloat(r['NO_OF_TRADES']|| r['TOTALTRADES'] || 0),
-    TURNOVER_LACS:(parseFloat(r['TURNOVER_LACS'] || r['TOTTRDVAL'] || 0)),
+  });
+
+  console.log('EQ rows after filter:', filtered.length);
+
+  // Helper to get numeric value trying multiple column name variants
+  const num = (r, ...keys) => {
+    for (const k of keys) {
+      const v = parseFloat(r[k]);
+      if (!isNaN(v)) return v;
+    }
+    return 0;
+  };
+
+  return filtered.map(r => ({
+    SYMBOL:       (r[symbolKey] || '').trim().toUpperCase(),
+    SERIES:       (r[seriesKey] || '').trim(),
+    OPEN:         num(r, 'OPEN_PRICE', 'OPEN'),
+    HIGH:         num(r, 'HIGH_PRICE', 'HIGH'),
+    LOW:          num(r, 'LOW_PRICE',  'LOW'),
+    CLOSE:        num(r, 'CLOSE_PRICE','CLOSE'),
+    PREV_CLOSE:   num(r, 'PREV_CLOSE', 'PREVCLOSE'),
+    TTL_TRD_QNTY: num(r, 'TTL_TRD_QNTY','TOTTRDQTY','TOTAL_TRADED_QUANTITY'),
+    DELIV_QTY:    num(r, 'DELIV_QTY',  'DELIVERABLE_QTY'),
+    DELIV_PER:    num(r, 'DELIV_PER',  '% DELY QT TO TRADED QTY', 'DELIV_PER'),
+    NO_OF_TRADES: num(r, 'NO_OF_TRADES','TOTALTRADES','NUMBER_OF_TRADES'),
+    TURNOVER_LACS: num(r, 'TURNOVER_LACS','TOTTRDVAL') / (r['TURNOVER_LACS'] !== undefined ? 1 : 100000),
   }));
 }
 
