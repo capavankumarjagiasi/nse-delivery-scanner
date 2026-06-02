@@ -154,6 +154,23 @@ tbody td.indices-col{text-align:left;font-size:.70rem;color:var(--muted);max-wid
 /* Footer */
 #footer{text-align:center;font-size:.72rem;color:var(--muted);padding:14px 10px 20px}
 @media(max-width:480px){.filter-grid{grid-template-columns:repeat(2,1fr)}.btn{padding:6px 12px;font-size:.78rem}#banner-title{font-size:.92rem}table{font-size:.72rem}}
+/* Period buttons */
+.period-btn{padding:3px 10px;border-radius:4px;font-size:.72rem;font-weight:700;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);cursor:pointer;transition:all .15s}
+.period-btn.active{background:#fff;color:var(--primary)}
+.period-btn:hover:not(.active){background:rgba(255,255,255,.3)}
+/* MA checkboxes */
+.ma-chk{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:700;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);cursor:pointer;transition:all .15s;user-select:none}
+.ma-chk.active{background:rgba(255,255,255,.25);color:#fff}
+.ma-chk input{width:12px;height:12px;accent-color:#fff}
+/* Detail stat cards */
+.dstat{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;text-align:center}
+.dstat-label{font-size:.65rem;color:var(--muted);font-weight:700;text-transform:uppercase}
+.dstat-val{font-size:.95rem;font-weight:800;color:var(--text);margin-top:2px}
+/* Period stats */
+.pstat{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px}
+.pstat-label{font-size:.70rem;color:var(--muted);font-weight:700;margin-bottom:4px}
+.pstat-val{font-size:.88rem;font-weight:800;color:var(--primary)}
+
 </style>
 </head>
 <body>
@@ -202,6 +219,7 @@ tbody td.indices-col{text-align:left;font-size:.70rem;color:var(--muted);max-wid
 <div id="section-nav">
   <button class="snav-btn active" onclick="showSection('scan')">📊 Scanner</button>
   <button class="snav-btn" onclick="showSection('history')">📋 History &amp; P&amp;L</button>
+  <button class="snav-btn" id="snav-detail" style="display:none" onclick="showSection('detail')">📈 Chart</button>
 </div>
 
 <!-- ══════════ SCANNER SECTION ══════════ -->
@@ -360,6 +378,94 @@ tbody td.indices-col{text-align:left;font-size:.70rem;color:var(--muted);max-wid
     <div class="hs-card"><div class="hs-label">Hit Rate</div><div class="hs-val" id="hs-hitrate">—</div></div>
   </div>
   <div id="history-list"><div style="text-align:center;padding:30px;color:var(--muted)">No scan history yet. Run a scan and click 💾 Save Top 5.</div></div>
+</div>
+
+<!-- ══════════ DETAIL / CHART SCREEN ══════════ -->
+<div id="sec-detail" class="section" style="padding:0">
+
+  <!-- Detail header bar -->
+  <div id="detail-bar" style="background:var(--primary);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50">
+    <button onclick="closeDetail()" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:5px 12px;border-radius:6px;font-weight:700;cursor:pointer;font-size:.85rem">← Back</button>
+    <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="detail-symbol" style="font-size:1.1rem;font-weight:800">—</span>
+        <span id="detail-fno-badge"></span>
+        <span id="detail-signal-tag"></span>
+      </div>
+      <div id="detail-sub" style="font-size:.72rem;opacity:.8;margin-top:1px">—</div>
+    </div>
+    <div style="text-align:right;font-size:.78rem">
+      <div id="detail-close" style="font-size:1.1rem;font-weight:800">—</div>
+      <div id="detail-chg" style="font-size:.78rem">—</div>
+    </div>
+  </div>
+
+  <div style="padding:10px 12px;max-width:1200px;margin:0 auto">
+
+    <!-- Key stats row -->
+    <div id="detail-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px"></div>
+
+    <!-- Chart panel -->
+    <div class="panel">
+      <div class="panel-hdr">
+        <!-- Period selector -->
+        <div style="display:flex;gap:4px;flex-wrap:wrap" id="period-btns">
+          <button class="period-btn" data-p="7" onclick="setChartPeriod(7)">7D</button>
+          <button class="period-btn" data-p="15" onclick="setChartPeriod(15)">15D</button>
+          <button class="period-btn" data-p="30" onclick="setChartPeriod(30)">1M</button>
+          <button class="period-btn active" data-p="65" onclick="setChartPeriod(65)">3M</button>
+          <button class="period-btn" data-p="130" onclick="setChartPeriod(130)">6M</button>
+          <button class="period-btn" data-p="250" onclick="setChartPeriod(250)">1Y</button>
+        </div>
+        <!-- MA selector -->
+        <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:.70rem;opacity:.8">MA:</span>
+          <label class="ma-chk" id="ma5-lbl"><input type="checkbox" id="ma5" value="5" onchange="redrawChart()"/> 5</label>
+          <label class="ma-chk active" id="ma10-lbl"><input type="checkbox" id="ma10" value="10" checked onchange="redrawChart()"/> 10</label>
+          <label class="ma-chk active" id="ma20-lbl"><input type="checkbox" id="ma20" value="20" checked onchange="redrawChart()"/> 20</label>
+          <label class="ma-chk" id="ma50-lbl"><input type="checkbox" id="ma50" value="50" onchange="redrawChart()"/> 50</label>
+          <label class="ma-chk" id="ma200-lbl"><input type="checkbox" id="ma200" value="200" onchange="redrawChart()"/> 200</label>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:8px">
+        <div id="chart-loading" style="text-align:center;padding:30px;color:var(--muted);display:none">
+          <div style="font-size:1.5rem;margin-bottom:8px">⏳</div>
+          <div id="chart-loading-msg">Loading chart data…</div>
+          <div style="margin-top:8px;height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+            <div id="chart-progress" style="height:100%;background:var(--primary);width:0%;transition:width .3s"></div>
+          </div>
+        </div>
+        <!-- 3-panel SVG chart -->
+        <div id="chart-container" style="width:100%;overflow-x:auto">
+          <svg id="main-chart" style="display:block;width:100%" preserveAspectRatio="none"></svg>
+        </div>
+        <!-- Crosshair tooltip -->
+        <div id="chart-tooltip" style="display:none;position:absolute;background:rgba(12,68,124,.95);color:#fff;padding:6px 10px;border-radius:6px;font-size:.72rem;pointer-events:none;z-index:200;line-height:1.7"></div>
+      </div>
+    </div>
+
+    <!-- 30-day stats summary -->
+    <div class="panel">
+      <div class="panel-hdr">📈 Period Statistics</div>
+      <div class="panel-body">
+        <div id="period-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"></div>
+      </div>
+    </div>
+
+    <!-- External links -->
+    <div class="panel">
+      <div class="panel-hdr">🔗 Research Links</div>
+      <div class="panel-body">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-outline" id="link-screener" onclick="openExternal('screener')" style="font-size:.80rem;padding:7px 14px">📊 Screener.in</button>
+          <button class="btn btn-outline" id="link-nse" onclick="openExternal('nse')" style="font-size:.80rem;padding:7px 14px">🏛 NSE India</button>
+          <button class="btn btn-outline" id="link-chartink" onclick="openExternal('chartink')" style="font-size:.80rem;padding:7px 14px">📉 Chartink</button>
+        </div>
+        <p style="font-size:.72rem;color:var(--muted);margin-top:8px">Links open in a new tab with the selected stock pre-loaded.</p>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 <div id="footer">NSE Delivery Volume Scanner &nbsp;|&nbsp; SDK Fintech &nbsp;|&nbsp; Data sourced from NSE India via Google Drive &nbsp;|&nbsp; For informational use only</div>
@@ -739,7 +845,7 @@ function renderResults(rows,volMode,availDays){
     const vrStr=r.VOL_RATIO!==null&&r.VOL_RATIO!==undefined?r.VOL_RATIO.toFixed(2)+'×':'N/A';
     tr.innerHTML=`
       <td>${i+1}</td>
-      <td class="sym">${r.SYMBOL}${fnoBadge}</td>
+      <td class="sym" style="cursor:pointer" onclick="openDetail('${r.SYMBOL}')" title="Tap for chart">📈 ${r.SYMBOL}${fnoBadge}</td>
       <td>₹${r.CLOSE.toFixed(1)}</td>
       <td class="${chgCls}">${chgStr}</td>
       <td>${r.DELIV_PER.toFixed(1)}%</td>
@@ -829,8 +935,10 @@ function showSection(id){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.snav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('sec-'+id).classList.add('active');
-  event.target.classList.add('active');
+  // highlight matching nav btn
+  document.querySelectorAll('.snav-btn').forEach(b=>{ if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(id)) b.classList.add('active'); });
   if(id==='history')renderHistory();
+  if(id==='detail'){document.getElementById('snav-detail').style.display='block';}
 }
 
 // ══════════════════════════════════════════════════
@@ -1031,6 +1139,373 @@ function setStatus(msg,state){
   else{dot.style.background='#F4D03F';dot.style.animation='pulse 1s infinite';}
 }
 function formatDate(d){const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return`${String(d.getDate()).padStart(2,'0')}-${m[d.getMonth()]}-${d.getFullYear()}`;}
+// ══════════════════════════════════════════════════
+//  DETAIL SCREEN & CHART ENGINE
+// ══════════════════════════════════════════════════
+
+let detailSymbol  = '';
+let detailStock   = null;      // from scanResults
+let chartPeriod   = 65;        // default 3M
+let chartData     = [];        // [{date,open,high,low,close,vol,delPer}] oldest→newest
+let chartDataFull = {};        // cache: symbol -> full array
+
+const MA_COLORS = {5:'#FF6F00',10:'#1565C0',20:'#2E7D11',50:'#6A1B9A',200:'#AD1457'};
+
+// ── Open detail screen ─────────────────────────
+function openDetail(sym){
+  const stock = scanResults.find(r=>r.SYMBOL===sym);
+  if(!stock) return;
+  detailSymbol = sym;
+  detailStock  = stock;
+
+  // Populate header
+  document.getElementById('detail-symbol').textContent = sym;
+  document.getElementById('detail-fno-badge').innerHTML = stock.IS_FNO ? '<span class="fno-badge">F&O</span>' : '';
+  const sigTag = stock.SIGNAL==='STRONG'?'<span class="tag tag-strong">STRONG</span>':
+                 stock.SIGNAL==='WATCH' ?'<span class="tag tag-watch">WATCH</span>':
+                                          '<span class="tag tag-neg">NEG</span>';
+  document.getElementById('detail-signal-tag').innerHTML = sigTag;
+  document.getElementById('detail-close').textContent = '₹'+stock.CLOSE.toFixed(2);
+  const chgSign = stock.PCT_CHANGE>=0?'+':'';
+  document.getElementById('detail-chg').textContent = chgSign+stock.PCT_CHANGE.toFixed(2)+'%';
+  document.getElementById('detail-chg').className = stock.PCT_CHANGE>=0?'up':'down';
+  document.getElementById('detail-sub').textContent =
+    `Del: ${stock.DELIV_PER.toFixed(1)}%  |  Vol Ratio: ${stock.VOL_RATIO!=null?stock.VOL_RATIO.toFixed(2)+'×':'N/A'}  |  T/O: ₹${stock.TURNOVER_LACS.toFixed(1)}L  |  Trades: ${Math.round(stock.NO_OF_TRADES).toLocaleString('en-IN')}`;
+
+  // Key stats
+  renderDetailStats(stock);
+
+  // Show screen
+  showSection('detail');
+
+  // Load chart
+  loadChartData(sym, chartPeriod);
+}
+
+function closeDetail(){
+  showSection('scan');
+}
+
+function renderDetailStats(stock){
+  const items = [
+    ['Close',    '₹'+stock.CLOSE.toFixed(2)],
+    ['Chg%',     (stock.PCT_CHANGE>=0?'+':'')+stock.PCT_CHANGE.toFixed(2)+'%'],
+    ['Del%',     stock.DELIV_PER.toFixed(1)+'%'],
+    ['Vol Ratio',stock.VOL_RATIO!=null?stock.VOL_RATIO.toFixed(2)+'×':'N/A'],
+    ['T/O ₹L',   stock.TURNOVER_LACS.toFixed(1)],
+    ['Trades',   Math.round(stock.NO_OF_TRADES).toLocaleString('en-IN')],
+    ['Gap%',     stock.GAP_PCT!=null?(stock.GAP_PCT>=0?'+':'')+stock.GAP_PCT.toFixed(2)+'%':'—'],
+    ['Score',    stock.SCORE.toFixed(1)],
+  ];
+  document.getElementById('detail-stats').innerHTML = items.map(([l,v])=>
+    `<div class="dstat"><div class="dstat-label">${l}</div><div class="dstat-val">${v}</div></div>`
+  ).join('');
+}
+
+// ── Load chart data ────────────────────────────
+async function loadChartData(sym, days){
+  // Check cache
+  if(chartDataFull[sym] && chartDataFull[sym].length>=days){
+    chartData = chartDataFull[sym].slice(-days);
+    redrawChart();
+    renderPeriodStats(chartData);
+    return;
+  }
+
+  document.getElementById('chart-loading').style.display='block';
+  document.getElementById('chart-container').style.display='none';
+
+  // Need to load more historical files
+  const needed = bhavFiles.slice(0, days+5); // +5 buffer
+  const toLoad = needed.filter(f=>!historicalData[f.dateStr]);
+  let loaded = 0;
+
+  for(const f of toLoad){
+    try{
+      document.getElementById('chart-loading-msg').textContent =
+        `Loading ${f.dateStr} (${loaded+1}/${toLoad.length})…`;
+      document.getElementById('chart-progress').style.width =
+        Math.round((loaded/Math.max(toLoad.length,1))*100)+'%';
+      historicalData[f.dateStr] = await loadBhavcopy(f);
+      loaded++;
+    } catch(e){ console.warn('Skip chart file:',f.dateStr); }
+  }
+
+  // Build full OHLCV array for this symbol: oldest→newest
+  const allDays = bhavFiles.slice().reverse(); // oldest first
+  const arr = [];
+  for(const f of allDays){
+    const src = f===bhavFiles[0] ? todayData : (historicalData[f.dateStr]||[]);
+    const row = src.find(r=>r.SYMBOL===sym);
+    if(row){
+      arr.push({
+        date:    f.dateStr,
+        dateObj: f.date,
+        open:    row.OPEN,
+        high:    row.HIGH,
+        low:     row.LOW,
+        close:   row.CLOSE,
+        vol:     row.TTL_TRD_QNTY,
+        delivVol:row.DELIV_QTY||0,
+        delPer:  row.DELIV_PER,
+        pctChg:  row.PREV_CLOSE>0?((row.CLOSE-row.PREV_CLOSE)/row.PREV_CLOSE)*100:0,
+      });
+    }
+  }
+
+  chartDataFull[sym] = arr;
+  chartData = arr.slice(-days);
+
+  document.getElementById('chart-loading').style.display='none';
+  document.getElementById('chart-container').style.display='block';
+  document.getElementById('chart-progress').style.width='0%';
+
+  redrawChart();
+  renderPeriodStats(chartData);
+}
+
+function setChartPeriod(days){
+  chartPeriod = days;
+  document.querySelectorAll('.period-btn').forEach(b=>{
+    b.classList.toggle('active', +b.dataset.p===days);
+  });
+  if(detailSymbol) loadChartData(detailSymbol, days);
+}
+
+// ── Compute MA ─────────────────────────────────
+function computeMA(closes, period){
+  const ma = new Array(closes.length).fill(null);
+  for(let i=period-1;i<closes.length;i++){
+    const sum = closes.slice(i-period+1,i+1).reduce((a,b)=>a+b,0);
+    ma[i] = sum/period;
+  }
+  return ma;
+}
+
+// ── Main chart draw ────────────────────────────
+function redrawChart(){
+  if(!chartData.length) return;
+
+  const svg     = document.getElementById('main-chart');
+  const W       = svg.parentElement.clientWidth || 700;
+  const H_CANDLE = Math.round(W * 0.45);
+  const H_VOL    = Math.round(W * 0.15);
+  const H_DEL    = Math.round(W * 0.12);
+  const GAP      = 6;
+  const TOTAL_H  = H_CANDLE + GAP + H_VOL + GAP + H_DEL;
+  const PAD_L    = 52, PAD_R = 10, PAD_TOP = 12, PAD_BOT = 24;
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${TOTAL_H + PAD_TOP + PAD_BOT}`);
+  svg.setAttribute('height', TOTAL_H + PAD_TOP + PAD_BOT);
+
+  const n     = chartData.length;
+  const cw    = (W - PAD_L - PAD_R) / n;
+  const bw    = Math.max(1, cw * 0.6);
+
+  // ── Compute ranges ──────────────────────────
+  const closes  = chartData.map(d=>d.close);
+  const highs   = chartData.map(d=>d.high);
+  const lows    = chartData.map(d=>d.low);
+  const vols    = chartData.map(d=>d.vol);
+  const delPers = chartData.map(d=>d.delPer);
+
+  const priceMin = Math.min(...lows)   * 0.998;
+  const priceMax = Math.max(...highs)  * 1.002;
+  const volMax   = Math.max(...vols)   * 1.05;
+  const delMin   = Math.min(...delPers) * 0.95;
+  const delMax   = Math.max(...delPers) * 1.05;
+
+  const scaleP = v => PAD_TOP + H_CANDLE - ((v-priceMin)/(priceMax-priceMin)) * H_CANDLE;
+  const scaleV = v => PAD_TOP + H_CANDLE + GAP + H_VOL - (v/volMax) * H_VOL;
+  const scaleD = v => PAD_TOP + H_CANDLE + GAP + H_VOL + GAP + H_DEL -
+                      ((v-delMin)/(Math.max(delMax-delMin,1))) * H_DEL;
+  const xOf    = i => PAD_L + (i+0.5)*cw;
+
+  // ── Active MAs ─────────────────────────────
+  const activeMAs = [5,10,20,50,200].filter(p=>document.getElementById('ma'+p)?.checked);
+  const maLines   = {};
+  activeMAs.forEach(p=>{ maLines[p] = computeMA(closes, p); });
+
+  // ── Build SVG ──────────────────────────────
+  let html = '';
+
+  // Background panels
+  html += `<rect x="${PAD_L}" y="${PAD_TOP}" width="${W-PAD_L-PAD_R}" height="${H_CANDLE}" fill="#FAFCFF" rx="2"/>`;
+  html += `<rect x="${PAD_L}" y="${PAD_TOP+H_CANDLE+GAP}" width="${W-PAD_L-PAD_R}" height="${H_VOL}" fill="#FAFCFF" rx="2"/>`;
+  html += `<rect x="${PAD_L}" y="${PAD_TOP+H_CANDLE+GAP+H_VOL+GAP}" width="${W-PAD_L-PAD_R}" height="${H_DEL}" fill="#FFF8F0" rx="2"/>`;
+
+  // Grid lines for price panel (4 lines)
+  for(let i=0;i<=4;i++){
+    const v = priceMin + (priceMax-priceMin)*(i/4);
+    const y = scaleP(v);
+    html += `<line x1="${PAD_L}" y1="${y}" x2="${W-PAD_R}" y2="${y}" stroke="#E0E8F0" stroke-width="0.5"/>`;
+    html += `<text x="${PAD_L-4}" y="${y+4}" text-anchor="end" font-size="9" fill="#8090A0">₹${v>=1000?Math.round(v).toLocaleString('en-IN'):v.toFixed(1)}</text>`;
+  }
+
+  // Panel labels
+  const labelY1 = PAD_TOP + H_CANDLE + GAP + 10;
+  html += `<text x="${PAD_L+2}" y="${labelY1}" font-size="8" fill="#8090A0" font-weight="700">VOL</text>`;
+  const labelY2 = PAD_TOP + H_CANDLE + GAP + H_VOL + GAP + 10;
+  html += `<text x="${PAD_L+2}" y="${labelY2}" font-size="8" fill="#E65100" font-weight="700">DEL%</text>`;
+
+  // ── Candlesticks ───────────────────────────
+  for(let i=0;i<n;i++){
+    const d   = chartData[i];
+    const x   = xOf(i);
+    const up  = d.close >= d.open;
+    const col = up ? '#2E7D11' : '#B71C1C';
+    const yH  = scaleP(d.high);
+    const yL  = scaleP(d.low);
+    const yO  = scaleP(d.open);
+    const yC  = scaleP(d.close);
+    const top = Math.min(yO,yC), bot = Math.max(yO,yC);
+    const bodyH = Math.max(1, bot-top);
+    // Wick
+    html += `<line x1="${x}" y1="${yH}" x2="${x}" y2="${yL}" stroke="${col}" stroke-width="1"/>`;
+    // Body
+    html += `<rect x="${x-bw/2}" y="${top}" width="${bw}" height="${bodyH}" fill="${col}" rx="0.5"/>`;
+  }
+
+  // ── MA lines ───────────────────────────────
+  activeMAs.forEach(p=>{
+    const pts = maLines[p];
+    let path = '';
+    for(let i=0;i<n;i++){
+      if(pts[i]===null) continue;
+      const x=xOf(i), y=scaleP(pts[i]);
+      path += path?`L${x},${y}`:`M${x},${y}`;
+    }
+    if(path) html += `<path d="${path}" fill="none" stroke="${MA_COLORS[p]}" stroke-width="1.2" opacity="0.85"/>`;
+    // MA legend label at right end
+    const lastIdx = pts.reduce((acc,v,i)=>v!==null?i:acc,-1);
+    if(lastIdx>=0){
+      html += `<text x="${xOf(lastIdx)+4}" y="${scaleP(pts[lastIdx])+4}" font-size="8" fill="${MA_COLORS[p]}" font-weight="700">MA${p}</text>`;
+    }
+  });
+
+  // ── Volume bars ────────────────────────────
+  for(let i=0;i<n;i++){
+    const d  = chartData[i];
+    const x  = xOf(i);
+    const up = d.close >= d.open;
+    const col= up?'rgba(46,125,17,.7)':'rgba(183,28,28,.7)';
+    const yTop = scaleV(d.vol);
+    const yBot = PAD_TOP + H_CANDLE + GAP + H_VOL;
+    html += `<rect x="${x-bw/2}" y="${yTop}" width="${bw}" height="${Math.max(1,yBot-yTop)}" fill="${col}" rx="0.5"/>`;
+  }
+
+  // ── Delivery % line ────────────────────────
+  let delPath = '';
+  for(let i=0;i<n;i++){
+    const x=xOf(i), y=scaleD(chartData[i].delPer);
+    delPath += delPath?`L${x},${y}`:`M${x},${y}`;
+  }
+  html += `<path d="${delPath}" fill="none" stroke="#E65100" stroke-width="1.5"/>`;
+
+  // Delivery area fill (subtle)
+  const delBase = PAD_TOP+H_CANDLE+GAP+H_VOL+GAP+H_DEL;
+  let delArea = `M${xOf(0)},${delBase} `;
+  for(let i=0;i<n;i++) delArea += `L${xOf(i)},${scaleD(chartData[i].delPer)} `;
+  delArea += `L${xOf(n-1)},${delBase} Z`;
+  html += `<path d="${delArea}" fill="rgba(230,81,0,.08)"/>`;
+
+  // Del% Y axis labels
+  for(let i=0;i<=2;i++){
+    const v = delMin + (delMax-delMin)*(i/2);
+    const y = scaleD(v);
+    html += `<text x="${PAD_L-4}" y="${y+4}" text-anchor="end" font-size="8" fill="#E65100">${v.toFixed(0)}%</text>`;
+  }
+
+  // ── X-axis dates ───────────────────────────
+  const step = Math.max(1, Math.floor(n/8));
+  for(let i=0;i<n;i+=step){
+    const parts = chartData[i].date.split('-');
+    const label = parts.length===3 ? `${parts[0]}/${parts[1]}` : chartData[i].date;
+    const x = xOf(i);
+    html += `<text x="${x}" y="${TOTAL_H+PAD_TOP+PAD_BOT-4}" text-anchor="middle" font-size="8" fill="#8090A0">${label}</text>`;
+    html += `<line x1="${x}" y1="${PAD_TOP}" x2="${x}" y2="${TOTAL_H+PAD_TOP}" stroke="#E8EEF5" stroke-width="0.5" stroke-dasharray="2,3"/>`;
+  }
+
+  // ── Invisible hit zones for tooltip ────────
+  for(let i=0;i<n;i++){
+    const xi = xOf(i).toFixed(1);
+    html += '<rect x="'+(xOf(i)-cw/2).toFixed(1)+'" y="'+PAD_TOP+'" width="'+cw.toFixed(1)+'" height="'+TOTAL_H+'" fill="transparent" data-i="'+i+'" class="chart-hit" onmouseout="hideChartTip()"/>';
+  }
+
+  svg.innerHTML = html;
+  // Attach tooltip events via delegation (avoids template literal issues)
+  svg.querySelectorAll('.chart-hit').forEach(el=>{
+    el.addEventListener('mouseover', e=>{ const i=+el.dataset.i; showChartTip(i,xOf(i),scaleP(chartData[i].close),e); });
+    el.addEventListener('touchstart', e=>{ const i=+el.dataset.i; showChartTip(i,xOf(i),scaleP(chartData[i].close),e); },{passive:true});
+  });
+}
+
+// ── Tooltip ────────────────────────────────────
+function showChartTip(i, x, y, e){
+  const d   = chartData[i];
+  const tip = document.getElementById('chart-tooltip');
+  tip.innerHTML = `<strong>${d.date}</strong><br>
+    O: ₹${d.open.toFixed(2)}  H: ₹${d.high.toFixed(2)}<br>
+    L: ₹${d.low.toFixed(2)}  C: ₹${d.close.toFixed(2)}<br>
+    Chg: ${d.pctChg>=0?'+':''}${d.pctChg.toFixed(2)}%<br>
+    Del%: ${d.delPer.toFixed(1)}%  Vol: ${Math.round(d.vol/1000)}K`;
+  const rect = document.getElementById('main-chart').getBoundingClientRect();
+  const ex   = e.touches?e.touches[0].clientX:e.clientX;
+  const ey   = e.touches?e.touches[0].clientY:e.clientY;
+  tip.style.left  = (ex - rect.left + 12)+'px';
+  tip.style.top   = (ey - rect.top  - 40)+'px';
+  tip.style.display='block';
+}
+function hideChartTip(){ document.getElementById('chart-tooltip').style.display='none'; }
+
+// ── Period stats ───────────────────────────────
+function renderPeriodStats(data){
+  if(!data.length) return;
+  const closes  = data.map(d=>d.close);
+  const highs   = data.map(d=>d.high);
+  const lows    = data.map(d=>d.low);
+  const dels    = data.map(d=>d.delPer);
+  const vols    = data.map(d=>d.vol);
+  const first   = data[0].close, last=data[data.length-1].close;
+  const periodRet = ((last-first)/first*100);
+  const avgDel  = dels.reduce((a,b)=>a+b,0)/dels.length;
+  const avgVol  = vols.reduce((a,b)=>a+b,0)/vols.length;
+  const maxDel  = Math.max(...dels);
+  const minDel  = Math.min(...dels);
+
+  const items = [
+    ['Period High',   '₹'+Math.max(...highs).toFixed(2)],
+    ['Period Low',    '₹'+Math.min(...lows).toFixed(2)],
+    ['Period Return', (periodRet>=0?'+':'')+periodRet.toFixed(2)+'%', periodRet>=0?'var(--green)':'var(--red)'],
+    ['Avg Del%',      avgDel.toFixed(1)+'%'],
+    ['Max Del%',      maxDel.toFixed(1)+'%'],
+    ['Min Del%',      minDel.toFixed(1)+'%'],
+    ['Avg Volume',    Math.round(avgVol/1000)+'K'],
+    ['Data Points',   data.length+' days'],
+    ['From → To',     data[0].date+' → '+data[data.length-1].date],
+  ];
+
+  document.getElementById('period-stats').innerHTML = items.map(([l,v,c])=>
+    `<div class="pstat"><div class="pstat-label">${l}</div>
+     <div class="pstat-val" style="${c?'color:'+c:''}">${v}</div></div>`
+  ).join('');
+}
+
+// ── External links ─────────────────────────────
+function openExternal(site){
+  const sym = detailSymbol;
+  if(!sym) return;
+  const urls = {
+    screener: `https://www.screener.in/company/${sym}/`,
+    nse:      `https://www.nseindia.com/get-quotes/equity?symbol=${sym}`,
+    chartink: `https://chartink.com/stocks-new?symbol=${sym}`,
+  };
+  window.open(urls[site], '_blank');
+}
+
+// ── Resize handler ─────────────────────────────
+window.addEventListener('resize', ()=>{ if(detailSymbol && chartData.length) redrawChart(); });
+
 </script>
 </body>
 </html>
