@@ -195,6 +195,21 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
 .ds-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;text-align:center}
 .ds-label{font-size:.65rem;color:var(--muted);font-weight:700;text-transform:uppercase}
 .ds-val{font-size:1rem;font-weight:800;color:var(--primary);margin-top:2px}
+
+/* Sync panel */
+#sync-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin:10px 12px 0;overflow:hidden}
+#sync-header{background:linear-gradient(135deg,#1565C0,#0D47A1);color:#fff;padding:8px 14px;font-size:.82rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+#sync-body{padding:10px 12px}
+.sync-status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+@media(max-width:500px){.sync-status-grid{grid-template-columns:repeat(2,1fr)}}
+.sync-file-card{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;text-align:center}
+.sync-file-label{font-size:.65rem;color:var(--muted);font-weight:700;text-transform:uppercase}
+.sync-file-status{font-size:.82rem;font-weight:800;margin-top:2px}
+.sfs-ok{color:var(--green)}
+.sfs-missing{color:var(--red)}
+.sfs-unknown{color:var(--muted)}
+.sync-log{background:#0D1117;color:#58D68D;font-family:monospace;font-size:.72rem;padding:8px 10px;border-radius:6px;max-height:120px;overflow-y:auto;margin-top:8px;white-space:pre-wrap;display:none}
+
 </style>
 </head>
 <body>
@@ -210,7 +225,7 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
       <li>Paste below and click Save</li>
     </ol>
     <div id="setup-error"></div>
-    <input id="api-key-input" type="text" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" spellcheck="false"/>
+    <input id="api-key-input" type="text" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" spellcheck="false" value="https://script.google.com/macros/s/AKfycbxS9WM2KgF_ucSqQ8d7Lm8ORoWH3TcIf3Vck4YN5bQt6uMb0p2QW_IsAkgL6WBeECXc/exec"/>
     <div style="display:flex;gap:8px">
       <button class="btn btn-primary" style="flex:1" onclick="saveProxyUrl()">Save &amp; Connect →</button>
     </div>
@@ -240,6 +255,37 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
 </div>
 
 <!-- SECTION NAV -->
+
+<!-- ── SYNC PANEL ── -->
+<div id="sync-panel">
+  <div id="sync-header" onclick="toggleSyncPanel()">
+    ☁ Drive Sync
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="sync-last-time" style="font-size:.70rem;opacity:.8">—</span>
+      <span id="sync-toggle-lbl" style="font-size:.72rem;opacity:.7">▼</span>
+    </div>
+  </div>
+  <div id="sync-body" style="display:none">
+    <!-- File status cards -->
+    <div class="sync-status-grid" id="sync-status-grid">
+      <div class="sync-file-card"><div class="sync-file-label">Bhavcopy</div><div class="sync-file-status sfs-unknown" id="ss-bhav">—</div></div>
+      <div class="sync-file-card"><div class="sync-file-label">Bulk Deals</div><div class="sync-file-status sfs-unknown" id="ss-bulk">—</div></div>
+      <div class="sync-file-card"><div class="sync-file-label">Block Deals</div><div class="sync-file-status sfs-unknown" id="ss-block">—</div></div>
+      <div class="sync-file-card"><div class="sync-file-label">52W H/L</div><div class="sync-file-status sfs-unknown" id="ss-w52">—</div></div>
+    </div>
+    <!-- Action buttons -->
+    <div class="btn-row" style="margin-bottom:8px">
+      <button class="btn btn-primary" id="btn-sync-all" onclick="syncAll()" style="padding:6px 16px;font-size:.80rem">☁ Sync Today's Data</button>
+      <button class="btn btn-outline" onclick="checkSyncStatus()" style="padding:6px 14px;font-size:.80rem">🔍 Check Status</button>
+      <button class="btn btn-gray" onclick="reloadAfterSync()" style="padding:6px 14px;font-size:.80rem">🔄 Reload Data</button>
+    </div>
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:6px">
+      ℹ Sync downloads from NSE → saves to your Drive folder. Best used after 6:30 PM (market close).
+    </div>
+    <div id="sync-log" class="sync-log"></div>
+  </div>
+</div>
+
 <div id="section-nav">
   <button class="snav-btn active" onclick="showSection('scan')">📊 Scanner</button>
   <button class="snav-btn" onclick="showSection('history')">📋 History &amp; P&amp;L</button>
@@ -1869,6 +1915,144 @@ function exportDealsCsv(){
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
   a.download=`deals_${new Date().toLocaleDateString('en-IN').replace(/\//g,'')}.csv`;
   a.click();
+}
+
+
+// ══════════════════════════════════════════════════
+//  SYNC ENGINE
+// ══════════════════════════════════════════════════
+let syncPanelOpen = false;
+
+function toggleSyncPanel(){
+  syncPanelOpen = !syncPanelOpen;
+  document.getElementById('sync-body').style.display = syncPanelOpen ? 'block' : 'none';
+  document.getElementById('sync-toggle-lbl').textContent = syncPanelOpen ? '▲' : '▼';
+  if(syncPanelOpen) checkSyncStatus();
+}
+
+function getTodayDateStr(){
+  // Returns DDMMYYYY in IST
+  const now = new Date();
+  const ist = new Date(now.getTime() + (5.5*60*60*1000));
+  const dd  = String(ist.getUTCDate()).padStart(2,'0');
+  const mm  = String(ist.getUTCMonth()+1).padStart(2,'0');
+  const yy  = ist.getUTCFullYear();
+  return dd+mm+yy;
+}
+
+function syncLog(msg){
+  const el = document.getElementById('sync-log');
+  el.style.display = 'block';
+  el.textContent += new Date().toLocaleTimeString('en-IN') + '  ' + msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+
+function syncLogClear(){
+  const el = document.getElementById('sync-log');
+  el.textContent='';
+  el.style.display='none';
+}
+
+async function checkSyncStatus(){
+  const ds = getTodayDateStr();
+  try{
+    const resp = await fetch(`${PROXY_URL}?action=sync_status&date=${ds}&_t=${Date.now()}`,{cache:'no-store'});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const data = await resp.json();
+    updateSyncCards(data);
+    document.getElementById('sync-last-time').textContent = 'Checked: '+new Date().toLocaleTimeString('en-IN');
+  }catch(e){
+    console.warn('Sync status error:',e);
+    ['ss-bhav','ss-bulk','ss-block','ss-w52'].forEach(id=>{
+      const el=document.getElementById(id);
+      el.textContent='Error'; el.className='sync-file-status sfs-missing';
+    });
+  }
+}
+
+function updateSyncCards(data){
+  const map = {
+    'ss-bhav':  data.bhav,
+    'ss-bulk':  data.bulk,
+    'ss-block': data.block,
+    'ss-w52':   data.w52,
+  };
+  for(const[id,ok] of Object.entries(map)){
+    const el = document.getElementById(id);
+    el.textContent  = ok ? '✓ Ready' : '✗ Missing';
+    el.className    = 'sync-file-status '+(ok?'sfs-ok':'sfs-missing');
+  }
+}
+
+async function syncAll(){
+  const btn = document.getElementById('btn-sync-all');
+  btn.disabled = true;
+  btn.textContent = '⏳ Syncing…';
+  syncLogClear();
+  syncLog('Starting full sync…');
+  setStatus('☁ Syncing data from NSE…','loading');
+
+  const ds = getTodayDateStr();
+
+  try{
+    // 1. Bhavcopy
+    syncLog('↓ Downloading bhavcopy ('+ds+')…');
+    const bhavResp = await fetch(
+      `${PROXY_URL}?action=download_bhav&date=${ds}&_t=${Date.now()}`,
+      {cache:'no-store'}
+    );
+    const bhav = await bhavResp.json();
+    syncLog((bhav.status==='saved'?'✓':bhav.status==='exists'?'ℹ':'✗')+
+            ' Bhavcopy: '+bhav.message+' ('+bhav.file+')');
+
+    // 2. Deals
+    syncLog('↓ Downloading bulk & block deals…');
+    const dealsResp = await fetch(
+      `${PROXY_URL}?action=download_deals&date=${ds}&_t=${Date.now()}`,
+      {cache:'no-store'}
+    );
+    const deals = await dealsResp.json();
+    const bulkS  = deals.results?.bulk?.status  || 'error';
+    const blockS = deals.results?.block?.status || 'error';
+    syncLog((bulkS==='saved'?'✓':'ℹ')+' Bulk: '+bulkS+
+            ' | '+(blockS==='saved'?'✓':'ℹ')+' Block: '+blockS);
+
+    // 3. 52W
+    syncLog('↓ Downloading 52W High/Low…');
+    const w52Resp = await fetch(
+      `${PROXY_URL}?action=download_52w&date=${ds}&_t=${Date.now()}`,
+      {cache:'no-store'}
+    );
+    const w52 = await w52Resp.json();
+    syncLog((w52.status==='saved'?'✓':w52.status==='exists'?'ℹ':'✗')+
+            ' 52W: '+w52.message);
+
+    // Update status cards
+    await checkSyncStatus();
+
+    const allOk = bhav.status!=='error' && w52.status!=='error';
+    syncLog(allOk ? '✓ Sync complete!' : '⚠ Sync done with some issues');
+    setStatus(allOk ? '✓ Sync complete — tap Reload Data to use new files' : '⚠ Sync partial — check log','ok');
+    document.getElementById('sync-last-time').textContent =
+      'Synced: '+new Date().toLocaleTimeString('en-IN');
+
+  }catch(e){
+    syncLog('✗ Sync error: '+e.message);
+    setStatus('☁ Sync failed: '+e.message,'error');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = "☁ Sync Today's Data";
+  }
+}
+
+async function reloadAfterSync(){
+  historicalData = {};
+  todayData = [];
+  bhavFiles = [];
+  w52Map = {};
+  bdMap  = {};
+  document.getElementById('btn-scan').disabled = true;
+  await loadAllData();
 }
 
 </script>
