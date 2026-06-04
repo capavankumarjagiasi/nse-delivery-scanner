@@ -171,6 +171,30 @@ tbody td.indices-col{text-align:left;font-size:.70rem;color:var(--muted);max-wid
 .pstat-label{font-size:.70rem;color:var(--muted);font-weight:700;margin-bottom:4px}
 .pstat-val{font-size:.88rem;font-weight:800;color:var(--primary)}
 
+
+/* Deals section */
+.deals-filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.deals-filter-row label{font-size:.72rem;color:var(--muted);font-weight:700}
+.deals-filter-row select,.deals-filter-row input{padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:.82rem;background:var(--bg);color:var(--text)}
+.deal-buy{color:var(--green);font-weight:700}
+.deal-sell{color:var(--red);font-weight:700}
+.tag-bulk{background:#1565C0;color:#fff}
+.tag-block{background:#6A1B9A;color:#fff}
+.bd-badge{display:inline-block;padding:1px 5px;border-radius:4px;font-size:.60rem;font-weight:800;background:#AD1457;color:#fff;margin-left:3px;vertical-align:middle;cursor:pointer}
+/* 52W cells */
+.near52h{background:#FFF9C4!important;font-weight:700}
+.above52h{background:#C8E6C9!important;font-weight:800;color:var(--green)}
+.near52l{background:#FFCDD2!important;font-weight:700;color:var(--red)}
+/* Sort arrows on th */
+thead th{position:relative}
+thead th.sort-asc::after{content:' ▲';font-size:.60rem;color:var(--primary)}
+thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
+/* Deals summary cards */
+.deals-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+@media(max-width:500px){.deals-sum{grid-template-columns:repeat(2,1fr)}}
+.ds-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:7px 10px;text-align:center}
+.ds-label{font-size:.65rem;color:var(--muted);font-weight:700;text-transform:uppercase}
+.ds-val{font-size:1rem;font-weight:800;color:var(--primary);margin-top:2px}
 </style>
 </head>
 <body>
@@ -219,6 +243,7 @@ tbody td.indices-col{text-align:left;font-size:.70rem;color:var(--muted);max-wid
 <div id="section-nav">
   <button class="snav-btn active" onclick="showSection('scan')">📊 Scanner</button>
   <button class="snav-btn" onclick="showSection('history')">📋 History &amp; P&amp;L</button>
+  <button class="snav-btn" onclick="showSection('deals')">🔴 Deals</button>
   <button class="snav-btn" id="snav-detail" style="display:none" onclick="showSection('detail')">📈 Chart</button>
 </div>
 
@@ -353,6 +378,8 @@ tbody td.indices-col{text-align:left;font-size:.70rem;color:var(--muted);max-wid
           <th onclick="sortTable(7)">Trades</th>
           <th onclick="sortTable(8)">Score</th>
           <th onclick="sortTable(9)">Signal</th>
+          <th onclick="sortTable(10)">52W-H</th>
+          <th onclick="sortTable(11)">52W-L</th>
           <th style="text-align:left">Indices</th>
         </tr></thead>
         <tbody id="results-body"></tbody>
@@ -468,6 +495,82 @@ tbody td.indices-col{text-align:left;font-size:.70rem;color:var(--muted);max-wid
   </div>
 </div>
 
+
+<!-- ══════════ DEALS SECTION ══════════ -->
+<div id="sec-deals" class="section">
+
+  <div style="margin-top:10px" class="panel">
+    <div class="panel-hdr">🔴 Bulk &amp; Block Deals Viewer</div>
+    <div class="panel-body">
+      <div class="deals-filter-row">
+        <label>Type:</label>
+        <select id="d-type" onchange="renderDeals()">
+          <option value="both">Both</option>
+          <option value="BULK">Bulk Only</option>
+          <option value="BLOCK">Block Only</option>
+        </select>
+        <label>Days:</label>
+        <select id="d-days" onchange="loadDealsData()">
+          <option value="7">7 Days</option>
+          <option value="14">14 Days</option>
+          <option value="30" selected>30 Days</option>
+          <option value="60">60 Days</option>
+          <option value="90">90 Days</option>
+        </select>
+        <label>Symbol:</label>
+        <input type="text" id="d-sym" placeholder="e.g. RELIANCE" oninput="renderDeals()" style="width:110px;text-transform:uppercase"/>
+        <label>B/S:</label>
+        <select id="d-bs" onchange="renderDeals()">
+          <option value="ALL">All</option>
+          <option value="BUY">Buy</option>
+          <option value="SELL">Sell</option>
+        </select>
+        <button class="btn btn-primary" onclick="loadDealsData()" style="padding:5px 14px;font-size:.78rem">🔄 Refresh</button>
+        <button class="btn btn-outline" onclick="exportDealsCsv()" style="padding:5px 14px;font-size:.78rem">💾 CSV</button>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="deals-sum" id="deals-sum">
+        <div class="ds-card"><div class="ds-label">Total Deals</div><div class="ds-val" id="ds-total">—</div></div>
+        <div class="ds-card"><div class="ds-label">Bulk</div><div class="ds-val" id="ds-bulk">—</div></div>
+        <div class="ds-card"><div class="ds-label">Block</div><div class="ds-val" id="ds-block">—</div></div>
+        <div class="ds-card"><div class="ds-label">Unique Stocks</div><div class="ds-val" id="ds-syms">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deals table -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <span id="deals-title">Deals</span>
+      <span id="deals-status" style="font-size:.72rem;opacity:.8">—</span>
+    </div>
+    <div id="deals-table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <div id="deals-empty" style="padding:30px;text-align:center;color:var(--muted)">
+        <div style="font-size:2rem;margin-bottom:8px">🔴</div>
+        <div>Click <strong>Refresh</strong> to load deals data</div>
+        <div style="font-size:.78rem;margin-top:4px">Requires bulk/block files synced to Drive</div>
+      </div>
+      <table id="deals-table" style="display:none">
+        <thead>
+          <tr>
+            <th onclick="sortDeals('date')">Date</th>
+            <th onclick="sortDeals('deal_type')">Type</th>
+            <th onclick="sortDeals('symbol')" style="text-align:left">Symbol</th>
+            <th onclick="sortDeals('client_name')" style="text-align:left">Client</th>
+            <th onclick="sortDeals('buy_sell')">B/S</th>
+            <th onclick="sortDeals('quantity')">Qty</th>
+            <th onclick="sortDeals('price')">Price(₹)</th>
+            <th onclick="sortDeals('value')">Value(₹L)</th>
+            <th style="text-align:left">Remarks</th>
+          </tr>
+        </thead>
+        <tbody id="deals-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <div id="footer">NSE Delivery Volume Scanner &nbsp;|&nbsp; SDK Fintech &nbsp;|&nbsp; Data sourced from NSE India via Google Drive &nbsp;|&nbsp; For informational use only</div>
 
 <script>
@@ -497,6 +600,14 @@ let sortCol        = 8;
 let sortDir        = -1;
 let configOpen     = true;
 let reviewPeriod   = 'month';
+// Deals state
+let dealsData      = [];   // all loaded deals
+let dealsFiltered  = [];   // after filter
+let dealsSortCol   = 'date';
+let dealsSortDir   = -1;
+// 52W state
+let w52Map         = {};   // { SYMBOL: {high, low, high_date, low_date} }
+let bdMap          = {};   // { SYMBOL: ['BULK','BLOCK'] }
 
 // ══════════════════════════════════════════════════
 //  INIT
@@ -843,9 +954,20 @@ function renderResults(rows,volMode,availDays){
                  '<span class="tag tag-neg">NEG</span>';
     const fnoBadge=r.IS_FNO?'<span class="fno-badge">F&O</span>':'';
     const vrStr=r.VOL_RATIO!==null&&r.VOL_RATIO!==undefined?r.VOL_RATIO.toFixed(2)+'×':'N/A';
+    // 52W
+    const w52=w52Map[r.SYMBOL]||{};
+    const w52h=w52.high, w52l=w52.low;
+    const w52hStr=w52h?'₹'+Number(w52h).toLocaleString('en-IN',{maximumFractionDigits:1}):'—';
+    const w52lStr=w52l?'₹'+Number(w52l).toLocaleString('en-IN',{maximumFractionDigits:1}):'—';
+    let h52cls='', l52cls='';
+    if(w52h&&r.CLOSE>0){const d=(w52h-r.CLOSE)/w52h*100; if(r.CLOSE>=w52h)h52cls='above52h'; else if(d<=3)h52cls='near52h';}
+    if(w52l&&r.CLOSE>0&&w52l>0){if((r.CLOSE-w52l)/w52l*100<=3)l52cls='near52l';}
+    // BD
+    const bdTypes=bdMap[r.SYMBOL]||[];
+    const bdBadge=bdTypes.length?`<span class="bd-badge" title="Deal in last 5d: ${bdTypes.join('|')}">${bdTypes.join('|')}</span>`:''; 
     tr.innerHTML=`
       <td>${i+1}</td>
-      <td class="sym" style="cursor:pointer" onclick="openDetail('${r.SYMBOL}')" title="Tap for chart">📈 ${r.SYMBOL}${fnoBadge}</td>
+      <td class="sym" style="cursor:pointer" onclick="openDetail('${r.SYMBOL}')" title="Tap for chart">📈 ${r.SYMBOL}${fnoBadge}${bdBadge}</td>
       <td>₹${r.CLOSE.toFixed(1)}</td>
       <td class="${chgCls}">${chgStr}</td>
       <td>${r.DELIV_PER.toFixed(1)}%</td>
@@ -854,6 +976,8 @@ function renderResults(rows,volMode,availDays){
       <td>${Math.round(r.NO_OF_TRADES).toLocaleString('en-IN')}</td>
       <td><strong>${r.SCORE.toFixed(1)}</strong></td>
       <td>${sigTag}</td>
+      <td class="${h52cls}" title="${w52h?'52W High: ₹'+w52h+' ('+w52.high_date+')':''}">${w52hStr}</td>
+      <td class="${l52cls}" title="${w52l?'52W Low: ₹'+w52l+' ('+w52.low_date+')':''}">${w52lStr}</td>
       <td class="indices-col" title="${r.INDICES}">${r.INDICES||'—'}</td>
     `;
     tbody.appendChild(tr);
@@ -882,7 +1006,7 @@ function updateMetrics(rows,volMode,availDays){
 function sortTable(col){
   if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=-1;}
   document.querySelectorAll('thead th').forEach((th,i)=>{th.className=i===col?(sortDir===-1?'sort-desc':'sort-asc'):'';});
-  const keys=[null,'SYMBOL','CLOSE','PCT_CHANGE','DELIV_PER','VOL_RATIO','TURNOVER_LACS','NO_OF_TRADES','SCORE','SIGNAL'];
+  const keys=[null,'SYMBOL','CLOSE','PCT_CHANGE','DELIV_PER','VOL_RATIO','TURNOVER_LACS','NO_OF_TRADES','SCORE','SIGNAL','_52WH','_52WL'];
   const k=keys[col];
   if(!k)return;
   scanResults.sort((a,b)=>{const va=a[k]??'',vb=b[k]??'';return typeof va==='number'?sortDir*(va-vb):sortDir*String(va).localeCompare(String(vb));});
@@ -1505,6 +1629,247 @@ function openExternal(site){
 
 // ── Resize handler ─────────────────────────────
 window.addEventListener('resize', ()=>{ if(detailSymbol && chartData.length) redrawChart(); });
+
+
+// ══════════════════════════════════════════════════
+//  52W & BD DATA LOADERS
+// ══════════════════════════════════════════════════
+async function load52WData(files){
+  // Find CM_52_wk_High_low.csv in drive files
+  const f = files.find(f=>f.name==='CM_52_wk_High_low.csv');
+  if(!f){ console.log('52W file not in Drive'); return; }
+  try{
+    const csv = await fetchDriveFile(f.id);
+    const lines = csv.split('\n');
+    // Find header line
+    let hi = lines.findIndex(l=>l.includes('SYMBOL')&&l.includes('SERIES'));
+    if(hi<0) return;
+    const parsed = Papa.parse(lines.slice(hi).join('\n'),
+      {header:true, skipEmptyLines:true, transformHeader:h=>h.trim()});
+    w52Map = {};
+    for(const r of parsed.data){
+      const sym = (r['SYMBOL']||'').trim().replace(/"/g,'');
+      const series = (r['SERIES']||'').trim().replace(/"/g,'');
+      if(!sym||series!=='EQ') continue;
+      const ph = v => { const n=parseFloat(String(v).replace(/"/g,'').trim()); return isNaN(n)?null:n; };
+      const h = ph(r['Adjusted_52_Week_High']);
+      const l = ph(r['Adjusted_52_Week_Low']);
+      if(h||l) w52Map[sym]={
+        high:h, low:l,
+        high_date:(r['52_Week_High_Date']||'').trim().replace(/"/g,''),
+        low_date: (r['52_Week_Low_DT']||'').trim().replace(/"/g,''),
+      };
+    }
+    console.log('52W loaded:',Object.keys(w52Map).length,'symbols');
+  }catch(e){console.warn('52W load error:',e);}
+}
+
+async function loadBDIndex(files){
+  // Load last 5 days of bulk/block files to build BD map
+  const today = bhavFiles[0]?.date || new Date();
+  const cutoff = new Date(today); cutoff.setDate(cutoff.getDate()-7);
+  const dealFiles = files.filter(f=>
+    (f.name.startsWith('bulk_')||f.name.startsWith('block_'))&&
+    f.name.endsWith('.csv')
+  );
+  bdMap = {};
+  await Promise.all(dealFiles.map(async f=>{
+    // Parse date from filename
+    const m = f.name.match(/(?:bulk|block)_(\d{2})(\d{2})(\d{4})\.csv/);
+    if(!m) return;
+    const d = new Date(+m[3],+m[2]-1,+m[1]);
+    if(d<cutoff) return;
+    try{
+      const csv = await fetchDriveFile(f.id);
+      const rows = Papa.parse(csv,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data;
+      const dtype = f.name.startsWith('bulk')?'BULK':'BLOCK';
+      for(const r of rows){
+        const sym=(r['Symbol']||'').trim().toUpperCase();
+        if(!sym) continue;
+        if(!bdMap[sym]) bdMap[sym]=[];
+        if(!bdMap[sym].includes(dtype)) bdMap[sym].push(dtype);
+      }
+    }catch(e){}
+  }));
+  console.log('BD map loaded:',Object.keys(bdMap).length,'symbols with deals');
+}
+
+// ══════════════════════════════════════════════════
+//  DEALS SECTION
+// ══════════════════════════════════════════════════
+async function loadDealsData(){
+  const days = parseInt(document.getElementById('d-days').value)||30;
+  const today = bhavFiles[0]?.date || new Date();
+  const cutoff = new Date(today); cutoff.setDate(cutoff.getDate()-days);
+
+  setStatus('Loading deals data from Drive...','loading');
+  document.getElementById('deals-status').textContent = 'Loading...';
+
+  // Get all deal files from Drive
+  const files = await listDriveFiles();
+  const dealFiles = files.filter(f=>
+    (f.name.startsWith('bulk_')||f.name.startsWith('block_'))&&f.name.endsWith('.csv')
+  );
+
+  if(!dealFiles.length){
+    document.getElementById('deals-empty').style.display='block';
+    document.getElementById('deals-table').style.display='none';
+    document.getElementById('deals-status').textContent='No deals files found in Drive';
+    setStatus('✓ Ready','ok');
+    return;
+  }
+
+  dealsData=[];
+  let loaded=0;
+  // Filter to within days range
+  const inRange = dealFiles.filter(f=>{
+    const m=f.name.match(/(?:bulk|block)_(\d{2})(\d{2})(\d{4})\.csv/);
+    if(!m) return false;
+    const d=new Date(+m[3],+m[2]-1,+m[1]);
+    return d>=cutoff;
+  });
+
+  document.getElementById('deals-status').textContent=`Loading ${inRange.length} files...`;
+
+  await Promise.all(inRange.map(async f=>{
+    try{
+      const csv=await fetchDriveFile(f.id);
+      const dtype=f.name.startsWith('bulk')?'BULK':'BLOCK';
+      const rows=Papa.parse(csv,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data;
+      for(const r of rows){
+        const qty=parseFloat((r['Quantity Traded']||'0').replace(/,/g,''))||0;
+        const price=parseFloat((r['Trade Price / Wght. Avg. Price']||r['Trade Price']||'0').replace(/,/g,''))||0;
+        dealsData.push({
+          date:     (r['Date']||'').trim(),
+          deal_type:dtype,
+          symbol:   (r['Symbol']||'').trim().toUpperCase(),
+          client:   (r['Client Name']||'').trim(),
+          buy_sell: (r['Buy/ Sell']||r['Buy/Sell']||'').trim().toUpperCase(),
+          quantity: qty,
+          price:    price,
+          value:    Math.round(qty*price/100000*100)/100,
+          remarks:  (r['Remarks']||'').trim(),
+        });
+      }
+      loaded++;
+    }catch(e){console.warn('Deal load error:',f.name,e);}
+  }));
+
+  dealsData.sort((a,b)=>b.date.localeCompare(a.date)||a.symbol.localeCompare(b.symbol));
+  setStatus('✓ Ready','ok');
+  renderDeals();
+}
+
+function renderDeals(){
+  const typeFilter = document.getElementById('d-type').value;
+  const symFilter  = document.getElementById('d-sym').value.trim().toUpperCase();
+  const bsFilter   = document.getElementById('d-bs').value;
+
+  dealsFiltered = dealsData.filter(r=>{
+    if(typeFilter!=='both'&&r.deal_type!==typeFilter) return false;
+    if(symFilter&&!r.symbol.includes(symFilter)) return false;
+    if(bsFilter!=='ALL'&&r.buy_sell!==bsFilter) return false;
+    return true;
+  });
+
+  // Summary
+  const bulkN  = dealsFiltered.filter(r=>r.deal_type==='BULK').length;
+  const blockN = dealsFiltered.filter(r=>r.deal_type==='BLOCK').length;
+  const syms   = new Set(dealsFiltered.map(r=>r.symbol)).size;
+  document.getElementById('ds-total').textContent = dealsFiltered.length;
+  document.getElementById('ds-bulk').textContent  = bulkN;
+  document.getElementById('ds-block').textContent = blockN;
+  document.getElementById('ds-syms').textContent  = syms;
+  document.getElementById('deals-title').textContent =
+    `Showing ${dealsFiltered.length} deals`;
+  document.getElementById('deals-status').textContent =
+    `${bulkN} Bulk  |  ${blockN} Block  |  ${syms} unique stocks`;
+
+  if(!dealsFiltered.length){
+    document.getElementById('deals-empty').style.display='block';
+    document.getElementById('deals-table').style.display='none';
+    return;
+  }
+  document.getElementById('deals-empty').style.display='none';
+  document.getElementById('deals-table').style.display='table';
+
+  const tbody=document.getElementById('deals-body');
+  tbody.innerHTML='';
+  for(const r of dealsFiltered){
+    const tr=document.createElement('tr');
+    const bsCls=r.buy_sell==='BUY'?'deal-buy':r.buy_sell==='SELL'?'deal-sell':'';
+    const typeTag=r.deal_type==='BULK'
+      ?'<span class="tag tag-bulk" style="font-size:.65rem">BULK</span>'
+      :'<span class="tag tag-block" style="font-size:.65rem">BLOCK</span>';
+    tr.innerHTML=`
+      <td>${r.date}</td>
+      <td>${typeTag}</td>
+      <td style="text-align:left;font-weight:700;color:var(--accent)">${r.symbol}</td>
+      <td style="text-align:left;font-size:.72rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.client}">${r.client}</td>
+      <td class="${bsCls}">${r.buy_sell}</td>
+      <td>${r.quantity>0?r.quantity.toLocaleString('en-IN'):'—'}</td>
+      <td>${r.price>0?'₹'+r.price.toLocaleString('en-IN',{maximumFractionDigits:2}):'—'}</td>
+      <td>${r.value>0?'₹'+r.value.toFixed(2):'—'}</td>
+      <td style="font-size:.70rem;color:var(--muted)">${r.remarks||'—'}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function sortDeals(col){
+  if(dealsSortCol===col) dealsSortDir*=-1;
+  else{dealsSortCol=col; dealsSortDir=-1;}
+  document.querySelectorAll('#deals-table thead th').forEach(th=>{
+    const base=th.textContent.replace(/ [▲▼]$/,'');
+    th.textContent=base;
+    th.className='';
+  });
+  const th=[...document.querySelectorAll('#deals-table thead th')]
+    .find(t=>t.getAttribute('onclick')===`sortDeals('${col}')`);
+  if(th){
+    th.textContent+=(dealsSortDir===-1?' ▼':' ▲');
+    th.className=dealsSortDir===-1?'sort-desc':'sort-asc';
+  }
+  const numCols=['quantity','price','value'];
+  dealsFiltered.sort((a,b)=>{
+    const va=a[col]??'', vb=b[col]??'';
+    if(numCols.includes(col)) return dealsSortDir*(Number(va)-Number(vb));
+    return dealsSortDir*String(va).localeCompare(String(vb));
+  });
+  // Re-render body only
+  const tbody=document.getElementById('deals-body');
+  tbody.innerHTML='';
+  for(const r of dealsFiltered){
+    const tr=document.createElement('tr');
+    const bsCls=r.buy_sell==='BUY'?'deal-buy':r.buy_sell==='SELL'?'deal-sell':'';
+    const typeTag=r.deal_type==='BULK'
+      ?'<span class="tag tag-bulk" style="font-size:.65rem">BULK</span>'
+      :'<span class="tag tag-block" style="font-size:.65rem">BLOCK</span>';
+    tr.innerHTML=`
+      <td>${r.date}</td><td>${typeTag}</td>
+      <td style="text-align:left;font-weight:700;color:var(--accent)">${r.symbol}</td>
+      <td style="text-align:left;font-size:.72rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.client}</td>
+      <td class="${bsCls}">${r.buy_sell}</td>
+      <td>${r.quantity>0?r.quantity.toLocaleString('en-IN'):'—'}</td>
+      <td>${r.price>0?'₹'+r.price.toLocaleString('en-IN',{maximumFractionDigits:2}):'—'}</td>
+      <td>${r.value>0?'₹'+r.value.toFixed(2):'—'}</td>
+      <td style="font-size:.70rem;color:var(--muted)">${r.remarks||'—'}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function exportDealsCsv(){
+  if(!dealsFiltered.length){alert('No deals to export.');return;}
+  const rows=[['Date','Type','Symbol','Client','Buy/Sell','Quantity','Price','Value(L)','Remarks']];
+  for(const r of dealsFiltered)
+    rows.push([r.date,r.deal_type,r.symbol,r.client,r.buy_sell,r.quantity,r.price,r.value,r.remarks]);
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=`deals_${new Date().toLocaleDateString('en-IN').replace(/\//g,'')}.csv`;
+  a.click();
+}
 
 </script>
 </body>
