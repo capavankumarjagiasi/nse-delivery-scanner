@@ -298,17 +298,56 @@ function handleDownloadSS(dateStr) {
     return jsonResp({ status: 'exists', file: fname, message: 'Already in Drive' });
   }
 
-  // NSE short selling URL
-  const url  = 'https://archives.nseindia.com/content/equities/shortselling_' + ds + '.csv';
-  const data = fetchNSE(url);
+  // NSE short selling — try multiple URL patterns with enhanced session handling
+  const SS_URL_PATTERNS = [
+    'https://archives.nseindia.com/content/equities/shortselling_' + ds + '.csv',
+    'https://archives.nseindia.com/content/equities/shortselling' + ds + '.csv',
+    'https://archives.nseindia.com/products/content/shortselling_' + ds + '.csv',
+  ];
 
-  if (data && data.length > 100) {
-    const saved = saveToFolder(dealsFolderId, fname, data, 'text/csv');
-    return jsonResp({ status: 'saved', file: fname, size: data.length,
-                      message: 'Downloaded and saved', fileId: saved });
+  // Enhanced fetch with multiple warmup attempts for NSE session
+  function fetchNSEWithSession(url) {
+    try {
+      // Multiple warmup requests to establish session
+      const warmupUrls = [
+        'https://www.nseindia.com',
+        'https://www.nseindia.com/all-reports',
+      ];
+      for (const w of warmupUrls) {
+        try { UrlFetchApp.fetch(w, { headers: NSE_HEADERS, muteHttpExceptions: true, followRedirects: true }); }
+        catch(e) {}
+      }
+      // Small delay
+      Utilities.sleep(500);
+      const resp = UrlFetchApp.fetch(url, {
+        headers: NSE_HEADERS, muteHttpExceptions: true, followRedirects: true
+      });
+      if (resp.getResponseCode() === 200) {
+        const c = resp.getContentText('UTF-8');
+        if (c && c.length > 100) return c;
+      }
+      Logger.log('SS URL failed: ' + url + ' status: ' + resp.getResponseCode());
+      return null;
+    } catch(e) {
+      Logger.log('SS fetch error: ' + url + ' : ' + e.message);
+      return null;
+    }
   }
 
-  // Try previous days
+  let data = null;
+  let usedUrl = '';
+  for (const url of SS_URL_PATTERNS) {
+    data = fetchNSEWithSession(url);
+    if (data && data.length > 100) { usedUrl = url; break; }
+  }
+
+  if (data) {
+    const saved = saveToFolder(dealsFolderId, fname, data, 'text/csv');
+    return jsonResp({ status: 'saved', file: fname, size: data.length,
+                      message: 'Downloaded and saved from ' + usedUrl, fileId: saved });
+  }
+
+  // Try previous 5 trading days with all patterns
   for (let i = 1; i <= 5; i++) {
     const prev   = getPrevTradingDay(ds, i);
     const pfname = 'shortsell_' + prev + '.csv';
@@ -316,15 +355,21 @@ function handleDownloadSS(dateStr) {
       return jsonResp({ status: 'exists', file: pfname,
                         message: 'Using previous day (' + prev + ')' });
     }
-    const purl  = 'https://archives.nseindia.com/content/equities/shortselling_' + prev + '.csv';
-    const pdata = fetchNSE(purl);
-    if (pdata && pdata.length > 100) {
-      const saved = saveToFolder(dealsFolderId, pfname, pdata, 'text/csv');
-      return jsonResp({ status: 'saved', file: pfname,
-                        message: 'Saved (prev day: ' + prev + ')', fileId: saved });
+    for (const base of [
+      'https://archives.nseindia.com/content/equities/shortselling_',
+      'https://archives.nseindia.com/content/equities/shortselling',
+      'https://archives.nseindia.com/products/content/shortselling_',
+    ]) {
+      const pdata = fetchNSE(base + prev + '.csv');
+      if (pdata && pdata.length > 100) {
+        const saved = saveToFolder(dealsFolderId, pfname, pdata, 'text/csv');
+        return jsonResp({ status: 'saved', file: pfname,
+                          message: 'Saved prev day ' + prev + ' from ' + base, fileId: saved });
+      }
     }
   }
-  return jsonResp({ status: 'empty', file: fname, message: 'No short selling data available' });
+  return jsonResp({ status: 'unavailable', file: fname,
+                    message: 'Short selling data not available — NSE may not publish this daily' });
 }
 
 // ── WATCHLIST SYNC ────────────────────────────────────────────────────────────
