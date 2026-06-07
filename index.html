@@ -210,6 +210,44 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
 .sfs-unknown{color:var(--muted)}
 .sync-log{background:#0D1117;color:#58D68D;font-family:monospace;font-size:.72rem;padding:8px 10px;border-radius:6px;max-height:120px;overflow-y:auto;margin-top:8px;white-space:pre-wrap;display:none}
 
+
+/* Streak badge */
+.streak-badge{display:inline-block;padding:1px 5px;border-radius:4px;font-size:.60rem;font-weight:800;background:#FF6F00;color:#fff;margin-left:3px;vertical-align:middle}
+/* SS badge */
+.ss-badge{display:inline-block;padding:1px 5px;border-radius:4px;font-size:.60rem;font-weight:800;background:#880E4F;color:#fff;margin-left:3px;vertical-align:middle}
+/* Alert badge */
+.alert-badge{display:inline-block;padding:1px 5px;border-radius:4px;font-size:.60rem;font-weight:800;background:#E65100;color:#fff;margin-left:3px;vertical-align:middle}
+/* Comparison table */
+.comp-row-new{background:#E8F5E9!important}
+.comp-row-exit{background:#FFEBEE!important;opacity:.7}
+.comp-row-up{color:var(--green);font-weight:700}
+.comp-row-dn{color:var(--red);font-weight:700}
+/* Watchlist */
+.wl-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.wl-sym{font-size:.95rem;font-weight:800;color:var(--accent);min-width:80px}
+.wl-stat{text-align:center;min-width:60px}
+.wl-stat-label{font-size:.62rem;color:var(--muted);font-weight:700;text-transform:uppercase}
+.wl-stat-val{font-size:.85rem;font-weight:700;color:var(--text)}
+/* Alert form */
+.alert-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.alert-form input,.alert-form select{padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:.82rem;background:var(--bg)}
+.alert-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.alert-triggered{border-color:var(--green);background:var(--green-bg)}
+.alert-expired{opacity:.5}
+/* Pre-market report */
+.pmr-card{background:var(--card);border:2px solid var(--primary);border-radius:var(--radius);padding:12px;margin-bottom:8px}
+.pmr-title{font-size:.9rem;font-weight:800;color:var(--primary);margin-bottom:8px}
+/* Notification toast */
+#toast-container{position:fixed;top:70px;right:12px;z-index:999;display:flex;flex-direction:column;gap:6px}
+.toast{background:var(--primary);color:#fff;padding:8px 14px;border-radius:8px;font-size:.80rem;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.2);animation:slideIn .3s ease;max-width:280px}
+.toast.success{background:#2E7D11}
+.toast.warning{background:#E65100}
+.toast.alert{background:#AD1457}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+/* Weekly report */
+.weekly-section{margin-bottom:14px}
+.weekly-section h3{font-size:.82rem;font-weight:700;color:var(--accent);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+
 </style>
 </head>
 <body>
@@ -272,6 +310,7 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
       <div class="sync-file-card"><div class="sync-file-label">Bulk Deals</div><div class="sync-file-status sfs-unknown" id="ss-bulk">—</div></div>
       <div class="sync-file-card"><div class="sync-file-label">Block Deals</div><div class="sync-file-status sfs-unknown" id="ss-block">—</div></div>
       <div class="sync-file-card"><div class="sync-file-label">52W H/L</div><div class="sync-file-status sfs-unknown" id="ss-w52">—</div></div>
+      <div class="sync-file-card"><div class="sync-file-label">Short Sell</div><div class="sync-file-status sfs-unknown" id="ss-sync-card">—</div></div>
     </div>
     <!-- Action buttons -->
     <div class="btn-row" style="margin-bottom:8px">
@@ -290,6 +329,9 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
   <button class="snav-btn active" onclick="showSection('scan')">📊 Scanner</button>
   <button class="snav-btn" onclick="showSection('history')">📋 History &amp; P&amp;L</button>
   <button class="snav-btn" onclick="showSection('deals')">🔴 Deals</button>
+  <button class="snav-btn" onclick="showSection('shortsell')">🔻 Short Sell</button>
+  <button class="snav-btn" onclick="showSection('watchlist')">⭐ Watchlist</button>
+  <button class="snav-btn" onclick="showSection('alerts')">🔔 Alerts</button>
   <button class="snav-btn" id="snav-detail" style="display:none" onclick="showSection('detail')">📈 Chart</button>
 </div>
 
@@ -361,7 +403,19 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
             <option value="20">20 days</option>
           </select>
         </div>
-        <div class="filter-item"><label>Top N (max 15)</label><input type="number" id="f-topn" value="15" min="5" max="15"/></div>
+        <div class="filter-item"><label>Top N</label>
+          <select id="f-topn">
+            <option value="10">10</option>
+            <option value="15" selected>15</option>
+            <option value="20">20</option>
+            <option value="25">25</option>
+            <option value="30">30</option>
+            <option value="35">35</option>
+            <option value="40">40</option>
+            <option value="45">45</option>
+            <option value="50">50</option>
+          </select>
+        </div>
         <div class="filter-item"><label>Min Trades</label><input type="number" id="f-trades" value="500" min="0"/></div>
         <div class="filter-item"><label>Fallback</label>
           <select id="f-fallback">
@@ -380,6 +434,16 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
       <div id="index-filter-row">
         <label>INDEX:</label>
         <div class="index-chips" id="index-chips"><span style="font-size:.75rem;color:var(--muted)">Loading…</span></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
+        <label style="display:flex;align-items:center;gap:5px;font-size:.78rem;color:var(--muted);cursor:pointer;font-weight:700">
+          <input type="checkbox" id="f-fno-only" style="accent-color:var(--primary)"/>
+          F&amp;O stocks only
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:.78rem;color:var(--muted);cursor:pointer;font-weight:700">
+          <input type="checkbox" id="f-positive-only"/>
+          Positive Chg% only
+        </label>
       </div>
       <div class="btn-row">
         <button class="btn btn-primary" id="btn-scan" onclick="runScan()" disabled>▶ Run Scan</button>
@@ -408,6 +472,8 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
       <div style="display:flex;gap:6px">
         <button class="btn btn-green" id="btn-pdf" onclick="exportPDF()" style="padding:4px 12px;font-size:.75rem" disabled>📄 PDF</button>
         <button class="btn btn-amber" id="btn-save-hist" onclick="saveToHistory()" style="padding:4px 12px;font-size:.75rem" disabled>💾 Save Top 5</button>
+        <button class="btn btn-outline" id="btn-premarket" onclick="generatePreMarket()" style="padding:4px 12px;font-size:.75rem" disabled>🌅 Pre-Market</button>
+        <button class="btn btn-outline" id="btn-weekly" onclick="generateWeeklyReport()" style="padding:4px 12px;font-size:.75rem;display:none" id="btn-weekly">📊 Weekly Report</button>
       </div>
     </div>
     <div id="table-scroll">
@@ -533,8 +599,10 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
           <button class="btn btn-outline" id="link-screener" onclick="openExternal('screener')" style="font-size:.80rem;padding:7px 14px">📊 Screener.in</button>
           <button class="btn btn-outline" id="link-nse" onclick="openExternal('nse')" style="font-size:.80rem;padding:7px 14px">🏛 NSE India</button>
           <button class="btn btn-outline" id="link-chartink" onclick="openExternal('chartink')" style="font-size:.80rem;padding:7px 14px">📉 Chartink</button>
+          <button class="btn btn-outline" id="link-mc" onclick="openExternal('moneycontrol')" style="font-size:.80rem;padding:7px 14px">💹 MoneyControl</button>
+          <button class="btn btn-outline" id="link-news" onclick="openExternal('news')" style="font-size:.80rem;padding:7px 14px;background:var(--amber-bg);border-color:var(--amber);color:var(--amber)">📰 News</button>
         </div>
-        <p style="font-size:.72rem;color:var(--muted);margin-top:8px">Links open in a new tab with the selected stock pre-loaded.</p>
+        <p style="font-size:.72rem;color:var(--muted);margin-top:8px">Links open in a new tab with the selected stock pre-loaded. News opens Google News search filtered for Indian markets.</p>
       </div>
     </div>
 
@@ -571,6 +639,8 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
           <option value="BUY">Buy</option>
           <option value="SELL">Sell</option>
         </select>
+        <label>Client:</label>
+        <input type="text" id="d-client" placeholder="Client name…" oninput="renderDeals()" style="width:130px"/>
         <button class="btn btn-primary" onclick="loadDealsData()" style="padding:5px 14px;font-size:.78rem">🔄 Refresh</button>
         <button class="btn btn-outline" onclick="exportDealsCsv()" style="padding:5px 14px;font-size:.78rem">💾 CSV</button>
       </div>
@@ -613,6 +683,104 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
         </thead>
         <tbody id="deals-body"></tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- ══ SHORT SELLING SECTION ══ -->
+<div id="sec-shortsell" class="section">
+  <div style="margin-top:10px" class="panel">
+    <div class="panel-hdr">🔻 Short Selling Data
+      <div style="display:flex;gap:6px">
+        <select id="ss-days" onchange="loadSSData()" style="padding:3px 8px;font-size:.75rem;border-radius:4px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.15);color:#fff">
+          <option value="7">7 Days</option>
+          <option value="14">14 Days</option>
+          <option value="30" selected>30 Days</option>
+        </select>
+        <button class="btn" onclick="loadSSData()" style="padding:3px 12px;font-size:.75rem;background:rgba(255,255,255,.2);color:#fff">🔄 Refresh</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">
+        Stocks where institutions/FIIs have short sold. 🔻 badge shown on scanner results when stock also appears here.
+      </div>
+      <div class="deals-sum" id="ss-summary">
+        <div class="ds-card"><div class="ds-label">Total Records</div><div class="ds-val" id="ss-total">—</div></div>
+        <div class="ds-card"><div class="ds-label">Unique Stocks</div><div class="ds-val" id="ss-syms">—</div></div>
+        <div class="ds-card"><div class="ds-label">Latest Date</div><div class="ds-val" id="ss-date">—</div></div>
+        <div class="ds-card"><div class="ds-label">In Scanner</div><div class="ds-val" id="ss-overlap">—</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-hdr">Short Selling Records</div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <div id="ss-empty" style="padding:30px;text-align:center;color:var(--muted)">
+        <div style="font-size:2rem">🔻</div>
+        <div style="margin-top:8px">Click <strong>Refresh</strong> to load short selling data</div>
+      </div>
+      <table id="ss-table" style="display:none">
+        <thead><tr>
+          <th onclick="sortSSTable('date')">Date</th>
+          <th onclick="sortSSTable('symbol')" style="text-align:left">Symbol</th>
+          <th onclick="sortSSTable('name')" style="text-align:left">Name</th>
+          <th onclick="sortSSTable('qty')">Short Qty</th>
+          <th onclick="sortSSTable('pct')">% of Vol</th>
+          <th>In Scanner</th>
+        </tr></thead>
+        <tbody id="ss-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ WATCHLIST SECTION ══ -->
+<div id="sec-watchlist" class="section">
+  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+    <span style="font-size:.82rem;font-weight:700;color:var(--muted)">⭐ MY WATCHLIST</span>
+    <button class="btn btn-green" onclick="syncWatchlistToDrive()" style="padding:5px 14px;font-size:.78rem">☁ Sync to Drive</button>
+    <button class="btn btn-outline" onclick="loadWatchlistFromDrive()" style="padding:5px 14px;font-size:.78rem">📥 Load from Drive</button>
+    <button class="btn btn-gray" onclick="clearWatchlist()" style="padding:5px 12px;font-size:.78rem">🗑 Clear All</button>
+  </div>
+  <div class="hist-summary" style="margin-bottom:10px">
+    <div class="hs-card"><div class="hs-label">Watching</div><div class="hs-val" id="wl-count">0</div></div>
+    <div class="hs-card"><div class="hs-label">Gainers</div><div class="hs-val green" id="wl-gainers">0</div></div>
+    <div class="hs-card"><div class="hs-label">Losers</div><div class="hs-val red" id="wl-losers">0</div></div>
+    <div class="hs-card"><div class="hs-label">Avg Return</div><div class="hs-val" id="wl-avg-ret">—</div></div>
+  </div>
+  <div id="wl-empty" style="text-align:center;padding:40px;color:var(--muted)">
+    <div style="font-size:2rem;margin-bottom:8px">⭐</div>
+    <div>Tap any stock in scan results → tap <strong>+ Add to Watchlist</strong></div>
+  </div>
+  <div id="wl-list"></div>
+</div>
+
+<!-- ══ ALERTS SECTION ══ -->
+<div id="sec-alerts" class="section">
+  <div style="margin-top:10px" class="panel">
+    <div class="panel-hdr">🔔 Price Alerts
+      <span style="font-size:.72rem;opacity:.8">— checked on every data load</span>
+    </div>
+    <div class="panel-body">
+      <div class="alert-form">
+        <input type="text" id="al-sym" placeholder="Symbol e.g. RELIANCE" style="width:130px;text-transform:uppercase"/>
+        <select id="al-cond">
+          <option value="above">Price Above ₹</option>
+          <option value="below">Price Below ₹</option>
+          <option value="near52h">Near 52W High (3%)</option>
+          <option value="near52l">Near 52W Low (3%)</option>
+        </select>
+        <input type="number" id="al-price" placeholder="Target ₹" style="width:100px"/>
+        <button class="btn btn-primary" onclick="addAlert()" style="padding:6px 14px;font-size:.80rem">+ Add Alert</button>
+      </div>
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">
+        Alerts auto-expire after 30 days. Triggered alerts show as banners when PWA loads.
+      </div>
+      <div id="alerts-list"><div style="text-align:center;padding:20px;color:var(--muted)">No alerts set yet.</div></div>
     </div>
   </div>
 </div>
@@ -818,7 +986,7 @@ async function runScan(){
   const fTO     = parseFloat(document.getElementById('f-to').value)||0;
   const fVR     = parseFloat(document.getElementById('f-vr').value)||0;
   const fDays   = parseInt(document.getElementById('f-days').value)||10;
-  const fTopN   = Math.min(parseInt(document.getElementById('f-topn').value)||15,15);
+  const fTopN   = parseInt(document.getElementById('f-topn').value)||15;
   const fTrades = parseInt(document.getElementById('f-trades').value)||0;
   const fFallback = document.getElementById('f-fallback').value;
   const wDel    = parseInt(document.getElementById('w-del').value)||40;
@@ -884,6 +1052,11 @@ async function runScan(){
       const si=symToIdx[r.SYMBOL]||[];
       if(!selChips.some(s=>si.includes(s)))continue;
     }
+    // F&O filter
+    if(document.getElementById('f-fno-only').checked && !FNO_STOCKS.has(r.SYMBOL)) continue;
+    // Positive change filter
+    const pctPre = r.PREV_CLOSE>0?((r.CLOSE-r.PREV_CLOSE)/r.PREV_CLOSE)*100:0;
+    if(document.getElementById('f-positive-only').checked && pctPre<=0) continue;
     if(r.CLOSE<fPrice)continue;
     if(r.TURNOVER_LACS<fTO)continue;
     if(r.NO_OF_TRADES<fTrades)continue;
@@ -1666,9 +1839,11 @@ function openExternal(site){
   const sym = detailSymbol;
   if(!sym) return;
   const urls = {
-    screener: `https://www.screener.in/company/${sym}/`,
-    nse:      `https://www.nseindia.com/get-quotes/equity?symbol=${sym}`,
-    chartink: `https://chartink.com/stocks-new?symbol=${sym}`,
+    screener:     `https://www.screener.in/company/${sym}/`,
+    nse:          `https://www.nseindia.com/get-quotes/equity?symbol=${sym}`,
+    chartink:     `https://chartink.com/stocks-new?symbol=${sym}`,
+    moneycontrol: `https://www.moneycontrol.com/india/stockpricequote/${sym.toLowerCase()}/${sym}`,
+    news:         `https://news.google.com/search?q=${encodeURIComponent(sym+' NSE stock India')}&hl=en-IN&gl=IN&ceid=IN:en`,
   };
   window.open(urls[site], '_blank');
 }
@@ -1811,10 +1986,12 @@ function renderDeals(){
   const symFilter  = document.getElementById('d-sym').value.trim().toUpperCase();
   const bsFilter   = document.getElementById('d-bs').value;
 
+  const clientFilter = (document.getElementById('d-client')?.value||'').trim().toUpperCase();
   dealsFiltered = dealsData.filter(r=>{
     if(typeFilter!=='both'&&r.deal_type!==typeFilter) return false;
     if(symFilter&&!r.symbol.includes(symFilter)) return false;
     if(bsFilter!=='ALL'&&r.buy_sell!==bsFilter) return false;
+    if(clientFilter&&!r.client.toUpperCase().includes(clientFilter)) return false;
     return true;
   });
 
@@ -1830,6 +2007,30 @@ function renderDeals(){
     `Showing ${dealsFiltered.length} deals`;
   document.getElementById('deals-status').textContent =
     `${bulkN} Bulk  |  ${blockN} Block  |  ${syms} unique stocks`;
+
+  // Net summary
+  const netSumEl = document.getElementById('deals-net-summary');
+  if(dealsFiltered.length){
+    const buyRows  = dealsFiltered.filter(r=>r.buy_sell==='BUY');
+    const sellRows = dealsFiltered.filter(r=>r.buy_sell==='SELL');
+    const buyQty   = buyRows.reduce((s,r)=>s+r.quantity,0);
+    const sellQty  = sellRows.reduce((s,r)=>s+r.quantity,0);
+    const buyVal   = buyRows.reduce((s,r)=>s+r.value,0);
+    const sellVal  = sellRows.reduce((s,r)=>s+r.value,0);
+    const netQty   = buyQty - sellQty;
+    const netVal   = buyVal - sellVal;
+    const netQCls  = netQty>=0?'color:var(--green)':'color:var(--red)';
+    const netVCls  = netVal>=0?'color:var(--green)':'color:var(--red)';
+    document.getElementById('dns-buy-qty').textContent  = 'Buy Qty: '+buyQty.toLocaleString('en-IN');
+    document.getElementById('dns-sell-qty').textContent = 'Sell Qty: '+sellQty.toLocaleString('en-IN');
+    document.getElementById('dns-net-qty').innerHTML    = `<span style="${netQCls}">Net Qty: ${netQty>=0?'+':''}${netQty.toLocaleString('en-IN')}</span>`;
+    document.getElementById('dns-buy-val').textContent  = 'Buy ₹L: '+buyVal.toFixed(1);
+    document.getElementById('dns-sell-val').textContent = 'Sell ₹L: '+sellVal.toFixed(1);
+    document.getElementById('dns-net-val').innerHTML    = `<span style="${netVCls}">Net ₹L: ${netVal>=0?'+':''}${netVal.toFixed(1)}</span>`;
+    netSumEl.style.display='block';
+  } else {
+    netSumEl.style.display='none';
+  }
 
   if(!dealsFiltered.length){
     document.getElementById('deals-empty').style.display='block';
@@ -1850,7 +2051,7 @@ function renderDeals(){
     tr.innerHTML=`
       <td>${r.date}</td>
       <td>${typeTag}</td>
-      <td style="text-align:left;font-weight:700;color:var(--accent)">${r.symbol}</td>
+      <td style="text-align:left;font-weight:700;color:var(--accent);cursor:pointer" onclick="openDetail('${r.symbol}')">${r.symbol}</td>
       <td style="text-align:left;font-size:.72rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.client}">${r.client}</td>
       <td class="${bsCls}">${r.buy_sell}</td>
       <td>${r.quantity>0?r.quantity.toLocaleString('en-IN'):'—'}</td>
@@ -1930,6 +2131,14 @@ function toggleSyncPanel(){
   if(syncPanelOpen) checkSyncStatus();
 }
 
+function formatDateShort(ds){
+  // ds = DDMMYYYY → DD-Mon
+  if(!ds||ds.length<6) return ds;
+  const dd=ds.substring(0,2),mm=ds.substring(2,4);
+  const months=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return dd+'-'+(months[parseInt(mm)]||mm);
+}
+
 function getTodayDateStr(){
   // Returns DDMMYYYY in IST
   const now = new Date();
@@ -1971,16 +2180,31 @@ async function checkSyncStatus(){
 }
 
 function updateSyncCards(data){
-  const map = {
-    'ss-bhav':  data.bhav,
-    'ss-bulk':  data.bulk,
-    'ss-block': data.block,
-    'ss-w52':   data.w52,
-  };
-  for(const[id,ok] of Object.entries(map)){
+  function setCard(id, ok, date){
     const el = document.getElementById(id);
-    el.textContent  = ok ? '✓ Ready' : '✗ Missing';
-    el.className    = 'sync-file-status '+(ok?'sfs-ok':'sfs-missing');
+    if(ok && date){
+      // Format DDMMYYYY → DD-Mon
+      const dd=date.substring(0,2), mm=date.substring(2,4);
+      const months=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      el.textContent = '✓ '+dd+'-'+months[parseInt(mm)];
+      el.className   = 'sync-file-status sfs-ok';
+    } else if(ok){
+      el.textContent='✓ Ready'; el.className='sync-file-status sfs-ok';
+    } else {
+      el.textContent='✗ Missing'; el.className='sync-file-status sfs-missing';
+    }
+  }
+  setCard('ss-bhav',  data.bhav,  data.bhavDate);
+  setCard('ss-bulk',  data.bulk,  data.bulkDate);
+  setCard('ss-block', data.block, data.blockDate);
+  const w52el = document.getElementById('ss-w52');
+  w52el.textContent = data.w52?'✓ Ready':'✗ Missing';
+  w52el.className   = 'sync-file-status '+(data.w52?'sfs-ok':'sfs-missing');
+  // Update SS card if exists
+  const ssel=document.getElementById('ss-sync-card');
+  if(ssel){
+    ssel.textContent=data.ss?(data.ssDate?'✓ '+formatDateShort(data.ssDate):'✓ Ready'):'✗ Missing';
+    ssel.className='sync-file-status '+(data.ss?'sfs-ok':'sfs-missing');
   }
 }
 
@@ -2017,6 +2241,16 @@ async function syncAll(){
     syncLog((bulkS==='saved'?'✓':'ℹ')+' Bulk: '+bulkS+
             ' | '+(blockS==='saved'?'✓':'ℹ')+' Block: '+blockS);
 
+    // 4. Short Selling
+    syncLog('↓ Downloading short selling data…');
+    const ssResp = await fetch(
+      `${PROXY_URL}?action=download_ss&date=${ds}&_t=${Date.now()}`,
+      {cache:'no-store'}
+    );
+    const ss = await ssResp.json();
+    syncLog((ss.status==='saved'?'✓':ss.status==='exists'?'ℹ':'⚠')+
+            ' Short Selling: '+ss.message);
+
     // 3. 52W
     syncLog('↓ Downloading 52W High/Low…');
     const w52Resp = await fetch(
@@ -2030,11 +2264,21 @@ async function syncAll(){
     // Update status cards
     await checkSyncStatus();
 
-    const allOk = bhav.status!=='error' && w52.status!=='error';
-    syncLog(allOk ? '✓ Sync complete!' : '⚠ Sync done with some issues');
-    setStatus(allOk ? '✓ Sync complete — tap Reload Data to use new files' : '⚠ Sync partial — check log','ok');
+    const allOk = bhav.status!=='error';
+    // Show which date's data was actually saved
+    const bhavDate = bhav.file ? bhav.file.replace('sec_bhavdata_full_','').replace('.csv','') : ds;
+    const bulkDate = deals.results?.bulk?.date  || ds;
+    const bsNote   = (bhavDate!==ds||bulkDate!==ds) ?
+      ' (using '+bhavDate+' data — today not yet published)' : '';
+    syncLog(allOk ? '✓ Sync complete!'+bsNote : '⚠ Sync done with some issues');
+    setStatus(
+      allOk
+        ? '✓ Sync complete ['+bhavDate+'] — tap Reload Data'
+        : '⚠ Sync partial — check log',
+      'ok'
+    );
     document.getElementById('sync-last-time').textContent =
-      'Synced: '+new Date().toLocaleTimeString('en-IN');
+      'Synced: '+new Date().toLocaleTimeString('en-IN')+' ['+bhavDate+']';
 
   }catch(e){
     syncLog('✗ Sync error: '+e.message);
@@ -2054,6 +2298,696 @@ async function reloadAfterSync(){
   document.getElementById('btn-scan').disabled = true;
   await loadAllData();
 }
+
+// ══════════════════════════════════════════════════
+//  STATE — new features
+// ══════════════════════════════════════════════════
+let ssData       = [];   // short selling rows
+let ssMap        = {};   // { SYMBOL: true } for badge
+let ssSortCol    = 'date'; let ssSortDir=-1;
+let watchlist    = JSON.parse(localStorage.getItem('nse_watchlist')||'[]');
+let alerts       = JSON.parse(localStorage.getItem('nse_alerts')||'[]');
+let yesterdayScan= JSON.parse(localStorage.getItem('nse_yesterday_scan')||'null');
+let autoSyncDone = false;  // prevent multiple auto-syncs per session
+let lastScanFilters = null; // remember last scan to re-run after auto-sync
+
+// ══════════════════════════════════════════════════
+//  AUTO-SYNC AT 8 PM IST
+// ══════════════════════════════════════════════════
+function startAutoSyncScheduler(){
+  checkAutoSync();
+  setInterval(checkAutoSync, 60*1000); // check every minute
+}
+
+async function checkAutoSync(){
+  if(autoSyncDone) return;
+  const now = new Date();
+  const ist = new Date(now.getTime()+(5.5*60*60*1000));
+  const h=ist.getUTCHours(), m=ist.getUTCMinutes();
+  // Trigger between 20:00 and 20:05 IST (8 PM)
+  if(h===20 && m<=5){
+    autoSyncDone = true;
+    showToast('⏰ Auto-sync starting (8 PM IST)…','warning');
+    await syncAll();
+    // Reload data
+    await reloadAfterSync();
+    // Re-run last scan if one was active
+    if(lastScanFilters && scanResults.length>0){
+      showToast('🔄 Re-running last scan…');
+      await runScan();
+    }
+    showToast('✓ Auto-sync complete','success');
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  TOAST NOTIFICATIONS
+// ══════════════════════════════════════════════════
+function showToast(msg, type='', duration=4000){
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast'+(type?' '+type:'');
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(()=>{ toast.style.opacity='0'; toast.style.transition='opacity .5s';
+    setTimeout(()=>toast.remove(),500); }, duration);
+}
+
+// ══════════════════════════════════════════════════
+//  STREAK TRACKER
+// ══════════════════════════════════════════════════
+function buildStreakMap(){
+  const h = JSON.parse(localStorage.getItem('nse_scan_history_v1')||'[]');
+  const streaks = {};
+  // Count consecutive appearances in last 10 scans
+  const recent = h.slice(0,10);
+  for(const entry of recent){
+    for(const s of (entry.stocks||[])){
+      if(!streaks[s.symbol]) streaks[s.symbol]=0;
+      streaks[s.symbol]++;
+    }
+  }
+  return streaks; // { SYMBOL: count }
+}
+
+// ══════════════════════════════════════════════════
+//  SHORT SELLING
+// ══════════════════════════════════════════════════
+async function loadSSData(){
+  const days = parseInt(document.getElementById('ss-days').value)||30;
+  setStatus('Loading short selling data…','loading');
+  document.getElementById('ss-empty').style.display='block';
+  document.getElementById('ss-table').style.display='none';
+
+  try{
+    const files = await listDriveFiles();
+    const today = bhavFiles[0]?.date||new Date();
+    const cutoff= new Date(today); cutoff.setDate(cutoff.getDate()-days);
+
+    const ssFiles = files.filter(f=>{
+      if(!f.name.startsWith('shortsell_')) return false;
+      const m=f.name.match(/shortsell_(\d{2})(\d{2})(\d{4})\.csv/);
+      if(!m) return false;
+      const d=new Date(+m[3],+m[2]-1,+m[1]);
+      return d>=cutoff;
+    });
+
+    ssData=[];
+    await Promise.all(ssFiles.map(async f=>{
+      try{
+        const csv=await fetchDriveFile(f.id);
+        const rows=Papa.parse(csv,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data;
+        const m=f.name.match(/shortsell_(\d{2})(\d{2})(\d{4})\.csv/);
+        const dateStr=m?`${m[1]}-${m[2]}-${m[3]}`:'';
+        for(const r of rows){
+          const sym=(r['Symbol']||r['SYMBOL']||'').trim().toUpperCase();
+          if(!sym) continue;
+          const qty=parseFloat((r['Short Sold Qty']||r['QTY']||'0').replace(/,/g,''))||0;
+          const pct=parseFloat((r['%']||r['PCT']||'0').replace(/,/g,''))||0;
+          ssData.push({
+            date:dateStr, symbol:sym,
+            name:(r['Security/Contract Description']||r['Name']||'').trim(),
+            qty, pct
+          });
+        }
+      }catch(e){console.warn('SS load error:',f.name,e);}
+    }));
+
+    // Build SS map for badge
+    ssMap={};
+    for(const r of ssData) ssMap[r.symbol]=true;
+
+    ssData.sort((a,b)=>b.date.localeCompare(a.date)||b.qty-a.qty);
+    renderSSTable();
+    setStatus('✓ Short selling data loaded','ok');
+  }catch(e){
+    setStatus('SS load error: '+e.message,'error');
+    console.error(e);
+  }
+}
+
+function renderSSTable(){
+  const tbody=document.getElementById('ss-body');
+  tbody.innerHTML='';
+  if(!ssData.length){
+    document.getElementById('ss-empty').style.display='block';
+    document.getElementById('ss-table').style.display='none';
+    return;
+  }
+  document.getElementById('ss-empty').style.display='none';
+  document.getElementById('ss-table').style.display='table';
+  const uniqueSyms=new Set(ssData.map(r=>r.symbol));
+  const latestDate=ssData[0]?.date||'—';
+  const inScanner=scanResults.filter(r=>ssMap[r.SYMBOL]).length;
+  document.getElementById('ss-total').textContent=ssData.length;
+  document.getElementById('ss-syms').textContent=uniqueSyms.size;
+  document.getElementById('ss-date').textContent=latestDate;
+  document.getElementById('ss-overlap').textContent=inScanner;
+
+  for(const r of ssData){
+    const tr=document.createElement('tr');
+    const inScan=scanResults.some(s=>s.SYMBOL===r.symbol);
+    tr.innerHTML=`
+      <td>${r.date}</td>
+      <td style="text-align:left;font-weight:700;color:var(--accent)">${r.symbol}</td>
+      <td style="text-align:left;font-size:.72rem">${r.name}</td>
+      <td>${r.qty>0?r.qty.toLocaleString('en-IN'):'—'}</td>
+      <td>${r.pct>0?r.pct.toFixed(2)+'%':'—'}</td>
+      <td>${inScan?'<span class="tag tag-strong" style="font-size:.65rem">YES</span>':'—'}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function sortSSTable(col){
+  if(ssSortCol===col)ssSortDir*=-1;else{ssSortCol=col;ssSortDir=-1;}
+  ssData.sort((a,b)=>{
+    const va=a[col]??'',vb=b[col]??'';
+    if(typeof va==='number') return ssSortDir*(va-vb);
+    return ssSortDir*String(va).localeCompare(String(vb));
+  });
+  renderSSTable();
+}
+
+// ══════════════════════════════════════════════════
+//  WATCHLIST
+// ══════════════════════════════════════════════════
+function saveWatchlistLocal(){
+  localStorage.setItem('nse_watchlist',JSON.stringify(watchlist));
+}
+
+function addToWatchlist(sym){
+  if(watchlist.find(w=>w.symbol===sym)){showToast(sym+' already in watchlist','warning');return;}
+  const stock = scanResults.find(r=>r.SYMBOL===sym)||todayData.find(r=>r.SYMBOL===sym);
+  if(!stock){showToast('Stock data not found','warning');return;}
+  watchlist.push({
+    symbol:sym, addedPrice:stock.CLOSE, addedDate:bhavFiles[0]?.dateStr||'',
+    currentPrice:stock.CLOSE, currentDate:bhavFiles[0]?.dateStr||'',
+    delPer:stock.DELIV_PER, notes:''
+  });
+  saveWatchlistLocal();
+  renderWatchlist();
+  showToast('⭐ '+sym+' added to watchlist','success');
+}
+
+function removeFromWatchlist(sym){
+  watchlist=watchlist.filter(w=>w.symbol!==sym);
+  saveWatchlistLocal();
+  renderWatchlist();
+}
+
+function renderWatchlist(){
+  const el=document.getElementById('wl-list');
+  const empty=document.getElementById('wl-empty');
+  if(!watchlist.length){empty.style.display='block';el.innerHTML='';updateWLSummary();return;}
+  empty.style.display='none';
+  // Update prices from todayData
+  for(const w of watchlist){
+    const cur=todayData.find(r=>r.SYMBOL===w.symbol);
+    if(cur){w.currentPrice=cur.CLOSE;w.currentDate=bhavFiles[0]?.dateStr||'';}
+  }
+  saveWatchlistLocal();
+  el.innerHTML='';
+  for(const w of watchlist){
+    const ret=w.addedPrice>0?((w.currentPrice-w.addedPrice)/w.addedPrice*100):0;
+    const retStr=(ret>=0?'+':'')+ret.toFixed(2)+'%';
+    const retCls=ret>=0?'up':'down';
+    const w52=w52Map[w.symbol]||{};
+    const near52h=w52.high&&w.currentPrice>0&&(w52.high-w.currentPrice)/w52.high*100<=3;
+    const near52l=w52.low&&w.currentPrice>0&&(w.currentPrice-w52.low)/w52.low*100<=3;
+    const bdBadge=(bdMap[w.symbol]||[]).length?'<span class="bd-badge">BD</span>':'';
+    const ssBadge=ssMap[w.symbol]?'<span class="ss-badge">SS</span>':'';
+    const card=document.createElement('div');
+    card.className='wl-card';
+    card.innerHTML=`
+      <div class="wl-sym">${w.symbol}${bdBadge}${ssBadge}
+        ${near52h?'<span class="tag near52h" style="font-size:.60rem;padding:1px 4px">52H</span>':''}
+        ${near52l?'<span class="tag near52l" style="font-size:.60rem;padding:1px 4px">52L</span>':''}
+      </div>
+      <div class="wl-stat"><div class="wl-stat-label">Added</div><div class="wl-stat-val">₹${w.addedPrice.toFixed(1)}</div></div>
+      <div class="wl-stat"><div class="wl-stat-label">Current</div><div class="wl-stat-val">₹${w.currentPrice.toFixed(1)}</div></div>
+      <div class="wl-stat"><div class="wl-stat-label">Return</div><div class="wl-stat-val ${retCls}">${retStr}</div></div>
+      <div class="wl-stat"><div class="wl-stat-label">Del%</div><div class="wl-stat-val">${w.delPer.toFixed(1)}%</div></div>
+      <div class="wl-stat"><div class="wl-stat-label">Added On</div><div class="wl-stat-val" style="font-size:.72rem">${w.addedDate}</div></div>
+      <button class="btn btn-gray" onclick="removeFromWatchlist('${w.symbol}')" style="padding:3px 10px;font-size:.72rem;margin-left:auto">✕ Remove</button>
+    `;
+    el.appendChild(card);
+  }
+  updateWLSummary();
+}
+
+function updateWLSummary(){
+  const n=watchlist.length;
+  const gains=watchlist.filter(w=>w.currentPrice>w.addedPrice).length;
+  const losses=watchlist.filter(w=>w.currentPrice<w.addedPrice).length;
+  const avgRet=n?watchlist.reduce((s,w)=>s+(w.addedPrice>0?(w.currentPrice-w.addedPrice)/w.addedPrice*100:0),0)/n:0;
+  document.getElementById('wl-count').textContent=n;
+  document.getElementById('wl-gainers').textContent=gains;
+  document.getElementById('wl-losers').textContent=losses;
+  const ar=document.getElementById('wl-avg-ret');
+  ar.textContent=n?(avgRet>=0?'+':'')+avgRet.toFixed(2)+'%':'—';
+  ar.className='hs-val '+(n?(avgRet>=0?'green':'red'):'');
+}
+
+async function syncWatchlistToDrive(){
+  if(!PROXY_URL){showToast('Proxy not configured','warning');return;}
+  try{
+    const payload=JSON.stringify({watchlist,updated:new Date().toISOString()});
+    // AppScript doGet doesn't support POST body — encode as URL param (watchlist is small)
+    const encoded=encodeURIComponent(payload);
+    const url=`${PROXY_URL}?action=save_watchlist&data=${encoded}&_t=${Date.now()}`;
+    const resp=await fetch(url,{cache:'no-store'});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const result=await resp.json();
+    if(result.status==='saved'){
+      showToast('☁ Watchlist synced to Drive ('+watchlist.length+' stocks)','success');
+    } else {
+      showToast('⚠ Sync issue: '+result.message,'warning');
+    }
+  }catch(e){
+    showToast('⚠ Drive sync failed — saved locally only','warning');
+    console.warn('Watchlist sync error:',e);
+  }
+}
+
+async function loadWatchlistFromDrive(){
+  if(!PROXY_URL){showToast('Proxy not configured','warning');return;}
+  showToast('☁ Loading watchlist from Drive…');
+  try{
+    const resp=await fetch(`${PROXY_URL}?action=load_watchlist&_t=${Date.now()}`,{cache:'no-store'});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const text=await resp.text();
+    const data=JSON.parse(text);
+    if(data.watchlist&&Array.isArray(data.watchlist)){
+      watchlist=data.watchlist;
+      saveWatchlistLocal();
+      renderWatchlist();
+      showToast('✓ Watchlist loaded ('+watchlist.length+' stocks)','success');
+    } else {
+      showToast('No watchlist found in Drive','warning');
+    }
+  }catch(e){
+    showToast('⚠ Load failed: '+e.message,'warning');
+  }
+}
+
+function clearWatchlist(){
+  if(!confirm('Clear entire watchlist?')) return;
+  watchlist=[];
+  saveWatchlistLocal();
+  renderWatchlist();
+}
+
+// ══════════════════════════════════════════════════
+//  PRICE ALERTS
+// ══════════════════════════════════════════════════
+function saveAlertsLocal(){ localStorage.setItem('nse_alerts',JSON.stringify(alerts)); }
+
+function addAlert(){
+  const sym   = document.getElementById('al-sym').value.trim().toUpperCase();
+  const cond  = document.getElementById('al-cond').value;
+  const price = parseFloat(document.getElementById('al-price').value)||0;
+  if(!sym){ showToast('Enter a symbol','warning'); return; }
+  if((cond==='above'||cond==='below')&&!price){ showToast('Enter target price','warning'); return; }
+  const expiry = new Date(); expiry.setDate(expiry.getDate()+30);
+  alerts.push({
+    id:Date.now(), symbol:sym, condition:cond, targetPrice:price,
+    createdDate:new Date().toLocaleDateString('en-IN'),
+    expiryDate:expiry.toLocaleDateString('en-IN'),
+    triggered:false, active:true
+  });
+  saveAlertsLocal();
+  renderAlerts();
+  document.getElementById('al-sym').value='';
+  document.getElementById('al-price').value='';
+  showToast('🔔 Alert set for '+sym,'success');
+}
+
+function removeAlert(id){
+  alerts=alerts.filter(a=>a.id!==id);
+  saveAlertsLocal();
+  renderAlerts();
+}
+
+function checkAlerts(){
+  if(!todayData.length||!alerts.length) return;
+  const now=new Date();
+  let triggered=0;
+  for(const al of alerts){
+    if(!al.active) continue;
+    // Check expiry
+    const exp=new Date(al.expiryDate.split('/').reverse().join('-'));
+    if(now>exp){ al.active=false; al.expired=true; continue; }
+    const stock=todayData.find(r=>r.SYMBOL===al.symbol);
+    if(!stock) continue;
+    const price=stock.CLOSE;
+    const w52=w52Map[al.symbol]||{};
+    let hit=false;
+    if(al.condition==='above'&&price>=al.targetPrice) hit=true;
+    else if(al.condition==='below'&&price<=al.targetPrice) hit=true;
+    else if(al.condition==='near52h'&&w52.high&&(w52.high-price)/w52.high*100<=3) hit=true;
+    else if(al.condition==='near52l'&&w52.low&&price>0&&(price-w52.low)/w52.low*100<=3) hit=true;
+    if(hit&&!al.triggered){
+      al.triggered=true;
+      showToast(`🔔 ALERT: ${al.symbol} — ${al.condition} ₹${price.toFixed(1)}`,'alert',8000);
+      triggered++;
+    }
+  }
+  if(triggered) saveAlertsLocal();
+  saveAlertsLocal(); // save expiry updates
+  renderAlerts();
+}
+
+function renderAlerts(){
+  const el=document.getElementById('alerts-list');
+  // Clean expired > 7 days ago
+  alerts=alerts.filter(a=>a.active||a.triggered);
+  saveAlertsLocal();
+  if(!alerts.length){ el.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted)">No alerts set yet.</div>'; return; }
+  el.innerHTML='';
+  for(const al of alerts){
+    const div=document.createElement('div');
+    div.className='alert-item'+(al.triggered?' alert-triggered':'')+(al.expired?' alert-expired':'');
+    const condStr=al.condition==='above'?`above ₹${al.targetPrice}`:
+                  al.condition==='below'?`below ₹${al.targetPrice}`:
+                  al.condition==='near52h'?'near 52W High':'near 52W Low';
+    div.innerHTML=`
+      <div>
+        <strong>${al.symbol}</strong>
+        <span style="font-size:.78rem;color:var(--muted);margin-left:6px">${condStr}</span>
+        ${al.triggered?'<span class="tag tag-strong" style="font-size:.65rem;margin-left:4px">TRIGGERED</span>':''}
+        ${al.expired?'<span class="tag tag-neg" style="font-size:.65rem;margin-left:4px">EXPIRED</span>':''}
+      </div>
+      <div style="font-size:.72rem;color:var(--muted)">
+        Set: ${al.createdDate} | Expires: ${al.expiryDate}
+      </div>
+      <button class="btn btn-gray" onclick="removeAlert(${al.id})" style="padding:2px 8px;font-size:.72rem">✕</button>
+    `;
+    el.appendChild(div);
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  TODAY vs YESTERDAY COMPARISON
+// ══════════════════════════════════════════════════
+function buildComparison(){
+  const panel=document.getElementById('comp-panel');
+  if(!scanResults.length||!yesterdayScan){ panel.style.display='none'; return; }
+  panel.style.display='block';
+  document.getElementById('comp-subtitle').textContent=
+    'vs '+yesterdayScan.date+' ('+yesterdayScan.scanners+')';
+  const tbody=document.getElementById('comp-body');
+  tbody.innerHTML='';
+  const todaySyms=scanResults.map(r=>r.SYMBOL);
+  const yesterdaySyms=(yesterdayScan.stocks||[]).map(s=>s.symbol);
+  // Merge both lists
+  const allSyms=[...new Set([...todaySyms,...yesterdaySyms])];
+  const rows=[];
+  for(const sym of allSyms){
+    const tIdx=todaySyms.indexOf(sym);
+    const yIdx=yesterdaySyms.indexOf(sym);
+    const tStock=scanResults[tIdx];
+    const yStock=(yesterdayScan.stocks||[])[yIdx];
+    rows.push({
+      sym, tRank:tIdx>=0?tIdx+1:null, yRank:yIdx>=0?yIdx+1:null,
+      tScore:tStock?.SCORE||null, yScore:yStock?.score||null,
+      tDel:tStock?.DELIV_PER||null, tChg:tStock?.PCT_CHANGE||null,
+      isNew: tIdx>=0&&yIdx<0, isExit: tIdx<0&&yIdx>=0,
+    });
+  }
+  rows.sort((a,b)=>(a.tRank||99)-(b.tRank||99));
+  for(const r of rows){
+    const tr=document.createElement('tr');
+    if(r.isNew) tr.className='comp-row-new';
+    else if(r.isExit) tr.className='comp-row-exit';
+    const rankDelta=r.tRank&&r.yRank?r.yRank-r.tRank:null;
+    const deltaStr=rankDelta===null?'—':
+      rankDelta>0?`<span class="comp-row-up">▲${rankDelta}</span>`:
+      rankDelta<0?`<span class="comp-row-dn">▼${Math.abs(rankDelta)}</span>`:'=';
+    const statusBadge=r.isNew?'<span class="tag tag-strong" style="font-size:.65rem">NEW</span>':
+      r.isExit?'<span class="tag tag-neg" style="font-size:.65rem">EXIT</span>':'—';
+    const chgStr=r.tChg!==null?(r.tChg>=0?'+':'')+r.tChg.toFixed(2)+'%':'—';
+    const chgCls=r.tChg!==null?(r.tChg>=0?'up':'down'):'';
+    tr.innerHTML=`
+      <td>${r.tRank||'—'}</td>
+      <td style="text-align:left;font-weight:700;color:var(--accent)">${r.sym}</td>
+      <td>${r.tScore?r.tScore.toFixed(1):'—'}</td>
+      <td>${r.yScore?r.yScore.toFixed(1):'—'}</td>
+      <td>${deltaStr}</td>
+      <td>${r.tDel?r.tDel.toFixed(1)+'%':'—'}</td>
+      <td class="${chgCls}">${chgStr}</td>
+      <td>${statusBadge}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  PRE-MARKET REPORT
+// ══════════════════════════════════════════════════
+function generatePreMarket(){
+  if(!scanResults.length){ showToast('Run a scan first','warning'); return; }
+  // Top 5 by score with gap or delivery signal
+  const candidates=scanResults
+    .filter(r=>r.SIGNAL==='STRONG'||(r.GAP_PCT&&Math.abs(r.GAP_PCT)>=0.5))
+    .slice(0,5);
+  if(!candidates.length){ showToast('No strong candidates found','warning'); return; }
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4'});
+  const dateStr=bhavFiles[0]?.dateStr||'N/A';
+  doc.setFillColor(24,95,165); doc.rect(0,0,210,20,'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(14); doc.setFont('helvetica','bold');
+  doc.text('Pre-Market Watchlist — SDK Fintech',10,12);
+  doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text('Based on: '+dateStr+' data  |  Generated: '+new Date().toLocaleString('en-IN'),10,18);
+  doc.autoTable({
+    startY:24,
+    head:[['#','Symbol','F&O','Close(₹)','Gap%','Del%','VolRatio','Score','Signal','Watch For']],
+    body:candidates.map((r,i)=>[
+      i+1, r.SYMBOL, r.IS_FNO?'★':'',
+      '₹'+r.CLOSE.toFixed(1),
+      r.GAP_PCT?(r.GAP_PCT>=0?'+':'')+r.GAP_PCT.toFixed(2)+'%':'—',
+      r.DELIV_PER.toFixed(1)+'%',
+      r.VOL_RATIO?r.VOL_RATIO.toFixed(2)+'×':'N/A',
+      r.SCORE.toFixed(1), r.SIGNAL,
+      r.GAP_PCT>=0.5?'Gap Up cont.':r.GAP_PCT<=-0.5?'Gap Fill?':'Delivery surge'
+    ]),
+    styles:{fontSize:9,cellPadding:3},
+    headStyles:{fillColor:[24,95,165],textColor:255,fontStyle:'bold'},
+  });
+  const nextDay=new Date(bhavFiles[0]?.date||new Date()); nextDay.setDate(nextDay.getDate()+1);
+  doc.setFontSize(9); doc.setTextColor(80);
+  doc.text('Watch these stocks at market open. Confirm ORB before entry.',10,doc.lastAutoTable.finalY+8);
+  doc.text('For informational use only — not investment advice | SDK Fintech',10,doc.lastAutoTable.finalY+14);
+  doc.save(`PreMarket_${dateStr.replace(/-/g,'')}.pdf`);
+  showToast('📄 Pre-Market PDF saved','success');
+}
+
+// ══════════════════════════════════════════════════
+//  WEEKLY REPORT
+// ══════════════════════════════════════════════════
+function checkWeeklyReportButton(){
+  // Show weekly report button on Fridays
+  const now=new Date();
+  const ist=new Date(now.getTime()+(5.5*60*60*1000));
+  if(ist.getUTCDay()===5){ // Friday
+    const btn=document.getElementById('btn-weekly');
+    if(btn) btn.style.display='inline-block';
+  }
+}
+
+function generateWeeklyReport(){
+  const h=JSON.parse(localStorage.getItem('nse_scan_history_v1')||'[]');
+  const now=new Date();
+  const weekAgo=new Date(now); weekAgo.setDate(weekAgo.getDate()-7);
+
+  const weekScans=h.filter(entry=>{
+    const parts=entry.date.split('-');
+    if(parts.length!==3) return false;
+    const d=new Date(+parts[2],+parts[1]-1,+parts[0]);
+    return d>=weekAgo;
+  });
+
+  if(!weekScans.length){ showToast('No scan history this week','warning'); return; }
+
+  // Aggregate stocks
+  const stockCounts={};
+  for(const entry of weekScans){
+    for(const s of (entry.stocks||[])){
+      if(!stockCounts[s.symbol]) stockCounts[s.symbol]={count:0,scores:[],signals:[]};
+      stockCounts[s.symbol].count++;
+      stockCounts[s.symbol].scores.push(s.score||0);
+      stockCounts[s.symbol].signals.push(s.signal||'');
+    }
+  }
+
+  const topStocks=Object.entries(stockCounts)
+    .map(([sym,d])=>({
+      sym, count:d.count,
+      avgScore:d.scores.reduce((a,b)=>a+b,0)/d.scores.length,
+      strong:d.signals.filter(s=>s==='STRONG').length
+    }))
+    .sort((a,b)=>b.count-a.count||b.avgScore-a.avgScore)
+    .slice(0,20);
+
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4'});
+  const weekStr=weekAgo.toLocaleDateString('en-IN')+' to '+now.toLocaleDateString('en-IN');
+
+  doc.setFillColor(24,95,165); doc.rect(0,0,210,22,'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(14); doc.setFont('helvetica','bold');
+  doc.text('Weekly Delivery Scanner Report — SDK Fintech',10,12);
+  doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text('Week: '+weekStr+'  |  Scans: '+weekScans.length+'  |  Generated: '+new Date().toLocaleString('en-IN'),10,19);
+
+  // Top recurring stocks
+  doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(24,95,165);
+  doc.text('Top Recurring Stocks This Week',10,30);
+  doc.autoTable({
+    startY:34,
+    head:[['#','Symbol','Appeared','Avg Score','Strong Signals','F&O']],
+    body:topStocks.map((s,i)=>[
+      i+1, s.sym, s.count+' / '+weekScans.length+' scans',
+      s.avgScore.toFixed(1), s.strong, FNO_STOCKS.has(s.sym)?'★':''
+    ]),
+    styles:{fontSize:8.5,cellPadding:2.5},
+    headStyles:{fillColor:[24,95,165],textColor:255,fontStyle:'bold'},
+    alternateRowStyles:{fillColor:[240,245,251]},
+  });
+
+  // Bulk/Block deals this week summary
+  if(dealsData.length){
+    const y=doc.lastAutoTable.finalY+8;
+    doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(24,95,165);
+    doc.text('Bulk & Block Deals This Week',10,y);
+    const weekDeals=dealsData.filter(d=>{
+      if(!d.date) return false;
+      const parts=d.date.split('-');
+      if(parts.length<3) return false;
+      const dd=new Date(parts[2]+'-'+parts[1]+'-'+parts[0]);
+      return dd>=weekAgo;
+    }).slice(0,15);
+    if(weekDeals.length){
+      doc.autoTable({
+        startY:y+4,
+        head:[['Date','Type','Symbol','Client','B/S','Value(₹L)']],
+        body:weekDeals.map(r=>[r.date,r.deal_type,r.symbol,r.client.substring(0,30),r.buy_sell,r.value>0?'₹'+r.value.toFixed(1):'—']),
+        styles:{fontSize:7.5,cellPadding:2},
+        headStyles:{fillColor:[21,101,192],textColor:255,fontStyle:'bold'},
+      });
+    }
+  }
+
+  doc.setFontSize(7.5); doc.setTextColor(120);
+  doc.text('For informational purposes only — not investment advice | SDK Fintech',
+    10, doc.internal.pageSize.height-5);
+  doc.save(`Weekly_Report_${now.toLocaleDateString('en-IN').replace(/\//g,'')}.pdf`);
+  showToast('📊 Weekly report PDF saved','success');
+}
+
+// ══════════════════════════════════════════════════
+//  INTEGRATE INTO EXISTING FUNCTIONS
+// ══════════════════════════════════════════════════
+
+// Patch renderResults to add streak + SS badges and save yesterday's scan
+const _origRenderResults = renderResults;
+renderResults = function(rows, volMode, availDays){
+  _origRenderResults(rows, volMode, availDays);
+  // Add streak + SS badges after render
+  addStreakAndSSBadges();
+  // Build comparison
+  buildComparison();
+  // Check alerts
+  checkAlerts();
+  // Enable pre-market button
+  if(rows.length){
+    document.getElementById('btn-premarket').disabled=false;
+    checkWeeklyReportButton();
+  }
+};
+
+function addStreakAndSSBadges(){
+  const streaks=buildStreakMap();
+  const rows=document.querySelectorAll('#results-body tr');
+  rows.forEach(tr=>{
+    const symCell=tr.querySelector('td.sym');
+    if(!symCell) return;
+    const sym=symCell.textContent.replace(/[^A-Z0-9]/g,'').substring(0,20);
+    // Find actual symbol
+    const r=scanResults.find(s=>s.SYMBOL===sym||symCell.textContent.includes(s.SYMBOL));
+    if(!r) return;
+    // Streak badge
+    const streak=streaks[r.SYMBOL]||0;
+    if(streak>=2&&!symCell.querySelector('.streak-badge')){
+      const sb=document.createElement('span');
+      sb.className='streak-badge'; sb.title='Appeared in last '+streak+' scans';
+      sb.textContent='🔥'+streak+'d';
+      symCell.appendChild(sb);
+    }
+    // SS badge
+    if(ssMap[r.SYMBOL]&&!symCell.querySelector('.ss-badge')){
+      const ss=document.createElement('span');
+      ss.className='ss-badge'; ss.title='Short selling detected';
+      ss.textContent='🔻SS';
+      symCell.appendChild(ss);
+    }
+  });
+}
+
+// Patch saveToHistory to also save as yesterday for comparison
+const _origSaveHistory = saveToHistory;
+saveToHistory = function(){
+  // Save current as yesterday before adding new
+  if(scanResults.length){
+    yesterdayScan={
+      date: bhavFiles[0]?.dateStr||'',
+      scanners: [...document.querySelectorAll('.scanner-check.checked')].map(l=>l.textContent.trim()).join('+'),
+      stocks: scanResults.slice(0,15).map(r=>({
+        symbol:r.SYMBOL, score:r.SCORE, signal:r.SIGNAL,
+        delPer:r.DELIV_PER, close:r.CLOSE
+      }))
+    };
+    localStorage.setItem('nse_yesterday_scan',JSON.stringify(yesterdayScan));
+  }
+  _origSaveHistory();
+};
+
+// Patch openDetail to add watchlist button
+const _origOpenDetail=openDetail;
+openDetail=function(sym){
+  _origOpenDetail(sym);
+  // Add watchlist button to detail bar if not already there
+  const bar=document.getElementById('detail-bar');
+  if(bar&&!bar.querySelector('.wl-add-btn')){
+    const btn=document.createElement('button');
+    btn.className='wl-add-btn';
+    btn.style.cssText='background:rgba(255,255,255,.2);border:none;color:#fff;padding:5px 10px;border-radius:6px;font-weight:700;cursor:pointer;font-size:.78rem;margin-left:4px';
+    btn.textContent='⭐ Watchlist';
+    btn.onclick=()=>addToWatchlist(sym);
+    bar.querySelector('button').after(btn);
+  } else if(bar){
+    bar.querySelector('.wl-add-btn').onclick=()=>addToWatchlist(sym);
+  }
+};
+
+// Patch loadAllData to run alerts + render watchlist + start scheduler
+const _origLoadAllData=loadAllData;
+loadAllData=async function(){
+  await _origLoadAllData();
+  checkAlerts();
+  renderWatchlist();
+  renderAlerts();
+  startAutoSyncScheduler();
+};
+
+// ══════════════════════════════════════════════════
+//  INIT CALLS
+// ══════════════════════════════════════════════════
+// Render alerts and watchlist on startup
+document.addEventListener('DOMContentLoaded',()=>{
+  renderAlerts();
+  renderWatchlist();
+});
 
 </script>
 </body>
