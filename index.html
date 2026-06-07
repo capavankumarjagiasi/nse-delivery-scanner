@@ -684,6 +684,17 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
         <tbody id="deals-body"></tbody>
       </table>
     </div>
+    <!-- Net summary bar -->
+    <div id="deals-net-summary" style="display:none;padding:8px 14px;background:#EAF0F8;border-top:2px solid var(--border);font-size:.78rem;font-weight:700;flex-wrap:wrap;gap:10px;display:none">
+      <span style="color:var(--muted)">NET SUMMARY (filtered):</span>
+      <span id="dns-buy-qty" style="color:var(--green);margin-left:8px">—</span>
+      <span id="dns-sell-qty" style="color:var(--red);margin-left:8px">—</span>
+      <span id="dns-net-qty" style="margin-left:8px">—</span>
+      <span style="color:var(--muted);margin-left:16px">|</span>
+      <span id="dns-buy-val" style="color:var(--green);margin-left:8px">—</span>
+      <span id="dns-sell-val" style="color:var(--red);margin-left:8px">—</span>
+      <span id="dns-net-val" style="margin-left:8px">—</span>
+    </div>
   </div>
 </div>
 
@@ -1926,16 +1937,21 @@ async function loadDealsData(){
   setStatus('Loading deals data from Drive...','loading');
   document.getElementById('deals-status').textContent = 'Loading...';
 
-  // Get all deal files from Drive
+  // Get all files from Drive (includes root + deals subfolder via AppScript)
   const files = await listDriveFiles();
+
+  // Deal files can be in root OR deals/ subfolder depending on source
   const dealFiles = files.filter(f=>
     (f.name.startsWith('bulk_')||f.name.startsWith('block_'))&&f.name.endsWith('.csv')
   );
 
+  console.log('All Drive files:', files.length, 'Deal files found:', dealFiles.length);
+  console.log('Sample files:', files.slice(0,5).map(f=>f.name));
+
   if(!dealFiles.length){
     document.getElementById('deals-empty').style.display='block';
     document.getElementById('deals-table').style.display='none';
-    document.getElementById('deals-status').textContent='No deals files found in Drive';
+    document.getElementById('deals-status').textContent='No deals files found — sync deals from desktop app or use Drive Sync';
     setStatus('✓ Ready','ok');
     return;
   }
@@ -1950,22 +1966,31 @@ async function loadDealsData(){
     return d>=cutoff;
   });
 
+  console.log('Files in date range:', inRange.length, 'cutoff:', cutoff);
   document.getElementById('deals-status').textContent=`Loading ${inRange.length} files...`;
 
-  await Promise.all(inRange.map(async f=>{
+  // If nothing in range, load all available (in case dates are off)
+  const toLoad = inRange.length > 0 ? inRange : dealFiles.slice(0, 20);
+
+  await Promise.all(toLoad.map(async f=>{
     try{
       const csv=await fetchDriveFile(f.id);
       const dtype=f.name.startsWith('bulk')?'BULK':'BLOCK';
       const rows=Papa.parse(csv,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data;
       for(const r of rows){
         const qty=parseFloat((r['Quantity Traded']||'0').replace(/,/g,''))||0;
-        const price=parseFloat((r['Trade Price / Wght. Avg. Price']||r['Trade Price']||'0').replace(/,/g,''))||0;
+        const price=parseFloat((r['Trade Price / Wght. Avg. Price']||r['Trade Price']||r['Price']||r['PRICE']||'0').replace(/,/g,'')||'0')||0;
         dealsData.push({
           date:     (r['Date']||'').trim(),
           deal_type:dtype,
           symbol:   (r['Symbol']||'').trim().toUpperCase(),
           client:   (r['Client Name']||'').trim(),
-          buy_sell: (r['Buy/ Sell']||r['Buy/Sell']||'').trim().toUpperCase(),
+          buy_sell: (()=>{
+            const v=(r['Buy/ Sell']||r['Buy/Sell']||r['BUY/SELL']||r['Type']||'').trim().toUpperCase();
+            if(v==='B'||v==='BUY') return 'BUY';
+            if(v==='S'||v==='SELL') return 'SELL';
+            return v||'—';
+          })(),
           quantity: qty,
           price:    price,
           value:    Math.round(qty*price/100000*100)/100,
@@ -2021,18 +2046,29 @@ function renderDeals(){
     const netVal   = buyVal - sellVal;
     const netQCls  = netQty>=0?'color:var(--green)':'color:var(--red)';
     const netVCls  = netVal>=0?'color:var(--green)':'color:var(--red)';
-    document.getElementById('dns-buy-qty').textContent  = 'Buy Qty: '+buyQty.toLocaleString('en-IN');
-    document.getElementById('dns-sell-qty').textContent = 'Sell Qty: '+sellQty.toLocaleString('en-IN');
-    document.getElementById('dns-net-qty').innerHTML    = `<span style="${netQCls}">Net Qty: ${netQty>=0?'+':''}${netQty.toLocaleString('en-IN')}</span>`;
-    document.getElementById('dns-buy-val').textContent  = 'Buy ₹L: '+buyVal.toFixed(1);
-    document.getElementById('dns-sell-val').textContent = 'Sell ₹L: '+sellVal.toFixed(1);
-    document.getElementById('dns-net-val').innerHTML    = `<span style="${netVCls}">Net ₹L: ${netVal>=0?'+':''}${netVal.toFixed(1)}</span>`;
-    netSumEl.style.display='block';
+    const _s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+    const _h=(id,v)=>{const el=document.getElementById(id);if(el)el.innerHTML=v;};
+    _s('dns-buy-qty',  'Buy Qty: '+buyQty.toLocaleString('en-IN'));
+    _s('dns-sell-qty', 'Sell Qty: '+sellQty.toLocaleString('en-IN'));
+    _h('dns-net-qty',  `<span style="${netQCls}">Net Qty: ${netQty>=0?'+':''}${netQty.toLocaleString('en-IN')}</span>`);
+    _s('dns-buy-val',  'Buy ₹L: '+buyVal.toFixed(1));
+    _s('dns-sell-val', 'Sell ₹L: '+sellVal.toFixed(1));
+    _h('dns-net-val',  `<span style="${netVCls}">Net ₹L: ${netVal>=0?'+':''}${netVal.toFixed(1)}</span>`);
+    netSumEl.style.display='flex';
   } else {
-    netSumEl.style.display='none';
+    if(netSumEl) netSumEl.style.display='none';
   }
 
+  console.log('dealsData total:', dealsData.length, 'filtered:', dealsFiltered.length);
+  if(dealsData.length && dealsFiltered.length===0){
+    // Sample first row for debug
+    console.log('Sample deal row:', JSON.stringify(dealsData[0]));
+  }
   if(!dealsFiltered.length){
+    document.getElementById('deals-empty').innerHTML=
+      dealsData.length
+        ? `<div style="font-size:2rem">🔍</div><div style="margin-top:8px">No deals match current filters.<br><span style="font-size:.78rem;color:var(--muted)">${dealsData.length} deals loaded — try clearing filters</span></div>`
+        : '<div style="font-size:2rem">🔴</div><div style="margin-top:8px">No deals data found.<br><span style="font-size:.78rem">Click <strong>Refresh</strong> to load from Drive</span></div>';
     document.getElementById('deals-empty').style.display='block';
     document.getElementById('deals-table').style.display='none';
     return;
