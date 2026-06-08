@@ -1184,7 +1184,6 @@ async function loadBDIndex(files){
   }));
   console.log('BD map loaded (Drive):',Object.keys(bdMap).length,'symbols with deals');
 }
-}
 
 // ══════════════════════════════════════════════════
 //  SCAN ENGINE
@@ -2074,69 +2073,6 @@ function openExternal(site){
 // ── Resize handler ─────────────────────────────
 window.addEventListener('resize', ()=>{ if(detailSymbol && chartData.length) redrawChart(); });
 
-
-// ══════════════════════════════════════════════════
-//  52W & BD DATA LOADERS
-// ══════════════════════════════════════════════════
-async function load52WData(files){
-  // Find CM_52_wk_High_low.csv in drive files
-  const f = files.find(f=>f.name==='CM_52_wk_High_low.csv');
-  if(!f){ console.log('52W file not in Drive'); return; }
-  try{
-    const csv = await fetchDriveFile(f.id);
-    const lines = csv.split('\n');
-    // Find header line
-    let hi = lines.findIndex(l=>l.includes('SYMBOL')&&l.includes('SERIES'));
-    if(hi<0) return;
-    const parsed = Papa.parse(lines.slice(hi).join('\n'),
-      {header:true, skipEmptyLines:true, transformHeader:h=>h.trim()});
-    w52Map = {};
-    for(const r of parsed.data){
-      const sym = (r['SYMBOL']||'').trim().replace(/"/g,'');
-      const series = (r['SERIES']||'').trim().replace(/"/g,'');
-      if(!sym||series!=='EQ') continue;
-      const ph = v => { const n=parseFloat(String(v).replace(/"/g,'').trim()); return isNaN(n)?null:n; };
-      const h = ph(r['Adjusted_52_Week_High']);
-      const l = ph(r['Adjusted_52_Week_Low']);
-      if(h||l) w52Map[sym]={
-        high:h, low:l,
-        high_date:(r['52_Week_High_Date']||'').trim().replace(/"/g,''),
-        low_date: (r['52_Week_Low_DT']||'').trim().replace(/"/g,''),
-      };
-    }
-    console.log('52W loaded:',Object.keys(w52Map).length,'symbols');
-  }catch(e){console.warn('52W load error:',e);}
-}
-
-async function loadBDIndex(files){
-  // Load last 5 days of bulk/block files to build BD map
-  const today = bhavFiles[0]?.date || new Date();
-  const cutoff = new Date(today); cutoff.setDate(cutoff.getDate()-7);
-  const dealFiles = files.filter(f=>
-    (f.name.startsWith('bulk_')||f.name.startsWith('block_'))&&
-    f.name.endsWith('.csv')
-  );
-  bdMap = {};
-  await Promise.all(dealFiles.map(async f=>{
-    // Parse date from filename
-    const m = f.name.match(/(?:bulk|block)_(\d{2})(\d{2})(\d{4})\.csv/);
-    if(!m) return;
-    const d = new Date(+m[3],+m[2]-1,+m[1]);
-    if(d<cutoff) return;
-    try{
-      const csv = await fetchDriveFile(f.id);
-      const rows = Papa.parse(csv,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data;
-      const dtype = f.name.startsWith('bulk')?'BULK':'BLOCK';
-      for(const r of rows){
-        const sym=(r['Symbol']||'').trim().toUpperCase();
-        if(!sym) continue;
-        if(!bdMap[sym]) bdMap[sym]=[];
-        if(!bdMap[sym].includes(dtype)) bdMap[sym].push(dtype);
-      }
-    }catch(e){}
-  }));
-  console.log('BD map loaded:',Object.keys(bdMap).length,'symbols with deals');
-}
 
 // ══════════════════════════════════════════════════
 //  DEALS SECTION
