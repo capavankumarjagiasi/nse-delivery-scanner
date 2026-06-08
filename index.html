@@ -1496,6 +1496,7 @@ function showSection(id){
   // highlight matching nav btn
   document.querySelectorAll('.snav-btn').forEach(b=>{ if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(id)) b.classList.add('active'); });
   if(id==='history')renderHistory();
+  if(id==='deals')loadDealsData();
   if(id==='detail'){document.getElementById('snav-detail').style.display='block';}
 }
 
@@ -2086,34 +2087,19 @@ async function loadDealsData(){
 
   // ── Use snapshot deals (fast, no network) ──
   if(snapshotData && snapshotData.deals){
-    dealsData=[];
-    for(const d of snapshotData.deals){
-      // Parse deal date from dt field (various formats)
-      let dealDate = null;
-      if(d.dt){
-        // Try DD-MMM-YYYY or DD/MM/YYYY or DDMMYYYY
-        const m1=d.dt.match(/(\d{2})-([A-Za-z]{3})-(\d{4})/);
-        const m2=d.dt.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-        const m3=d.dt.match(/^(\d{2})(\d{2})(\d{4})$/);
-        const months={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
-        if(m1) dealDate=new Date(+m1[3],months[m1[2]]??0,+m1[1]);
-        else if(m2) dealDate=new Date(+m2[3],+m2[2]-1,+m2[1]);
-        else if(m3) dealDate=new Date(+m3[3],+m3[2]-1,+m3[1]);
-      }
-      if(dealDate && dealDate < cutoff) continue;
-      dealsData.push({
-        date:      d.dt||'',
-        deal_type: d.t==='B'?'BULK':'BLOCK',
-        symbol:    d.sym||'',
-        client:    d.cl||'',        // client name from snapshot
-        buy_sell:  d.bs==='B'?'BUY':d.bs==='S'?'SELL':'—',
-        quantity:  d.qty||0,
-        price:     d.px||0,
-        value:     Math.round((d.qty||0)*(d.px||0)/100000*100)/100,
-        remarks:   '',
-      });
-    }
+    dealsData = snapshotData.deals.map(d=>({
+      date:      d.dt||'',
+      deal_type: d.t==='B'?'BULK':'BLOCK',
+      symbol:    d.sym||'',
+      client:    d.cl||'',
+      buy_sell:  d.bs==='B'?'BUY':d.bs==='S'?'SELL':'—',
+      quantity:  d.qty||0,
+      price:     d.px||0,
+      value:     Math.round((d.qty||0)*(d.px||0)/100000*100)/100,
+      remarks:   '',
+    }));
     dealsData.sort((a,b)=>b.date.localeCompare(a.date)||a.symbol.localeCompare(b.symbol));
+    document.getElementById('deals-status').textContent = dealsData.length+' deals loaded';
     setStatus('✓ Ready','ok');
     renderDeals();
     return;
