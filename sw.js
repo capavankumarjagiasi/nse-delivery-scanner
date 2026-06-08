@@ -1,6 +1,6 @@
-// NSE Delivery Scanner — Service Worker v3
+// NSE Delivery Scanner — Service Worker v4
 // SDK Fintech
-const CACHE_NAME = 'nse-scanner-v3';
+const CACHE_NAME = 'nse-scanner-v4';
 const STATIC_ASSETS = [
   './index.html',
   './manifest.json',
@@ -27,12 +27,18 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch — NEVER cache googleapis.com or drive.google.com calls
+// Fetch
 self.addEventListener('fetch', event => {
   const url = event.request.url;
 
-  // API calls — always go to network, never cache
-  if (url.includes('googleapis.com') || url.includes('drive.google.com')) {
+  // Never cache — always network only
+  if (
+    url.includes('googleapis.com') ||
+    url.includes('drive.google.com') ||
+    url.includes('script.google.com') ||
+    url.includes('snapshot.json') ||
+    url.includes('history.json')
+  ) {
     event.respondWith(fetch(event.request));
     return;
   }
@@ -52,7 +58,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Own files — network first, cache fallback
+  // Own files (index.html, manifest, icons) — network first, cache fallback
   event.respondWith(
     fetch(event.request)
       .then(resp => {
