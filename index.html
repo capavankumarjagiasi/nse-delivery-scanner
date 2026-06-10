@@ -255,9 +255,8 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
 <!-- SETUP OVERLAY -->
 <div id="setup-overlay">
   <div id="setup-card">
-    <h2>⚙️ Sync Configuration (Optional)</h2>
-    <p>The app loads all data from <strong>snapshot.json</strong> automatically — no setup needed to view data.</p>
-    <p style="margin-top:8px">The Apps Script URL is only needed to <strong>sync new data</strong> from NSE (Sync tab). If you don't need sync from PWA, just close this.</p>
+    <h2>📡 One-Time Setup Required</h2>
+    <p>This app uses a Google Apps Script proxy to read NSE data from your Drive. Paste the Web App URL below.</p>
     <ol>
       <li>Go to <a href="https://script.google.com" target="_blank">script.google.com</a> → open <strong>NSE Scanner Proxy</strong></li>
       <li>Click <strong>Deploy → Manage deployments</strong> → copy the Web App URL</li>
@@ -267,9 +266,8 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
     <input id="api-key-input" type="text" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" spellcheck="false" value="https://script.google.com/macros/s/AKfycbxS9WM2KgF_ucSqQ8d7Lm8ORoWH3TcIf3Vck4YN5bQt6uMb0p2QW_IsAkgL6WBeECXc/exec"/>
     <div style="display:flex;gap:8px">
       <button class="btn btn-primary" style="flex:1" onclick="saveProxyUrl()">Save &amp; Connect →</button>
-      <button class="btn btn-gray" onclick="document.getElementById('setup-overlay').style.display='none'">Skip →</button>
     </div>
-    <p style="margin-top:12px;font-size:.72rem;color:var(--muted)">ℹ URL stored only on this device. Data loads from GitHub Pages snapshot.</p>
+    <p style="margin-top:12px;font-size:.72rem;color:var(--muted)">ℹ URL stored only on this device.</p>
   </div>
 </div>
 
@@ -808,11 +806,6 @@ const DRIVE_FOLDER_ID   = '1uX1UGhOJg51dazjdwiiPmdn-EpIE0fvv';
 const STORAGE_KEY_PROXY = 'nse_scanner_proxy_url';
 const STORAGE_KEY_HIST  = 'nse_scan_history_v1';
 
-// ── Snapshot URLs (GitHub Pages CDN — fast, no proxy needed) ──────────────
-const GITHUB_PAGES_BASE = 'https://capavankumarjagiasi.github.io/nse-delivery-scanner';
-const SNAPSHOT_URL      = `${GITHUB_PAGES_BASE}/snapshot.json`;
-const HISTORY_URL       = `${GITHUB_PAGES_BASE}/history.json`;
-
 let PROXY_URL = localStorage.getItem(STORAGE_KEY_PROXY) || '';
 
 const EXCLUDE_KEYWORDS = ['NIFTY','SENSEX','GOLDBEES','LIQUIDBEES','SETFNN50','ICICIB22','AXISBPSETF','HDFCMFGETF','LICNETFN5','SBIETFQLTY','KOTAKBKETF','MAFANG','ABSLLIQUID','NETFLTGILT','MOM100','ETF','BEES','FUND','GILT','LIQUID'];
@@ -841,19 +834,18 @@ let dealsSortDir   = -1;
 let w52Map         = {};   // { SYMBOL: {high, low, high_date, low_date} }
 let bdMap          = {};   // { SYMBOL: ['BULK','BLOCK'] }
 
-// Snapshot state
-let snapshotData   = null; // full parsed snapshot.json
-let historyLoaded  = false;// true once history.json loaded into historicalData
-
 // ══════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════
 (async function init(){
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
   PROXY_URL = localStorage.getItem(STORAGE_KEY_PROXY)||'';
-  // Always load from snapshot — no setup needed
-  document.getElementById('setup-overlay').style.display='none';
-  await loadAllData();
+  if(PROXY_URL){
+    document.getElementById('setup-overlay').style.display='none';
+    await loadAllData();
+  } else {
+    setStatus('Setup required — configure Apps Script proxy','loading');
+  }
   renderHistory();
 })();
 
@@ -881,133 +873,8 @@ function resetProxy(){localStorage.removeItem(STORAGE_KEY_PROXY);PROXY_URL='';do
 // ══════════════════════════════════════════════════
 //  DATA LOADING
 // ══════════════════════════════════════════════════
-//  SNAPSHOT-BASED DATA LOADING
-//  Fetches snapshot.json from GitHub Pages (CDN fast)
-//  Falls back to Drive/AppScript if snapshot unavailable
-// ══════════════════════════════════════════════════
 async function loadAllData(){
-  setStatus('Loading snapshot from GitHub…','loading');
-  try{
-    // ── Fetch snapshot.json ─────────────────────────
-    const resp = await fetch(`${SNAPSHOT_URL}?_t=${Date.now()}`,{cache:'no-store'});
-    if(!resp.ok) throw new Error(`snapshot.json HTTP ${resp.status}`);
-    snapshotData = await resp.json();
-
-    // ── Populate today's data ───────────────────────
-    const raw = snapshotData.today || [];
-    todayData = raw.filter(r=>!EXCLUDE_KEYWORDS.some(k=>r.SYMBOL.includes(k)));
-
-    // ── Populate bhavFiles list (for compatibility) ─
-    const sd = snapshotData.scan_date; // DDMMYYYY
-    const scanDateObj = new Date(+sd.slice(4,8), +sd.slice(2,4)-1, +sd.slice(0,2));
-    bhavFiles = [{
-      name: `sec_bhavdata_full_${sd}.csv`,
-      dateStr: `${sd.slice(0,2)}-${sd.slice(2,4)}-${sd.slice(4,8)}`,
-      date: scanDateObj,
-      id: null  // no Drive ID needed
-    }];
-    // Add history dates to bhavFiles for vol-ratio compatibility
-    (snapshotData.history_days||[]).forEach(d=>{
-      const dd=d; // DDMMYYYY
-      bhavFiles.push({
-        name:`sec_bhavdata_full_${dd}.csv`,
-        dateStr:`${dd.slice(0,2)}-${dd.slice(2,4)}-${dd.slice(4,8)}`,
-        date:new Date(+dd.slice(4,8),+dd.slice(2,4)-1,+dd.slice(0,2)),
-        id:null
-      });
-    });
-    bhavFiles.sort((a,b)=>b.date-a.date);
-
-    // ── Populate index map ──────────────────────────
-    indexMap={};
-    const indices = snapshotData.indices||{};
-    for(const [name,syms] of Object.entries(indices)){
-      indexMap[name]=new Set(syms);
-    }
-    buildIndexChips();
-
-    // ── Populate 52W map ────────────────────────────
-    w52Map={};
-    const w52raw = snapshotData.w52||{};
-    for(const [sym,v] of Object.entries(w52raw)){
-      w52Map[sym]={high:v.h, low:v.l, high_date:v.hd||'', low_date:v.ld||''};
-    }
-
-    // ── Populate BD map from deals ──────────────────
-    bdMap={};
-    const today7 = new Date(scanDateObj); today7.setDate(today7.getDate()-7);
-    for(const deal of (snapshotData.deals||[])){
-      // deal.dt format varies — just use all recent deals
-      const sym = deal.sym;
-      if(!sym) continue;
-      const dtype = deal.t==='B'?'BULK':'BLOCK';
-      if(!bdMap[sym]) bdMap[sym]=[];
-      if(!bdMap[sym].includes(dtype)) bdMap[sym].push(dtype);
-    }
-
-    // ── Update UI ───────────────────────────────────
-    document.getElementById('data-date').textContent = snapshotData.scan_date_fmt||sd;
-    document.getElementById('banner-sync-info').textContent =
-      `Snapshot: ${snapshotData.scan_date_fmt||sd} | ${todayData.length} stocks`;
-
-    const w52count = Object.keys(w52Map).length;
-    const idxcount = Object.keys(indexMap).length;
-    setStatus(`✓ Ready — ${todayData.length} stocks | 52W: ${w52count} | ${idxcount} indices | ${snapshotData.scan_date_fmt||sd}`,'ok');
-    document.getElementById('btn-scan').disabled=false;
-
-    // ── Load history.json in background ────────────
-    loadHistoryBackground();
-
-  }catch(e){
-    console.error('Snapshot load failed:',e);
-    setStatus(`⚠ Snapshot load failed: ${e.message} — trying Drive fallback…`,'error');
-    // Fallback to Drive/AppScript if snapshot unavailable
-    if(PROXY_URL){
-      await loadAllDataFromDrive();
-    } else {
-      setStatus(`✗ Cannot load data. Run desktop app → Generate Snapshot to update.`,'error');
-    }
-  }
-}
-
-// ── Background history loader ──────────────────────────────────────────────
-async function loadHistoryBackground(){
-  if(historyLoaded) return;
-  try{
-    setStatus('Loading history in background…','loading');
-    const resp = await fetch(`${HISTORY_URL}?_t=${Date.now()}`,{cache:'no-store'});
-    if(!resp.ok) throw new Error(`history.json HTTP ${resp.status}`);
-    const pkg = await resp.json();
-    // Populate historicalData in slim format → convert to full format for vol ratio
-    historicalData={};
-    for(const [dateStr, rows] of Object.entries(pkg.history||{})){
-      // Convert DDMMYYYY key to DD-MM-YYYY for compatibility
-      const dk = `${dateStr.slice(0,2)}-${dateStr.slice(2,4)}-${dateStr.slice(4,8)}`;
-      historicalData[dk] = rows.map(r=>({
-        SYMBOL:       r.S,
-        OPEN:         r.O,
-        HIGH:         r.H,
-        LOW:          r.L,
-        CLOSE:        r.C,
-        TTL_TRD_QNTY: r.V,
-        DELIV_PER:    r.D,
-        PREV_CLOSE:   r.C,  // approximate
-        TURNOVER_LACS:0,
-        NO_OF_TRADES: 0,
-      }));
-    }
-    historyLoaded=true;
-    const daycount = Object.keys(historicalData).length;
-    setStatus(`✓ Ready — ${todayData.length} stocks | ${daycount}d history loaded | ${snapshotData?.scan_date_fmt||''}`, 'ok');
-    console.log(`History loaded: ${daycount} days`);
-  }catch(e){
-    console.warn('History background load failed:',e);
-    // Not fatal — scanner works without it, just vol ratio may be limited
-  }
-}
-
-// ── Drive fallback (if snapshot.json missing) ──────────────────────────────
-async function loadAllDataFromDrive(){
+  setStatus('Listing files in Drive folder…','loading');
   try{
     const files = await listDriveFiles();
     const bhavRaw = files.filter(f=>f.name.startsWith('sec_bhavdata_full_'));
@@ -1020,27 +887,22 @@ async function loadAllDataFromDrive(){
     if(!bhavFiles.length){setStatus('No bhavcopy files found','error');return;}
     const latest=bhavFiles[0];
     document.getElementById('data-date').textContent=formatDate(latest.date);
-    document.getElementById('banner-sync-info').textContent=`Drive: ${latest.dateStr} (${bhavFiles.length} files)`;
-    setStatus(`Loading ${mwFiles.length} index files from Drive…`,'loading');
+    document.getElementById('banner-sync-info').textContent=`Latest: ${latest.dateStr} (${bhavFiles.length} files)`;
+    setStatus(`Loading ${mwFiles.length} index files…`,'loading');
     await loadIndexFiles(mwFiles);
-    setStatus(`Loading bhavcopy ${latest.dateStr} from Drive…`,'loading');
+    setStatus(`Loading bhavcopy ${latest.dateStr}…`,'loading');
     todayData = await loadBhavcopy(latest);
     if(todayData.length===0){
-      setStatus('⚠ 0 EQ stocks parsed from Drive','error');
+      setStatus('⚠ 0 EQ stocks parsed — check console for column info','error');
     } else {
-      setStatus(`✓ Ready (Drive fallback) — ${todayData.length} EQ stocks | ${latest.dateStr}`,'ok');
+      setStatus(`✓ Ready — ${todayData.length} EQ stocks | ${latest.dateStr}`,'ok');
       document.getElementById('btn-scan').disabled=false;
-      Promise.all([
-        load52WData(files).catch(e=>console.warn('52W load:',e)),
-        loadBDIndex(files).catch(e=>console.warn('BD load:',e)),
-      ]).then(()=>{
-        const w52count=Object.keys(w52Map).length;
-        if(w52count>0) setStatus(`✓ Ready (Drive) — ${todayData.length} stocks | 52W: ${w52count} | ${latest.dateStr}`,'ok');
-      });
     }
   }catch(e){
-    setStatus('✗ Drive fallback failed: '+e.message,'error');
+    setStatus('Error: '+e.message,'error');
     console.error(e);
+    document.getElementById('setup-overlay').style.display='flex';
+    showSetupError('Connection failed: '+e.message);
   }
 }
 
@@ -1110,14 +972,6 @@ async function loadBhavcopy(fileInfo){
 }
 
 async function loadHistoricalBhav(numDays){
-  // With snapshot, historicalData is pre-populated from history.json
-  // If not yet loaded, wait for background load
-  if(!historyLoaded){
-    await loadHistoryBackground();
-    return;
-  }
-  // Legacy Drive path (fallback only)
-  if(snapshotData) return; // snapshot is source of truth
   const needed=bhavFiles.slice(1,numDays+1);
   const toLoad=needed.filter(f=>!historicalData[f.dateStr]);
   if(!toLoad.length)return;
@@ -1125,64 +979,6 @@ async function loadHistoricalBhav(numDays){
   await Promise.all(toLoad.map(async f=>{
     try{historicalData[f.dateStr]=await loadBhavcopy(f);}catch(e){console.warn('Skip hist:',f.name);}
   }));
-}
-
-async function load52WData(files){
-  // Used only in Drive fallback path — snapshot path populates w52Map directly
-  const f = files.find(f=>f.name==='CM_52_wk_High_low.csv');
-  if(!f){ console.log('52W file not in Drive'); return; }
-  try{
-    const csv = await fetchDriveFile(f.id);
-    const lines = csv.split('\n');
-    let hi = lines.findIndex(l=>l.includes('SYMBOL')&&l.includes('SERIES'));
-    if(hi<0) return;
-    const parsed = Papa.parse(lines.slice(hi).join('\n'),
-      {header:true, skipEmptyLines:true, transformHeader:h=>h.trim()});
-    w52Map = {};
-    for(const r of parsed.data){
-      const sym = (r['SYMBOL']||'').trim().replace(/"/g,'');
-      const series = (r['SERIES']||'').trim().replace(/"/g,'');
-      if(!sym||series!=='EQ') continue;
-      const ph = v => { const n=parseFloat(String(v).replace(/"/g,'').trim()); return isNaN(n)?null:n; };
-      const h = ph(r['Adjusted_52_Week_High']);
-      const l = ph(r['Adjusted_52_Week_Low']);
-      if(h||l) w52Map[sym]={
-        high:h, low:l,
-        high_date:(r['52_Week_High_Date']||'').trim().replace(/"/g,''),
-        low_date: (r['52_Week_Low_DT']||'').trim().replace(/"/g,''),
-      };
-    }
-    console.log('52W loaded (Drive):',Object.keys(w52Map).length,'symbols');
-  }catch(e){console.warn('52W load error:',e);}
-}
-
-async function loadBDIndex(files){
-  // Used only in Drive fallback path — snapshot path populates bdMap directly
-  const today = bhavFiles[0]?.date || new Date();
-  const cutoff = new Date(today); cutoff.setDate(cutoff.getDate()-7);
-  const dealFiles = files.filter(f=>
-    (f.name.startsWith('bulk_')||f.name.startsWith('block_'))&&
-    f.name.endsWith('.csv')
-  );
-  bdMap = {};
-  await Promise.all(dealFiles.map(async f=>{
-    const m = f.name.match(/(?:bulk|block)_(\d{2})(\d{2})(\d{4})\.csv/);
-    if(!m) return;
-    const d = new Date(+m[3],+m[2]-1,+m[1]);
-    if(d<cutoff) return;
-    try{
-      const csv = await fetchDriveFile(f.id);
-      const rows = Papa.parse(csv,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data;
-      const dtype = f.name.startsWith('bulk')?'BULK':'BLOCK';
-      for(const r of rows){
-        const sym=(r['Symbol']||'').trim().toUpperCase();
-        if(!sym) continue;
-        if(!bdMap[sym]) bdMap[sym]=[];
-        if(!bdMap[sym].includes(dtype)) bdMap[sym].push(dtype);
-      }
-    }catch(e){}
-  }));
-  console.log('BD map loaded (Drive):',Object.keys(bdMap).length,'symbols with deals');
 }
 
 // ══════════════════════════════════════════════════
@@ -1496,7 +1292,6 @@ function showSection(id){
   // highlight matching nav btn
   document.querySelectorAll('.snav-btn').forEach(b=>{ if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(id)) b.classList.add('active'); });
   if(id==='history')renderHistory();
-  if(id==='deals')loadDealsData();
   if(id==='detail'){document.getElementById('snav-detail').style.display='block';}
 }
 
@@ -1689,7 +1484,7 @@ function clearResults(){
   document.getElementById('btn-save-hist').disabled=true;
   ['m-scanned','m-passed','m-del','m-vol','m-gain','m-loss','m-fno','m-mode'].forEach(id=>document.getElementById(id).textContent='—');
 }
-async function reloadData(){historicalData={};todayData=[];bhavFiles=[];w52Map={};bdMap={};snapshotData=null;historyLoaded=false;document.getElementById('btn-scan').disabled=true;await loadAllData();}
+async function reloadData(){historicalData={};todayData=[];bhavFiles=[];document.getElementById('btn-scan').disabled=true;await loadAllData();}
 function setStatus(msg,state){
   document.getElementById('status-text').textContent=msg;
   const dot=document.getElementById('status-dot');
@@ -1712,8 +1507,30 @@ const MA_COLORS = {5:'#FF6F00',10:'#1565C0',20:'#2E7D11',50:'#6A1B9A',200:'#AD14
 
 // ── Open detail screen ─────────────────────────
 function openDetail(sym){
-  const stock = scanResults.find(r=>r.SYMBOL===sym);
-  if(!stock) return;
+  // Look in scanResults first, then todayData (for clicks from Deals/SS tabs)
+  let stock = scanResults.find(r=>r.SYMBOL===sym);
+
+  if(!stock){
+    // Build a stock object from todayData
+    const raw = todayData.find(r=>r.SYMBOL===sym);
+    if(!raw){
+      showToast('No data for '+sym+' — load data first','warning');
+      return;
+    }
+    const pctChange = raw.PREV_CLOSE>0?((raw.CLOSE-raw.PREV_CLOSE)/raw.PREV_CLOSE)*100:0;
+    stock = {
+      ...raw,
+      PCT_CHANGE:   pctChange,
+      VOL_RATIO:    null,
+      SCORE:        0,
+      SIGNAL:       pctChange>=0?'WATCH':'NEG',
+      IS_FNO:       FNO_STOCKS.has(sym),
+      INDICES:      '',
+      GAP_PCT:      raw.PREV_CLOSE>0?((raw.OPEN-raw.PREV_CLOSE)/raw.PREV_CLOSE)*100:0,
+      TURNOVER_LACS:raw.TURNOVER_LACS||0,
+    };
+  }
+
   detailSymbol = sym;
   detailStock  = stock;
 
@@ -1734,7 +1551,8 @@ function openDetail(sym){
   // Key stats
   renderDetailStats(stock);
 
-  // Show screen
+  // Show screen & reveal chart tab
+  document.getElementById('snav-detail').style.display='block';
   showSection('detail');
 
   // Load chart
@@ -1763,7 +1581,7 @@ function renderDetailStats(stock){
 
 // ── Load chart data ────────────────────────────
 async function loadChartData(sym, days){
-  // Check full cache first
+  // Check cache
   if(chartDataFull[sym] && chartDataFull[sym].length>=days){
     chartData = chartDataFull[sym].slice(-days);
     redrawChart();
@@ -1774,27 +1592,20 @@ async function loadChartData(sym, days){
   document.getElementById('chart-loading').style.display='block';
   document.getElementById('chart-container').style.display='none';
 
-  // If history not yet loaded, wait for it
-  if(!historyLoaded && snapshotData){
-    document.getElementById('chart-loading-msg').textContent='Waiting for history data…';
-    await loadHistoryBackground();
-  }
+  // Need to load more historical files
+  const needed = bhavFiles.slice(0, days+5); // +5 buffer
+  const toLoad = needed.filter(f=>!historicalData[f.dateStr]);
+  let loaded = 0;
 
-  // If still need Drive files (Drive fallback path only)
-  if(!snapshotData){
-    const needed = bhavFiles.slice(0, days+5);
-    const toLoad = needed.filter(f=>!historicalData[f.dateStr]);
-    let loaded=0;
-    for(const f of toLoad){
-      try{
-        document.getElementById('chart-loading-msg').textContent =
-          `Loading ${f.dateStr} (${loaded+1}/${toLoad.length})…`;
-        document.getElementById('chart-progress').style.width =
-          Math.round((loaded/Math.max(toLoad.length,1))*100)+'%';
-        historicalData[f.dateStr] = await loadBhavcopy(f);
-        loaded++;
-      }catch(e){ console.warn('Skip chart file:',f.dateStr); }
-    }
+  for(const f of toLoad){
+    try{
+      document.getElementById('chart-loading-msg').textContent =
+        `Loading ${f.dateStr} (${loaded+1}/${toLoad.length})…`;
+      document.getElementById('chart-progress').style.width =
+        Math.round((loaded/Math.max(toLoad.length,1))*100)+'%';
+      historicalData[f.dateStr] = await loadBhavcopy(f);
+      loaded++;
+    } catch(e){ console.warn('Skip chart file:',f.dateStr); }
   }
 
   // Build full OHLCV array for this symbol: oldest→newest
@@ -2076,6 +1887,69 @@ window.addEventListener('resize', ()=>{ if(detailSymbol && chartData.length) red
 
 
 // ══════════════════════════════════════════════════
+//  52W & BD DATA LOADERS
+// ══════════════════════════════════════════════════
+async function load52WData(files){
+  // Find CM_52_wk_High_low.csv in drive files
+  const f = files.find(f=>f.name==='CM_52_wk_High_low.csv');
+  if(!f){ console.log('52W file not in Drive'); return; }
+  try{
+    const csv = await fetchDriveFile(f.id);
+    const lines = csv.split('\n');
+    // Find header line
+    let hi = lines.findIndex(l=>l.includes('SYMBOL')&&l.includes('SERIES'));
+    if(hi<0) return;
+    const parsed = Papa.parse(lines.slice(hi).join('\n'),
+      {header:true, skipEmptyLines:true, transformHeader:h=>h.trim()});
+    w52Map = {};
+    for(const r of parsed.data){
+      const sym = (r['SYMBOL']||'').trim().replace(/"/g,'');
+      const series = (r['SERIES']||'').trim().replace(/"/g,'');
+      if(!sym||series!=='EQ') continue;
+      const ph = v => { const n=parseFloat(String(v).replace(/"/g,'').trim()); return isNaN(n)?null:n; };
+      const h = ph(r['Adjusted_52_Week_High']);
+      const l = ph(r['Adjusted_52_Week_Low']);
+      if(h||l) w52Map[sym]={
+        high:h, low:l,
+        high_date:(r['52_Week_High_Date']||'').trim().replace(/"/g,''),
+        low_date: (r['52_Week_Low_DT']||'').trim().replace(/"/g,''),
+      };
+    }
+    console.log('52W loaded:',Object.keys(w52Map).length,'symbols');
+  }catch(e){console.warn('52W load error:',e);}
+}
+
+async function loadBDIndex(files){
+  // Load last 5 days of bulk/block files to build BD map
+  const today = bhavFiles[0]?.date || new Date();
+  const cutoff = new Date(today); cutoff.setDate(cutoff.getDate()-7);
+  const dealFiles = files.filter(f=>
+    (f.name.startsWith('bulk_')||f.name.startsWith('block_'))&&
+    f.name.endsWith('.csv')
+  );
+  bdMap = {};
+  await Promise.all(dealFiles.map(async f=>{
+    // Parse date from filename
+    const m = f.name.match(/(?:bulk|block)_(\d{2})(\d{2})(\d{4})\.csv/);
+    if(!m) return;
+    const d = new Date(+m[3],+m[2]-1,+m[1]);
+    if(d<cutoff) return;
+    try{
+      const csv = await fetchDriveFile(f.id);
+      const rows = Papa.parse(csv,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data;
+      const dtype = f.name.startsWith('bulk')?'BULK':'BLOCK';
+      for(const r of rows){
+        const sym=(r['Symbol']||'').trim().toUpperCase();
+        if(!sym) continue;
+        if(!bdMap[sym]) bdMap[sym]=[];
+        if(!bdMap[sym].includes(dtype)) bdMap[sym].push(dtype);
+      }
+    }catch(e){}
+  }));
+  console.log('BD map loaded:',Object.keys(bdMap).length,'symbols with deals');
+}
+
+// ══════════════════════════════════════════════════
 //  DEALS SECTION
 // ══════════════════════════════════════════════════
 async function loadDealsData(){
@@ -2083,77 +1957,76 @@ async function loadDealsData(){
   const today = bhavFiles[0]?.date || new Date();
   const cutoff = new Date(today); cutoff.setDate(cutoff.getDate()-days);
 
+  setStatus('Loading deals data from Drive...','loading');
   document.getElementById('deals-status').textContent = 'Loading...';
 
-  // ── Use snapshot deals (fast, no network) ──
-  if(snapshotData && snapshotData.deals){
-    dealsData = snapshotData.deals.map(d=>({
-      date:      d.dt||'',
-      deal_type: d.t==='B'?'BULK':'BLOCK',
-      symbol:    d.sym||'',
-      client:    d.cl||'',
-      buy_sell:  d.bs==='B'?'BUY':d.bs==='S'?'SELL':'—',
-      quantity:  d.qty||0,
-      price:     d.px||0,
-      value:     Math.round((d.qty||0)*(d.px||0)/100000*100)/100,
-      remarks:   '',
-    }));
-    dealsData.sort((a,b)=>b.date.localeCompare(a.date)||a.symbol.localeCompare(b.symbol));
-    document.getElementById('deals-status').textContent = dealsData.length+' deals loaded';
+  // Get all files from Drive (includes root + deals subfolder via AppScript)
+  const files = await listDriveFiles();
+
+  // Deal files can be in root OR deals/ subfolder depending on source
+  const dealFiles = files.filter(f=>
+    (f.name.startsWith('bulk_')||f.name.startsWith('block_'))&&f.name.endsWith('.csv')
+  );
+
+  console.log('All Drive files:', files.length, 'Deal files found:', dealFiles.length);
+  console.log('Sample files:', files.slice(0,5).map(f=>f.name));
+
+  if(!dealFiles.length){
+    document.getElementById('deals-empty').style.display='block';
+    document.getElementById('deals-table').style.display='none';
+    document.getElementById('deals-status').textContent='No deals files found — sync deals from desktop app or use Drive Sync';
     setStatus('✓ Ready','ok');
-    renderDeals();
     return;
   }
 
-  // ── Drive fallback ──────────────────────────
-  setStatus('Loading deals data from Drive...','loading');
-  try{
-    const files = await listDriveFiles();
-    const dealFiles = files.filter(f=>
-      (f.name.startsWith('bulk_')||f.name.startsWith('block_'))&&f.name.endsWith('.csv')
-    );
-    if(!dealFiles.length){
-      document.getElementById('deals-empty').style.display='block';
-      document.getElementById('deals-table').style.display='none';
-      document.getElementById('deals-status').textContent='No deals files found — sync from desktop app';
-      setStatus('✓ Ready','ok');
-      return;
-    }
-    dealsData=[];
-    const inRange=dealFiles.filter(f=>{
-      const m=f.name.match(/(?:bulk|block)_(\d{2})(\d{2})(\d{4})\.csv/);
-      if(!m) return false;
-      return new Date(+m[3],+m[2]-1,+m[1])>=cutoff;
-    });
-    const toLoad=inRange.length>0?inRange:dealFiles.slice(0,20);
-    await Promise.all(toLoad.map(async f=>{
-      try{
-        const csv=await fetchDriveFile(f.id);
-        const dtype=f.name.startsWith('bulk')?'BULK':'BLOCK';
-        const rows=Papa.parse(csv,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data;
-        for(const r of rows){
-          const qty=parseFloat((r['Quantity Traded']||'0').replace(/,/g,''))||0;
-          const price=parseFloat((r['Trade Price / Wght. Avg. Price']||r['Trade Price']||'0').replace(/,/g,''))||0;
-          dealsData.push({
-            date:(r['Date']||'').trim(),
-            deal_type:dtype,
-            symbol:(r['Symbol']||'').trim().toUpperCase(),
-            client:(r['Client Name']||'').trim(),
-            buy_sell:(()=>{const v=(r['Buy/ Sell']||r['Buy/Sell']||'').trim().toUpperCase();if(v==='B'||v==='BUY')return 'BUY';if(v==='S'||v==='SELL')return 'SELL';return v||'—';})(),
-            quantity:qty, price:price,
-            value:Math.round(qty*price/100000*100)/100,
-            remarks:(r['Remarks']||'').trim(),
-          });
-        }
-      }catch(e){console.warn('Deal load error:',f.name,e);}
-    }));
-    dealsData.sort((a,b)=>b.date.localeCompare(a.date)||a.symbol.localeCompare(b.symbol));
-    setStatus('✓ Ready','ok');
-    renderDeals();
-  }catch(e){
-    document.getElementById('deals-status').textContent='Error loading deals: '+e.message;
-    setStatus('✓ Ready','ok');
-  }
+  dealsData=[];
+  let loaded=0;
+  // Filter to within days range
+  const inRange = dealFiles.filter(f=>{
+    const m=f.name.match(/(?:bulk|block)_(\d{2})(\d{2})(\d{4})\.csv/);
+    if(!m) return false;
+    const d=new Date(+m[3],+m[2]-1,+m[1]);
+    return d>=cutoff;
+  });
+
+  console.log('Files in date range:', inRange.length, 'cutoff:', cutoff);
+  document.getElementById('deals-status').textContent=`Loading ${inRange.length} files...`;
+
+  // If nothing in range, load all available (in case dates are off)
+  const toLoad = inRange.length > 0 ? inRange : dealFiles.slice(0, 20);
+
+  await Promise.all(toLoad.map(async f=>{
+    try{
+      const csv=await fetchDriveFile(f.id);
+      const dtype=f.name.startsWith('bulk')?'BULK':'BLOCK';
+      const rows=Papa.parse(csv,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data;
+      for(const r of rows){
+        const qty=parseFloat((r['Quantity Traded']||'0').replace(/,/g,''))||0;
+        const price=parseFloat((r['Trade Price / Wght. Avg. Price']||r['Trade Price']||r['Price']||r['PRICE']||'0').replace(/,/g,'')||'0')||0;
+        dealsData.push({
+          date:     (r['Date']||'').trim(),
+          deal_type:dtype,
+          symbol:   (r['Symbol']||'').trim().toUpperCase(),
+          client:   (r['Client Name']||'').trim(),
+          buy_sell: (()=>{
+            const v=(r['Buy/ Sell']||r['Buy/Sell']||r['BUY/SELL']||r['Type']||'').trim().toUpperCase();
+            if(v==='B'||v==='BUY') return 'BUY';
+            if(v==='S'||v==='SELL') return 'SELL';
+            return v||'—';
+          })(),
+          quantity: qty,
+          price:    price,
+          value:    Math.round(qty*price/100000*100)/100,
+          remarks:  (r['Remarks']||'').trim(),
+        });
+      }
+      loaded++;
+    }catch(e){console.warn('Deal load error:',f.name,e);}
+  }));
+
+  dealsData.sort((a,b)=>b.date.localeCompare(a.date)||a.symbol.localeCompare(b.symbol));
+  setStatus('✓ Ready','ok');
+  renderDeals();
 }
 
 function renderDeals(){
