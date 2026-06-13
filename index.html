@@ -740,9 +740,9 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
         <thead><tr>
           <th onclick="sortSSTable('date')">Date</th>
           <th onclick="sortSSTable('symbol')" style="text-align:left">Symbol</th>
-          <th onclick="sortSSTable('name')" style="text-align:left">Name</th>
-          <th onclick="sortSSTable('qty')">Short Qty</th>
-          <th onclick="sortSSTable('pct')">% of Vol</th>
+          <th onclick="sortSSTable('qty')" style="text-align:right">Qty Short</th>
+          <th onclick="sortSSTable('cov')" style="text-align:right">Qty Covered</th>
+          <th onclick="sortSSTable('net')" style="text-align:right">Net Short</th>
           <th>In Scanner</th>
         </tr></thead>
         <tbody id="ss-body"></tbody>
@@ -944,6 +944,30 @@ async function loadAllData(){
       if(!bdMap[sym]) bdMap[sym]=[];
       if(!bdMap[sym].includes(dtype)) bdMap[sym].push(dtype);
     }
+
+    // ── Populate SS map from snapshot.shortsell ─────
+    ssMap={};
+    ssData=[];
+    for(const r of (snapshotData.shortsell||[])){
+      const sym=r.sym||'';
+      if(!sym) continue;
+      ssMap[sym]=true;
+      // Convert DDMMYYYY → DD-MM-YYYY for display
+      const dt=r.dt||'';
+      const dateDisp = dt.length===8
+        ? `${dt.slice(0,2)}-${dt.slice(2,4)}-${dt.slice(4,8)}`
+        : dt;
+      ssData.push({
+        date:   dateDisp,
+        symbol: sym,
+        name:   '',
+        qty:    r.qty||0,
+        cov:    r.cov||0,
+        net:    r.net||0,
+        pct:    0,
+      });
+    }
+    ssData.sort((a,b)=>b.date.localeCompare(a.date)||b.qty-a.qty);
 
     // ── Update UI ───────────────────────────────────
     document.getElementById('data-date').textContent = snapshotData.scan_date_fmt||sd;
@@ -2565,44 +2589,67 @@ async function loadSSData(){
   document.getElementById('ss-empty').style.display='block';
   document.getElementById('ss-table').style.display='none';
 
+  // ── JSON-first: use snapshot.shortsell ───────────
+  if(snapshotData && snapshotData.shortsell && snapshotData.shortsell.length){
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    ssData=[];
+    for(const r of snapshotData.shortsell){
+      const dt=r.dt||'';
+      const dateObj=dt.length===8
+        ?new Date(+dt.slice(4,8),+dt.slice(2,4)-1,+dt.slice(0,2))
+        :null;
+      if(dateObj && dateObj<cutoffDate) continue;
+      const dateDisp=dt.length===8
+        ?`${dt.slice(0,2)}-${dt.slice(2,4)}-${dt.slice(4,8)}`
+        :dt;
+      ssData.push({
+        date:dateDisp, symbol:r.sym||'', name:'',
+        qty:r.qty||0, cov:r.cov||0, net:r.net||0, pct:0,
+      });
+    }
+    ssMap={};
+    for(const r of ssData) ssMap[r.symbol]=true;
+    ssData.sort((a,b)=>b.date.localeCompare(a.date)||b.qty-a.qty);
+    renderSSTable();
+    setStatus('✓ Short selling data loaded from snapshot','ok');
+    return;
+  }
+
+  // ── Drive fallback (snapshot has no SS data yet) ──
   try{
     const files = await listDriveFiles();
     const today = bhavFiles[0]?.date||new Date();
     const cutoff= new Date(today); cutoff.setDate(cutoff.getDate()-days);
-
-    const ssFiles = files.filter(f=>{
+    const ssFiles=files.filter(f=>{
       if(!f.name.startsWith('shortsell_')) return false;
       const m=f.name.match(/shortsell_(\d{2})(\d{2})(\d{4})\.csv/);
       if(!m) return false;
-      const d=new Date(+m[3],+m[2]-1,+m[1]);
-      return d>=cutoff;
+      return new Date(+m[3],+m[2]-1,+m[1])>=cutoff;
     });
-
     ssData=[];
     await Promise.all(ssFiles.map(async f=>{
       try{
         const csv=await fetchDriveFile(f.id);
-        const rows=Papa.parse(csv,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim()}).data;
+        const rows=Papa.parse(csv,{header:true,skipEmptyLines:true,
+          transformHeader:h=>h.trim()}).data;
         const m=f.name.match(/shortsell_(\d{2})(\d{2})(\d{4})\.csv/);
         const dateStr=m?`${m[1]}-${m[2]}-${m[3]}`:'';
         for(const r of rows){
-          const sym=(r['Symbol']||r['SYMBOL']||'').trim().toUpperCase();
+          // New NSE format: "Symbol Name", "Quantity"
+          const sym=(r['Symbol Name']||r['Symbol']||r['SYMBOL']||'').trim().toUpperCase();
           if(!sym) continue;
-          const qty=parseFloat((r['Short Sold Qty']||r['QTY']||'0').replace(/,/g,''))||0;
-          const pct=parseFloat((r['%']||r['PCT']||'0').replace(/,/g,''))||0;
-          ssData.push({
-            date:dateStr, symbol:sym,
-            name:(r['Security/Contract Description']||r['Name']||'').trim(),
-            qty, pct
-          });
+          const qty=parseFloat((r['Quantity']||r['Quantity Sold Short']||
+                                r['Short Sold Qty']||'0').replace(/,/g,''))||0;
+          const cov=parseFloat((r['Quantity Covered']||'0').replace(/,/g,''))||0;
+          ssData.push({date:dateStr,symbol:sym,name:(r['Security Name']||'').trim(),
+            qty,cov,net:qty-cov,pct:0});
         }
       }catch(e){console.warn('SS load error:',f.name,e);}
     }));
-
-    // Build SS map for badge
     ssMap={};
     for(const r of ssData) ssMap[r.symbol]=true;
-
     ssData.sort((a,b)=>b.date.localeCompare(a.date)||b.qty-a.qty);
     renderSSTable();
     setStatus('✓ Short selling data loaded','ok');
@@ -2630,15 +2677,21 @@ function renderSSTable(){
   document.getElementById('ss-date').textContent=latestDate;
   document.getElementById('ss-overlap').textContent=inScanner;
 
+  const fromSnapshot = snapshotData && snapshotData.shortsell && snapshotData.shortsell.length;
+
   for(const r of ssData){
     const tr=document.createElement('tr');
     const inScan=scanResults.some(s=>s.SYMBOL===r.symbol);
+    const net = r.net!=null ? r.net : (r.qty - (r.cov||0));
+    const netStyle = net>0
+      ? 'color:#c0392b;font-weight:700'
+      : net<0 ? 'color:#27ae60' : '';
     tr.innerHTML=`
       <td>${r.date}</td>
       <td style="text-align:left;font-weight:700;color:var(--accent)">${r.symbol}</td>
-      <td style="text-align:left;font-size:.72rem">${r.name}</td>
-      <td>${r.qty>0?r.qty.toLocaleString('en-IN'):'—'}</td>
-      <td>${r.pct>0?r.pct.toFixed(2)+'%':'—'}</td>
+      <td style="text-align:right">${r.qty>0?r.qty.toLocaleString('en-IN'):'—'}</td>
+      <td style="text-align:right">${r.cov>0?r.cov.toLocaleString('en-IN'):'—'}</td>
+      <td style="text-align:right;${netStyle}">${net!==0?net.toLocaleString('en-IN'):'—'}</td>
       <td>${inScan?'<span class="tag tag-strong" style="font-size:.65rem">YES</span>':'—'}</td>
     `;
     tbody.appendChild(tr);
