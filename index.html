@@ -121,6 +121,42 @@ tbody td.indices-col{text-align:left;font-size:.70rem;color:var(--muted);max-wid
 .fno-badge{display:inline-block;padding:1px 5px;border-radius:4px;font-size:.62rem;font-weight:800;background:#FF6F00;color:#fff;margin-left:4px;vertical-align:middle}
 .up{color:var(--green);font-weight:700}
 .down{color:var(--red);font-weight:700}
+/* Market Pulse */
+.mp-tab{padding:7px 12px;font-size:.74rem;font-weight:700;color:var(--muted);background:var(--card);border:1.5px solid var(--border);border-radius:16px;white-space:nowrap;cursor:pointer;transition:all .15s}
+.mp-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.mp-tab:hover:not(.active){border-color:var(--primary);color:var(--primary)}
+.mp-circuit{display:inline-block;padding:1px 6px;border-radius:5px;font-size:.66rem;font-weight:800}
+.mp-circuit.uc3{background:#FF1744;color:#fff}
+.mp-circuit.uc2{background:#FF6D00;color:#fff}
+.mp-circuit.uc1{background:#FFD600;color:#1A1A1A}
+.mp-circuit.lc3{background:#1A237E;color:#fff}
+.mp-circuit.lc2{background:#283593;color:#fff}
+.mp-circuit.lc1{background:#3949AB;color:#fff}
+.mp-circuit.ucfix{background:#F3E5F5;color:#4A148C}
+.mp-circuit.lcfix{background:#E3F2FD;color:#0D47A1}
+.mp-trend{display:inline-block;padding:1px 6px;border-radius:5px;font-size:.64rem;font-weight:800}
+.mp-trend.up{background:var(--green-bg);color:var(--green)}
+.mp-trend.dn{background:var(--red-bg);color:var(--red)}
+.mp-trend.mx{background:var(--amber-bg);color:var(--amber)}
+/* Heatmap */
+#mp-heatmap-grid{display:flex;flex-wrap:wrap;gap:2px;padding:8px;background:#0D1117}
+.hm-tile{border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-weight:700;overflow:hidden;text-align:center;transition:transform .1s}
+.hm-tile:active{transform:scale(.96)}
+.hm-tile .hm-sym{font-size:.74rem}
+.hm-tile .hm-chg{font-size:.66rem;font-weight:600;opacity:.92}
+/* Index performance bars */
+.idx-bar-row{padding:7px 0;border-bottom:1px solid var(--border)}
+.idx-bar-row:last-child{border-bottom:none}
+.idx-bar-top{display:flex;justify-content:space-between;font-size:.78rem;font-weight:700;margin-bottom:4px}
+.idx-bar-track{position:relative;height:14px;background:#EEF3FA;border-radius:7px;overflow:hidden}
+.idx-bar-fill{position:absolute;top:0;height:100%;border-radius:7px}
+.idx-bar-fill.pos{background:linear-gradient(90deg,#43A047,#2E7D32);left:50%}
+.idx-bar-fill.neg{background:linear-gradient(90deg,#C62828,#E53935);right:50%}
+.idx-bar-mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--border)}
+.idx-bar-meta{font-size:.66rem;color:var(--muted);margin-top:3px}
+@media(min-width:700px){
+  #sec-pulse-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:10px}
+}
 /* Empty state */
 #empty-state{padding:40px 20px;text-align:center;color:var(--muted);font-size:.9rem}
 #empty-state .big{font-size:2.5rem;margin-bottom:10px}
@@ -328,7 +364,8 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
 </div>
 
 <div id="section-nav">
-  <button class="snav-btn active" onclick="showSection('scan')">📊 Scanner</button>
+  <button class="snav-btn" onclick="showSection('scan')">📊 Scanner</button>
+  <button class="snav-btn" onclick="showSection('pulse')">⚡ Market Pulse</button>
   <button class="snav-btn" onclick="showSection('history')">📋 History &amp; P&amp;L</button>
   <button class="snav-btn" onclick="showSection('deals')">🔴 Deals</button>
   <button class="snav-btn" onclick="showSection('shortsell')">🔻 Short Sell</button>
@@ -500,6 +537,76 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
       </table>
     </div>
   </div>
+</div>
+
+<!-- ══════════ MARKET PULSE SECTION ══════════ -->
+<div id="sec-pulse" class="section">
+
+  <div class="panel" style="margin-top:10px">
+    <div class="panel-hdr">⚡ Market Pulse</div>
+    <div style="padding:10px 12px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <select id="mp-index-filter" onchange="renderMarketPulse()"
+                style="flex:1;min-width:140px;padding:6px 8px;border:1px solid var(--border);border-radius:5px;font-size:.82rem;background:var(--bg);color:var(--text)">
+          <option value="">All Stocks</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:5px;font-size:.78rem;font-weight:700;color:var(--muted);white-space:nowrap">
+          <input type="checkbox" id="mp-idx-only" checked onchange="renderMarketPulse()" style="width:auto">
+          📊 Index Only
+        </label>
+      </div>
+      <div id="mp-summary" style="font-size:.76rem;color:var(--muted);padding:6px 0;border-top:1px solid var(--border)"></div>
+    </div>
+  </div>
+
+  <div id="mp-subnav" style="display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:4px;margin-bottom:8px;padding-bottom:2px">
+    <button class="mp-tab active" data-view="gainers"  onclick="mpSwitch('gainers')">🚀 Gainers</button>
+    <button class="mp-tab"        data-view="losers"   onclick="mpSwitch('losers')">📉 Losers</button>
+    <button class="mp-tab"        data-view="volume"   onclick="mpSwitch('volume')">📦 Volume</button>
+    <button class="mp-tab"        data-view="value"    onclick="mpSwitch('value')">💰 Value</button>
+    <button class="mp-tab"        data-view="delivery" onclick="mpSwitch('delivery')">🎯 Del%</button>
+    <button class="mp-tab"        data-view="circuits" onclick="mpSwitch('circuits')">⚡ Circuits</button>
+    <button class="mp-tab"        data-view="trend"    onclick="mpSwitch('trend')">📈 Trend</button>
+    <button class="mp-tab"        data-view="heatmap"  onclick="mpSwitch('heatmap')">🗺 Heatmap</button>
+  </div>
+
+  <!-- Table view (gainers/losers/volume/value/delivery/circuits/trend) -->
+  <div class="panel" id="mp-table-panel">
+    <div id="mp-table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table id="mp-table">
+        <thead><tr>
+          <th>#</th>
+          <th style="text-align:left">Symbol</th>
+          <th>Close</th>
+          <th>Chg%</th>
+          <th>Del%</th>
+          <th>Volume</th>
+          <th>T/O(₹L)</th>
+          <th>Circuit</th>
+          <th>Trend</th>
+        </tr></thead>
+        <tbody id="mp-table-body"></tbody>
+      </table>
+    </div>
+    <div id="mp-empty" style="padding:30px 16px;text-align:center;color:var(--muted);font-size:.85rem">
+      Loading market data…
+    </div>
+  </div>
+
+  <!-- Heatmap view -->
+  <div class="panel" id="mp-heatmap-panel" style="display:none">
+    <div style="padding:8px 10px;font-size:.72rem;color:var(--muted)">
+      Tile size = turnover  |  Colour = Chg%  |  Tap tile for chart
+    </div>
+    <div id="mp-heatmap-grid"></div>
+  </div>
+
+  <!-- Index performance bar chart (shown alongside heatmap, below on mobile) -->
+  <div class="panel" id="mp-index-panel" style="display:none">
+    <div class="panel-hdr">📊 Index Performance</div>
+    <div id="mp-index-bars" style="padding:8px 10px"></div>
+  </div>
+
 </div>
 
 <!-- ══════════ HISTORY SECTION ══════════ -->
@@ -1487,6 +1594,303 @@ function buildIndexChips(){
 }
 
 // ══════════════════════════════════════════════════
+//  MARKET PULSE
+// ══════════════════════════════════════════════════
+let mpView = 'gainers';
+let mpSwingCache = {};   // symbol -> {trend, badge}
+
+function mpPopulateIndexFilter(){
+  const sel = document.getElementById('mp-index-filter');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All Stocks</option>';
+  Object.keys(indexMap).sort().forEach(name=>{
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  if(cur && indexMap[cur]) sel.value = cur;
+}
+
+function mpSwitch(view){
+  mpView = view;
+  document.querySelectorAll('.mp-tab').forEach(b=>{
+    b.classList.toggle('active', b.dataset.view===view);
+  });
+  const isHeatmap = (view === 'heatmap');
+  document.getElementById('mp-table-panel').style.display   = isHeatmap ? 'none' : 'block';
+  document.getElementById('mp-heatmap-panel').style.display  = isHeatmap ? 'block' : 'none';
+  document.getElementById('mp-index-panel').style.display    = isHeatmap ? 'block' : 'none';
+  renderMarketPulse();
+}
+
+function mpGetIndexedSymbols(){
+  const all = new Set();
+  Object.values(indexMap).forEach(set=>{ set.forEach(s=>all.add(s)); });
+  return all;
+}
+
+// F&O circuit bands: 1st=10%,2nd=15%,3rd=20% | Non-F&O fixed: 2/5/10/20%
+function mpCircuitBadge(sym, chg, close, high, low){
+  if(!chg) return {text:'', cls:''};
+  const isFno = FNO_STOCKS.has(sym);
+  // Pin check — close must be within 0.05% of high(UC) or low(LC)
+  if(close>0 && high>0 && low>0){
+    if(chg>0){
+      const pctFromHigh = (high-close)/high*100;
+      if(pctFromHigh > 0.05) return {text:'', cls:''};
+    } else if(chg<0){
+      const pctFromLow = close>0 ? (close-low)/close*100 : 0;
+      if(pctFromLow > 0.05) return {text:'', cls:''};
+    }
+  }
+  if(isFno){
+    if(chg>=20)  return {text:'🔴UC3', cls:'uc3'};
+    if(chg>=15)  return {text:'🟠UC2', cls:'uc2'};
+    if(chg>=10)  return {text:'🟡UC1', cls:'uc1'};
+    if(chg<=-20) return {text:'🔴LC3', cls:'lc3'};
+    if(chg<=-15) return {text:'🟠LC2', cls:'lc2'};
+    if(chg<=-10) return {text:'🟡LC1', cls:'lc1'};
+    return {text:'', cls:''};
+  }
+  const tol=0.4;
+  if(chg>0){
+    for(const [band,lbl] of [[20,'UC20'],[10,'UC10'],[5,'UC5'],[2,'UC2']]){
+      if(Math.abs(chg-band)<=tol) return {text:'🔼'+lbl, cls:'ucfix'};
+    }
+  } else {
+    for(const [band,lbl] of [[20,'LC20'],[10,'LC10'],[5,'LC5'],[2,'LC2']]){
+      if(Math.abs(chg+band)<=tol) return {text:'🔽'+lbl, cls:'lcfix'};
+    }
+  }
+  return {text:'', cls:''};
+}
+
+// 30-day Dow Theory swing trend (HH/HL/LH/LL) from historicalData
+function mpComputeSwing(sym){
+  if(mpSwingCache[sym]) return mpSwingCache[sym];
+  const dates = Object.keys(historicalData).sort();   // ascending DD-MM-YYYY string sort works since format is fixed-width
+  const sorted = dates.map(d=>({d, rows:historicalData[d]}))
+    .sort((a,b)=>{
+      const pa=a.d.split('-'), pb=b.d.split('-');
+      const da=new Date(+pa[2],+pa[1]-1,+pa[0]);
+      const db=new Date(+pb[2],+pb[1]-1,+pb[0]);
+      return da-db;
+    });
+  const highs=[],lows=[];
+  for(const {rows} of sorted){
+    const row = rows.find(r=>r.SYMBOL===sym);
+    if(row && row.HIGH>0 && row.LOW>0){ highs.push(row.HIGH); lows.push(row.LOW); }
+  }
+  const n = highs.length;
+  if(n<5){ mpSwingCache[sym]={trend:'NEUTRAL',badge:''}; return mpSwingCache[sym]; }
+
+  const win=2;
+  const swingHighs=[], swingLows=[];
+  for(let i=win;i<n-win;i++){
+    const wh = highs.slice(i-win,i+win+1);
+    if(highs[i]===Math.max(...wh)){
+      if(!swingHighs.length || i-swingHighs[swingHighs.length-1][0]>=win) swingHighs.push([i,highs[i]]);
+    }
+    const wl = lows.slice(i-win,i+win+1);
+    if(lows[i]===Math.min(...wl)){
+      if(!swingLows.length || i-swingLows[swingLows.length-1][0]>=win) swingLows.push([i,lows[i]]);
+    }
+  }
+  if(swingHighs.length<2 || swingLows.length<2){
+    mpSwingCache[sym]={trend:'NEUTRAL',badge:''}; return mpSwingCache[sym];
+  }
+  const hh = swingHighs[swingHighs.length-1][1] > swingHighs[swingHighs.length-2][1];
+  const hl = swingLows[swingLows.length-1][1]  > swingLows[swingLows.length-2][1];
+  let trend, badge;
+  if(hh && hl){ trend='HH+HL'; badge='🔼HH+HL'; }
+  else if(!hh && !hl){ trend='LH+LL'; badge='🔽LH+LL'; }
+  else if(hh && !hl){ trend='HH+LL'; badge='↔HH+LL'; }
+  else { trend='LH+HL'; badge='↔LH+HL'; }
+  mpSwingCache[sym]={trend,badge};
+  return mpSwingCache[sym];
+}
+
+function mpGetFilteredData(){
+  let data = todayData.map(r=>{
+    const close=r.CLOSE, prev=r.PREV_CLOSE;
+    const chg = prev ? (close-prev)/prev*100 : 0;
+    return {
+      symbol:r.SYMBOL, close, prev, chg,
+      high:r.HIGH, low:r.LOW, delPct:r.DELIV_PER,
+      vol:r.TTL_TRD_QNTY, turnover:r.TURNOVER_LACS,
+    };
+  });
+
+  if(document.getElementById('mp-idx-only').checked){
+    const idxSet = mpGetIndexedSymbols();
+    if(idxSet.size) data = data.filter(r=>idxSet.has(r.symbol));
+  }
+  const idxFilter = document.getElementById('mp-index-filter').value;
+  if(idxFilter && indexMap[idxFilter]){
+    const valid = indexMap[idxFilter];
+    data = data.filter(r=>valid.has(r.symbol));
+  }
+  return data;
+}
+
+function renderMarketPulse(){
+  if(!todayData.length){
+    document.getElementById('mp-empty').style.display='block';
+    document.getElementById('mp-empty').textContent='No data loaded yet.';
+    return;
+  }
+  const data = mpGetFilteredData();
+  const gainers = data.filter(r=>r.chg>0).length;
+  const losers  = data.filter(r=>r.chg<0).length;
+  let circuits = 0;
+  data.forEach(r=>{ if(mpCircuitBadge(r.symbol,r.chg,r.close,r.high,r.low).text) circuits++; });
+  document.getElementById('mp-summary').innerHTML =
+    `Total: <b>${data.length}</b>  |  Gainers: <b style="color:var(--green)">${gainers}</b>  |  `+
+    `Losers: <b style="color:var(--red)">${losers}</b>  |  Circuit hits: <b>${circuits}</b>`;
+
+  if(mpView === 'heatmap'){
+    mpRenderHeatmap(data);
+    mpRenderIndexBars();
+    return;
+  }
+  mpRenderTable(data);
+}
+
+function mpRenderTable(data){
+  let rows = [...data];
+  switch(mpView){
+    case 'gainers':  rows=rows.filter(r=>r.chg>0).sort((a,b)=>b.chg-a.chg); break;
+    case 'losers':   rows=rows.filter(r=>r.chg<0).sort((a,b)=>a.chg-b.chg); break;
+    case 'volume':   rows=rows.sort((a,b)=>b.vol-a.vol); break;
+    case 'value':    rows=rows.sort((a,b)=>b.turnover-a.turnover); break;
+    case 'delivery': rows=rows.filter(r=>r.delPct>0).sort((a,b)=>b.delPct-a.delPct); break;
+    case 'circuits':
+      rows=rows.filter(r=>mpCircuitBadge(r.symbol,r.chg,r.close,r.high,r.low).text);
+      rows.sort((a,b)=>Math.abs(b.chg)-Math.abs(a.chg));
+      break;
+    case 'trend':
+      rows.sort((a,b)=>{
+        const order={'HH+HL':0,'LH+HL':1,'HH+LL':2,'LH+LL':3,'NEUTRAL':4};
+        return order[mpComputeSwing(a.symbol).trend]-order[mpComputeSwing(b.symbol).trend];
+      });
+      break;
+  }
+  if(mpView!=='circuits' && mpView!=='trend') rows = rows.slice(0,50);
+
+  const tbody = document.getElementById('mp-table-body');
+  tbody.innerHTML='';
+  document.getElementById('mp-empty').style.display = rows.length ? 'none' : 'block';
+  if(!rows.length){ document.getElementById('mp-empty').textContent='No stocks match this view.'; return; }
+
+  rows.forEach((r,i)=>{
+    const ckt = mpCircuitBadge(r.symbol, r.chg, r.close, r.high, r.low);
+    const sw  = mpComputeSwing(r.symbol);
+    const trendCls = sw.trend==='HH+HL'?'up':sw.trend==='LH+LL'?'dn':sw.trend==='NEUTRAL'?'':'mx';
+    const volS = r.vol>=1e7?(r.vol/1e7).toFixed(2)+'Cr':r.vol>=1e5?(r.vol/1e5).toFixed(2)+'L':r.vol>=1e3?(r.vol/1e3).toFixed(0)+'K':r.vol;
+    const chgCls = r.chg>=0?'up':'down';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${i+1}</td>
+      <td class="sym" style="cursor:pointer" onclick="openDetail('${r.symbol}')">📈 ${r.symbol}</td>
+      <td>₹${r.close.toFixed(2)}</td>
+      <td class="${chgCls}">${r.chg>=0?'+':''}${r.chg.toFixed(2)}%</td>
+      <td>${r.delPct.toFixed(1)}%</td>
+      <td>${volS}</td>
+      <td>${r.turnover.toFixed(1)}</td>
+      <td>${ckt.text?`<span class="mp-circuit ${ckt.cls}">${ckt.text}</span>`:'—'}</td>
+      <td>${sw.badge?`<span class="mp-trend ${trendCls}">${sw.badge}</span>`:'—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── Heatmap (CSS flex-based treemap approximation) ─────────────────────
+function mpRenderHeatmap(data){
+  const grid = document.getElementById('mp-heatmap-grid');
+  grid.innerHTML='';
+  if(!data.length) return;
+
+  const sorted = [...data].sort((a,b)=>b.turnover-a.turnover).slice(0,60);
+  const totalTo = sorted.reduce((s,r)=>s+Math.max(r.turnover,1),0) || 1;
+  const gridArea = 1000;   // virtual area units, flex-wrap handles actual layout
+
+  sorted.forEach(r=>{
+    const areaFrac = Math.max(r.turnover,1)/totalTo;
+    const px = Math.max(46, Math.sqrt(areaFrac*gridArea)*16);
+    const tile = document.createElement('div');
+    tile.className='hm-tile';
+    tile.style.width  = px+'px';
+    tile.style.height = Math.max(36, px*0.62)+'px';
+    tile.style.background = mpChgToColor(r.chg);
+    tile.onclick = ()=>openDetail(r.symbol);
+    tile.innerHTML = `<div class="hm-sym">${r.symbol}</div><div class="hm-chg">${r.chg>=0?'+':''}${r.chg.toFixed(2)}%</div>`;
+    grid.appendChild(tile);
+  });
+}
+
+function mpChgToColor(chg){
+  const capped = Math.max(-5, Math.min(5, chg));
+  let r,g,b;
+  if(capped>=0){
+    const t=capped/5;
+    r=Math.round(38+(20-38)*t); g=Math.round(50+(180-50)*t); b=Math.round(40+(60-40)*t);
+  } else {
+    const t=(-capped)/5;
+    r=Math.round(50+(200-50)*t); g=Math.round(40+(30-40)*t); b=Math.round(40+(30-40)*t);
+  }
+  return `rgb(${r},${g},${b})`;
+}
+
+// ── Index performance horizontal bars ───────────────────────────────────
+function mpRenderIndexBars(){
+  const wrap = document.getElementById('mp-index-bars');
+  wrap.innerHTML='';
+  if(!Object.keys(indexMap).length){
+    wrap.innerHTML='<div style="color:var(--muted);font-size:.8rem">No index files loaded.</div>';
+    return;
+  }
+  const chgLookup = {};
+  todayData.forEach(r=>{
+    chgLookup[r.SYMBOL] = r.PREV_CLOSE ? (r.CLOSE-r.PREV_CLOSE)/r.PREV_CLOSE*100 : 0;
+  });
+
+  const perf = [];
+  for(const [name, symSet] of Object.entries(indexMap)){
+    const chgs=[];
+    symSet.forEach(s=>{ if(chgLookup[s]!==undefined) chgs.push(chgLookup[s]); });
+    if(!chgs.length) continue;
+    const avg = chgs.reduce((a,b)=>a+b,0)/chgs.length;
+    const gainers = chgs.filter(c=>c>0).length;
+    const losers  = chgs.filter(c=>c<0).length;
+    perf.push({name, avg, n:chgs.length, gainers, losers});
+  }
+  perf.sort((a,b)=>b.avg-a.avg);
+
+  const maxAbs = Math.max(0.3, ...perf.map(p=>Math.abs(p.avg)));
+  perf.forEach(p=>{
+    const frac = p.avg/maxAbs;   // -1..1
+    const widthPct = Math.min(50, Math.abs(frac)*50);
+    const isPos = p.avg>=0;
+    const row=document.createElement('div');
+    row.className='idx-bar-row';
+    row.style.cursor='pointer';
+    row.onclick=()=>{ document.getElementById('mp-index-filter').value=p.name; renderMarketPulse(); };
+    row.innerHTML=`
+      <div class="idx-bar-top">
+        <span>${p.name}</span>
+        <span style="color:${isPos?'var(--green)':'var(--red)'}">${isPos?'+':''}${p.avg.toFixed(2)}%</span>
+      </div>
+      <div class="idx-bar-track">
+        <div class="idx-bar-mid"></div>
+        <div class="idx-bar-fill ${isPos?'pos':'neg'}" style="width:${widthPct}%"></div>
+      </div>
+      <div class="idx-bar-meta">${p.n} stocks &nbsp;▲${p.gainers} ▼${p.losers}</div>
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+// ══════════════════════════════════════════════════
 //  SCANNER TOGGLE
 // ══════════════════════════════════════════════════
 function toggleScanner(cb,lblId){
@@ -1521,6 +1925,7 @@ function showSection(id){
   document.querySelectorAll('.snav-btn').forEach(b=>{ if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(id)) b.classList.add('active'); });
   if(id==='history')renderHistory();
   if(id==='deals')loadDealsData();
+  if(id==='pulse'){mpPopulateIndexFilter();renderMarketPulse();}
   if(id==='detail'){document.getElementById('snav-detail').style.display='block';}
 }
 
