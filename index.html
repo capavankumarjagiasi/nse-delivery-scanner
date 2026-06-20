@@ -157,6 +157,19 @@ tbody td.indices-col{text-align:left;font-size:.70rem;color:var(--muted);max-wid
 @media(min-width:700px){
   #sec-pulse-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:10px}
 }
+/* Swing Setup */
+.sw-sector-chip{padding:8px 12px;font-size:.74rem;font-weight:700;color:var(--text);background:var(--card);border:1.5px solid var(--border);border-radius:10px;white-space:nowrap;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:70px}
+.sw-sector-chip .sw-chip-score{font-size:.9rem;font-weight:800}
+.sw-sector-chip.active{background:#1A6B2E;color:#fff;border-color:#1A6B2E}
+.sw-sector-chip.active .sw-chip-score{color:#fff}
+.sw-sector-chip:hover:not(.active){border-color:#1A6B2E}
+#sw-table tr.sw-strong{background:var(--green-bg)}
+#sw-table tr.sw-mid{background:#FFF8E1}
+#sw-table tr.sw-extended{background:var(--red-bg)}
+.sw-atr{display:inline-block;padding:1px 6px;border-radius:5px;font-size:.64rem;font-weight:700}
+.sw-atr.tight{background:var(--green-bg);color:var(--green)}
+.sw-atr.wide{background:var(--red-bg);color:var(--red)}
+.sw-atr.flat{background:#EEE;color:var(--muted)}
 /* Empty state */
 #empty-state{padding:40px 20px;text-align:center;color:var(--muted);font-size:.9rem}
 #empty-state .big{font-size:2.5rem;margin-bottom:10px}
@@ -366,6 +379,7 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
 <div id="section-nav">
   <button class="snav-btn" onclick="showSection('scan')">📊 Scanner</button>
   <button class="snav-btn" onclick="showSection('pulse')">⚡ Market Pulse</button>
+  <button class="snav-btn" onclick="showSection('swing')">🎯 Swing Setup</button>
   <button class="snav-btn" onclick="showSection('history')">📋 History &amp; P&amp;L</button>
   <button class="snav-btn" onclick="showSection('deals')">🔴 Deals</button>
   <button class="snav-btn" onclick="showSection('shortsell')">🔻 Short Sell</button>
@@ -605,6 +619,68 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
   <div class="panel" id="mp-index-panel" style="display:none">
     <div class="panel-hdr">📊 Index Performance</div>
     <div id="mp-index-bars" style="padding:8px 10px"></div>
+  </div>
+
+</div>
+
+<!-- ══════════ SWING SETUP SECTION ══════════ -->
+<div id="sec-swing" class="section">
+
+  <div class="panel" style="margin-top:10px">
+    <div class="panel-hdr">🎯 Swing Trade Setups</div>
+    <div style="padding:10px 12px">
+      <div style="font-size:.74rem;color:var(--muted);margin-bottom:8px">
+        Target 5–10% over 10–20 sessions
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <select id="sw-minscore" onchange="renderSwingSetups()"
+                style="padding:6px 8px;border:1px solid var(--border);border-radius:5px;font-size:.82rem;background:var(--bg);color:var(--text)">
+          <option value="0">Min Score: 0</option>
+          <option value="30" selected>Min Score: 30</option>
+          <option value="40">Min Score: 40</option>
+          <option value="50">Min Score: 50</option>
+          <option value="60">Min Score: 60</option>
+          <option value="70">Min Score: 70</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:5px;font-size:.78rem;font-weight:700;color:var(--muted);white-space:nowrap">
+          <input type="checkbox" id="sw-idx-only" checked onchange="renderSwingSetups()" style="width:auto">
+          📊 Index Only
+        </label>
+        <button class="btn btn-primary" style="margin-left:auto" onclick="runSwingScan()">🔄 Scan Now</button>
+      </div>
+      <div id="sw-status" style="font-size:.76rem;color:var(--muted);padding:6px 0;border-top:1px solid var(--border)">
+        Tap 'Scan Now' to evaluate today's swing setups.
+      </div>
+    </div>
+  </div>
+
+  <!-- Sector filter strip -->
+  <div id="sw-sector-strip" style="display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:6px;margin-bottom:8px;padding-bottom:2px"></div>
+
+  <div class="panel" id="sw-table-panel">
+    <div id="sw-table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table id="sw-table">
+        <thead><tr>
+          <th>#</th>
+          <th style="text-align:left">Symbol</th>
+          <th style="text-align:left">Sector</th>
+          <th>Score</th>
+          <th>Entry</th>
+          <th>SL</th>
+          <th>Risk%</th>
+          <th>T1 (5%)</th>
+          <th>T2 (8%)</th>
+          <th>T3 (12%)</th>
+          <th>RS vs N</th>
+          <th>ATR</th>
+          <th>Vol×</th>
+        </tr></thead>
+        <tbody id="sw-table-body"></tbody>
+      </table>
+    </div>
+    <div id="sw-empty" style="padding:30px 16px;text-align:center;color:var(--muted);font-size:.85rem">
+      No scan run yet — tap 'Scan Now' above.
+    </div>
   </div>
 
 </div>
@@ -926,6 +1002,10 @@ const EXCLUDE_KEYWORDS = ['NIFTY','SENSEX','GOLDBEES','LIQUIDBEES','SETFNN50','I
 
 // NSE F&O eligible stocks (as of Jun 2026 — update quarterly)
 const FNO_STOCKS = new Set(['AARTIIND','ABB','ABBOTINDIA','ABCAPITAL','ABFRL','ACC','ADANIENT','ADANIPORTS','ALKEM','AMBUJACEM','APOLLOHOSP','APOLLOTYRE','ASHOKLEY','ASIANPAINT','ASTRAL','ATUL','AUBANK','AUROPHARMA','AXISBANK','BAJAJ-AUTO','BAJAJFINSV','BAJFINANCE','BALKRISIND','BANDHANBNK','BANKBARODA','BATAINDIA','BEL','BERGEPAINT','BHARATFORG','BHARTIARTL','BHEL','BIOCON','BOSCHLTD','BPCL','BRITANNIA','BSOFT','CANBK','CANFINHOME','CHAMBLFERT','CHOLAFIN','CIPLA','COALINDIA','COFORGE','COLPAL','CONCOR','COROMANDEL','CROMPTON','CUB','CUMMINSIND','DABUR','DALBHARAT','DEEPAKNTR','DELTACORP','DIVISLAB','DIXON','DLF','DRREDDY','EICHERMOT','ESCORTS','EXIDEIND','FEDERALBNK','FINNIFTY','FORTIS','GAIL','GLENMARK','GMRINFRA','GNFC','GODREJCP','GODREJPROP','GRANULES','GRASIM','GSPL','GUJGASLTD','HAVELLS','HCLTECH','HDFCAMC','HDFCBANK','HDFCLIFE','HEROMOTOCO','HINDALCO','HINDCOPPER','HINDPETRO','HINDUNILVR','ICICIBANK','ICICIGI','ICICIPRULI','IDEA','IDFCFIRSTB','IEX','IGL','INDHOTEL','INDIACEM','INDIAMART','INDIGO','INDUSINDBK','INDUSTOWER','INFY','INTELLECT','IOC','IPCALAB','IRCTC','ITC','JINDALSTEL','JKCEMENT','JSWSTEEL','JUBLFOOD','KOTAKBANK','KPITTECH','L&TFH','LALPATHLAB','LATENTVIEW','LAURUSLABS','LICHSGFIN','LT','LTIM','LTTS','LUPIN','M&M','M&MFIN','MANAPPURAM','MARICO','MARUTI','MCX','METROPOLIS','MFSL','MGL','MOTHERSON','MPHASIS','MRF','MUTHOOTFIN','NATIONALUM','NAVINFLUOR','NAUKRI','NBCC','NCC','NESTLEIND','NHPC','NMDC','NTPC','OBEROIRLTY','OFSS','OIL','ONGC','PAGEIND','PEL','PERSISTENT','PETRONET','PFC','PIDILITIND','PIIND','PNB','POLYCAB','POWERGRID','PVRINOX','RAIN','RAMCOCEM','RBLBANK','RECLTD','RELIANCE','SAIL','SBICARD','SBILIFE','SBIN','SHREECEM','SHRIRAMFIN','SIEMENS','SRF','SUNPHARMA','SUNTV','SYNGENE','TATACHEM','TATACOMM','TATACONSUM','TATAMOTORS','TATAPOWER','TATASTEEL','TCS','TECHM','TIINDIA','TITAN','TORNTPHARM','TORNTPOWER','TRENT','TVSMOTOR','UBL','ULTRACEMCO','UNITDSPR','UPL','VEDL','VOLTAS','WIPRO','ZEEL','ZOMATO','ZYDUSLIFE']);
+
+// F&O Sector master map — {SYMBOL: [Sector, Industry]}
+const FO_SECTOR_MAP = {"ABB":["Capital Goods","Electrical Equipment"],"ABCAPITAL":["NBFC","Diversified Financial"],"ADANIPORTS":["Infrastructure","Ports & Logistics"],"AMBER":["Consumer Durables","Electronics"],"ANGELONE":["NBFC","Broking"],"ASHOKLEY":["Auto","Commercial Vehicles"],"BAJAJ-AUTO":["Auto","Two Wheelers"],"BAJAJHLDNG":["NBFC","Investment Company"],"BAJFINANCE":["NBFC","Consumer Finance"],"ADANIENSOL":["Power","Power Transmission"],"ADANIENT":["Conglomerate","Diversified"],"ADANIGREEN":["Power","Renewable Energy"],"ADANIPOWER":["Power","Power Generation"],"ATGL":["Energy","Gas Distribution"],"ABFRL":["Consumer","Retail"],"ALKEM":["Pharma","Pharmaceuticals"],"AMBUJACEM":["Cement","Cement"],"APOLLOHOSP":["Healthcare","Hospitals"],"APOLLOTYRE":["Auto","Auto Ancillary"],"ASTRAL":["Building Materials","Pipes"],"AUROPHARMA":["Pharma","Pharmaceuticals"],"AXISBANK":["Banking","Private Banks"],"BAJAJFINSV":["NBFC","Diversified Financial"],"BALKRISIND":["Auto","Auto Ancillary"],"BANDHANBNK":["Banking","Private Banks"],"BANKBARODA":["Banking","Public Sector Banks"],"BATAINDIA":["Consumer","Footwear"],"BEL":["Capital Goods","Defence Electronics"],"BERGEPAINT":["Consumer","Paints"],"BHARATFORG":["Auto","Auto Ancillary"],"BHARTIARTL":["Telecom","Telecom Services"],"BHEL":["Capital Goods","Heavy Engineering"],"BIOCON":["Pharma","Biotechnology"],"BOSCHLTD":["Auto","Auto Ancillary"],"BPCL":["Energy","Oil Refining"],"BRITANNIA":["FMCG","Food Products"],"CANBK":["Banking","Public Sector Banks"],"CHOLAFIN":["NBFC","Vehicle Finance"],"CIPLA":["Pharma","Pharmaceuticals"],"COALINDIA":["Mining","Coal"],"COFORGE":["IT","IT Services"],"COLPAL":["FMCG","Personal Products"],"CONCOR":["Infrastructure","Logistics"],"COROMANDEL":["Chemicals","Agro Chemicals"],"CROMPTON":["Consumer Durables","Electrical Appliances"],"CUMMINSIND":["Capital Goods","Industrial Machinery"],"DABUR":["FMCG","Personal Products"],"DALBHARAT":["Cement","Cement"],"DEEPAKFERT":["Chemicals","Fertilizers"],"DEEPAKNTR":["Chemicals","Specialty Chemicals"],"DIVISLAB":["Pharma","Pharmaceuticals"],"DIXON":["Consumer Durables","Electronics"],"DLF":["Real Estate","Real Estate"],"DRREDDY":["Pharma","Pharmaceuticals"],"EICHERMOT":["Auto","Two Wheelers"],"ESCORTS":["Auto","Tractors"],"EXIDEIND":["Auto","Auto Ancillary"],"FEDERALBNK":["Banking","Private Banks"],"FORTIS":["Healthcare","Hospitals"],"GAIL":["Energy","Gas Transmission"],"GLENMARK":["Pharma","Pharmaceuticals"],"GMRAIRPORT":["Infrastructure","Airports"],"GODREJCP":["FMCG","Personal Products"],"GODREJPROP":["Real Estate","Real Estate"],"GRANULES":["Pharma","Pharmaceuticals"],"GRASIM":["Cement","Cement & Diversified"],"GSPL":["Energy","Gas Transmission"],"HAL":["Capital Goods","Defence & Aerospace"],"HAVELLS":["Consumer Durables","Electrical Equipment"],"HCLTECH":["IT","IT Services"],"HDFCAMC":["NBFC","Asset Management"],"HDFCBANK":["Banking","Private Banks"],"HDFCLIFE":["Insurance","Life Insurance"],"HEROMOTOCO":["Auto","Two Wheelers"],"HINDALCO":["Metal","Aluminium"],"HINDCOPPER":["Metal","Copper"],"HINDPETRO":["Energy","Oil Refining"],"HINDUNILVR":["FMCG","FMCG Diversified"],"ICICIBANK":["Banking","Private Banks"],"ICICIGI":["Insurance","General Insurance"],"ICICIPRULI":["Insurance","Life Insurance"],"IDEA":["Telecom","Telecom Services"],"IDFCFIRSTB":["Banking","Private Banks"],"IEX":["Capital Goods","Energy Exchange"],"IGL":["Energy","Gas Distribution"],"INDHOTEL":["Consumer","Hotels"],"INDIACEM":["Cement","Cement"],"INDIAMART":["IT","E-Commerce"],"INDIGO":["Infrastructure","Airlines"],"INDUSINDBK":["Banking","Private Banks"],"INDUSTOWER":["Telecom","Telecom Infrastructure"],"INFY":["IT","IT Services"],"IOC":["Energy","Oil Refining"],"IPCALAB":["Pharma","Pharmaceuticals"],"IRCTC":["Infrastructure","Tourism"],"ITC":["FMCG","FMCG Diversified"],"JINDALSTEL":["Metal","Steel"],"JKCEMENT":["Cement","Cement"],"JSL":["Metal","Stainless Steel"],"JSWENERGY":["Power","Power Generation"],"JSWSTEEL":["Metal","Steel"],"JUBLFOOD":["Consumer","Quick Service Restaurants"],"KALYANKJIL":["Consumer","Jewellery"],"KPITTECH":["IT","IT Services"],"KOTAKBANK":["Banking","Private Banks"],"LALPATHLAB":["Healthcare","Diagnostic Centres"],"LAURUSLABS":["Pharma","Pharmaceuticals"],"LICHSGFIN":["NBFC","Housing Finance"],"LICI":["Insurance","Life Insurance"],"LTIM":["IT","IT Services"],"LTTS":["IT","IT Services"],"LT":["Capital Goods","Construction"],"LUPIN":["Pharma","Pharmaceuticals"],"M&M":["Auto","SUV & Tractors"],"M&MFIN":["NBFC","Vehicle Finance"],"MARICO":["FMCG","Personal Products"],"MARUTI":["Auto","Passenger Vehicles"],"MAXHEALTH":["Healthcare","Hospitals"],"MCX":["Capital Goods","Commodity Exchange"],"METROPOLIS":["Healthcare","Diagnostic Centres"],"MFSL":["Insurance","Life Insurance"],"MHRIL":["Consumer","Hotels"],"MOTHERSON":["Auto","Auto Ancillary"],"MPHASIS":["IT","IT Services"],"MRF":["Auto","Auto Ancillary"],"MUTHOOTFIN":["NBFC","Gold Finance"],"NAUKRI":["IT","Internet Services"],"NAVINFLUOR":["Chemicals","Specialty Chemicals"],"NESTLEIND":["FMCG","Food Products"],"NMDC":["Mining","Iron Ore"],"NTPC":["Power","Power Generation"],"OBEROIRLTY":["Real Estate","Real Estate"],"OFSS":["IT","IT Services"],"ONGC":["Energy","Oil Exploration"],"PAGEIND":["Consumer","Garments"],"PATANJALI":["FMCG","Edible Oil"],"PERSISTENT":["IT","IT Services"],"PETRONET":["Energy","Gas Terminals"],"PIDILITIND":["Chemicals","Adhesives"],"PIIND":["Chemicals","Agro Chemicals"],"PNB":["Banking","Public Sector Banks"],"PNBHOUSING":["NBFC","Housing Finance"],"POLYCAB":["Consumer Durables","Electrical Cables"],"POONAWALLA":["NBFC","Consumer Finance"],"POWERGRID":["Power","Power Transmission"],"PVRINOX":["Consumer","Entertainment"],"RAMCOCEM":["Cement","Cement"],"RECLTD":["NBFC","Power Finance"],"RELIANCE":["Energy","Oil & Gas Conglomerate"],"SAIL":["Metal","Steel"],"SBICARD":["NBFC","Credit Cards"],"SBILIFE":["Insurance","Life Insurance"],"SBIN":["Banking","Public Sector Banks"],"SHREECEM":["Cement","Cement"],"SHRIRAMFIN":["NBFC","Vehicle Finance"],"SIEMENS":["Capital Goods","Electrical Equipment"],"SOLARINDS":["Capital Goods","Explosives"],"SRF":["Chemicals","Specialty Chemicals"],"SUNPHARMA":["Pharma","Pharmaceuticals"],"SUNTV":["Media","Television Broadcasting"],"SUPREMEIND":["Building Materials","Plastic Products"],"TATACOMM":["Telecom","Telecom Services"],"TATACONSUM":["FMCG","Food & Beverages"],"TATAMOTORS":["Auto","Commercial & Passenger Vehicles"],"TATAPOWER":["Power","Power Generation"],"TATASTEEL":["Metal","Steel"],"TCS":["IT","IT Services"],"TECHM":["IT","IT Services"],"TITAN":["Consumer","Jewellery & Watches"],"TORNTPHARM":["Pharma","Pharmaceuticals"],"TORNTPOWER":["Power","Power Generation"],"TRENT":["Consumer","Retail"],"TVSMOTOR":["Auto","Two Wheelers"],"UBL":["FMCG","Beverages"],"ULTRACEMCO":["Cement","Cement"],"UNIONBANK":["Banking","Public Sector Banks"],"UNOMINDA":["Auto","Auto Ancillary"],"UPL":["Chemicals","Agro Chemicals"],"VEDL":["Metal","Diversified Metals"],"VOLTAS":["Consumer Durables","Air Conditioning"],"WIPRO":["IT","IT Services"],"YESBANK":["Banking","Private Banks"],"ZOMATO":["Consumer","Food Delivery"],"ZYDUSLIFE":["Pharma","Pharmaceuticals"],"MANKIND":["Pharma","Pharmaceuticals"],"NYKAA":["Consumer","E-Commerce"],"PAYTM":["NBFC","Payments"],"DELHIVERY":["Infrastructure","Logistics"],"POLICYBZR":["NBFC","Insurance Platform"],"IRFC":["NBFC","Railway Finance"],"NHPC":["Power","Hydro Power"],"SJVN":["Power","Hydro Power"],"RVNL":["Infrastructure","Railway Construction"],"HUDCO":["NBFC","Housing Finance"],"MAZDOCK":["Capital Goods","Defence Shipbuilding"],"COCHINSHIP":["Capital Goods","Shipbuilding"],"GRSE":["Capital Goods","Defence Shipbuilding"],"BEML":["Capital Goods","Defence & Railways"],"IDBI":["Banking","Public Sector Banks"],"KAJARIACER":["Building Materials","Ceramics"],"CENTURYTEX":["Textile","Textiles & Cement"],"RAYMOND":["Textile","Textile & Real Estate"],"INDIGOPNTS":["Consumer","Paints"],"ASIANPAINT":["Consumer","Paints"],"KANSAINER":["Consumer","Paints"],"FLUOROCHEM":["Chemicals","Specialty Chemicals"],"LAXMIMACH":["Capital Goods","Textile Machinery"],"SUNDARMFIN":["NBFC","Vehicle Finance"],"GMMPFAUDLR":["Capital Goods","Industrial Equipment"],"CARBORUNIV":["Capital Goods","Abrasives"],"SUPRAJIT":["Auto","Auto Ancillary"],"GUJGASLTD":["Energy","Gas Distribution"],"MGL":["Energy","Gas Distribution"],"MINDAIND":["Auto","Auto Ancillary"],"AARTIIND":["Chemicals","Specialty Chemicals"],"CLEAN":["Chemicals","Specialty Chemicals"],"FINEORG":["Chemicals","Specialty Chemicals"],"TATACHEM":["Chemicals","Chemicals"],"GNFC":["Chemicals","Fertilizers & Chemicals"],"CHAMBLFERT":["Chemicals","Fertilizers"],"EQUITASBNK":["Banking","Small Finance Banks"],"UJJIVANSFB":["Banking","Small Finance Banks"],"CREDITACC":["NBFC","Microfinance"],"SPANDANA":["NBFC","Microfinance"],"MANAPPURAM":["NBFC","Gold Finance"],"IIFL":["NBFC","Diversified Financial"],"5PAISA":["NBFC","Broking"],"MOTILALOFS":["NBFC","Broking"],"NIPPONLIFE":["NBFC","Asset Management"],"UTIAMC":["NBFC","Asset Management"],"STARHEALTH":["Insurance","General Insurance"],"NIACL":["Insurance","General Insurance"],"GICRE":["Insurance","Reinsurance"]};
+
 
 // ══════════════════════════════════════════════════
 //  STATE
@@ -1710,6 +1790,405 @@ function mpComputeSwing(sym){
   return mpSwingCache[sym];
 }
 
+
+// ══════════════════════════════════════════════════
+//  SWING SETUP SCANNER
+// ══════════════════════════════════════════════════
+let swingData = [];           // last scan results, sorted by score desc
+let swingSectorFilter = null; // null = show all sectors
+let swingNiftyProxyCache = null;
+
+function swGetSector(sym){
+  const e = FO_SECTOR_MAP[sym];
+  return e ? e[0] : '—';
+}
+
+function swGetSortedHistDates(){
+  const dates = Object.keys(historicalData);
+  return dates.map(d=>{
+    const p = d.split('-');
+    return {key:d, date:new Date(+p[2],+p[1]-1,+p[0])};
+  }).sort((a,b)=>a.date-b.date).map(x=>x.key);
+}
+
+function swBuildSeriesForSymbol(sym, sortedDates){
+  const closes=[], highs=[], lows=[], opens=[], vols=[], delivs=[];
+  for(const d of sortedDates){
+    const rows = historicalData[d];
+    const row = rows.find(r=>r.SYMBOL===sym);
+    if(row && row.CLOSE>0 && row.HIGH>0 && row.LOW>0){
+      opens.push(row.OPEN||row.CLOSE);
+      closes.push(row.CLOSE);
+      highs.push(row.HIGH);
+      lows.push(row.LOW);
+      vols.push(row.TTL_TRD_QNTY||0);
+      delivs.push(row.DELIV_PER||0);
+    }
+  }
+  return {closes,highs,lows,opens,vols,delivs};
+}
+
+// Equal-weighted synthetic Nifty 50 proxy — built once per scan from
+// constituent stocks already present in historicalData (Nifty 50 itself
+// is an index, never appears as a SERIES=EQ row, so a real symbol lookup
+// would always fail).
+function swBuildNiftyProxy(sortedDates){
+  if(swingNiftyProxyCache) return swingNiftyProxyCache;
+  const niftyConstituents = indexMap['Nifty 50'] || indexMap['NIFTY 50'] || new Set();
+  if(!niftyConstituents.size){ swingNiftyProxyCache=[]; return []; }
+
+  const byDate = {};
+  let constituentCount = 0;
+  niftyConstituents.forEach(sym=>{
+    let closeCount = 0;
+    for(const d of sortedDates){
+      const rows = historicalData[d];
+      const row = rows.find(r=>r.SYMBOL===sym);
+      if(row && row.CLOSE>0){
+        if(!byDate[d]) byDate[d]=[];
+        byDate[d].push(row.CLOSE);
+        closeCount++;
+      }
+    }
+    if(closeCount >= 15) constituentCount++;
+  });
+
+  let level=100.0, prevAvg=null;
+  const proxy=[];
+  for(const d of sortedDates){
+    const vals = byDate[d];
+    if(!vals || !vals.length) continue;
+    const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
+    if(prevAvg!==null && prevAvg>0) level *= (avg/prevAvg);
+    proxy.push(level);
+    prevAvg = avg;
+  }
+  swingNiftyProxyCache = proxy;
+  console.log(`Swing scan: Nifty 50 proxy built (${proxy.length} sessions, ${constituentCount} constituents)`);
+  return proxy;
+}
+
+// Wilder-smoothed ATR(14) — same math as desktop _compute_atr14
+function swComputeATR14(highs, lows, closes){
+  const n = highs.length;
+  if(n===0) return [];
+  const trs=[highs[0]-lows[0]];
+  for(let i=1;i<n;i++){
+    const hl=highs[i]-lows[i];
+    const hc=Math.abs(highs[i]-closes[i-1]);
+    const lc=Math.abs(lows[i]-closes[i-1]);
+    trs.push(Math.max(hl,hc,lc));
+  }
+  const alpha=1/14;
+  const out=[trs[0]];
+  for(let i=1;i<trs.length;i++) out.push(out[i-1]+alpha*(trs[i]-out[i-1]));
+  return out;
+}
+
+// Core 0-100 swing-setup score — mirrors desktop _compute_swing_score
+// exactly, including the corrected ATR thresholds (8%/10% — NOT the
+// original overly-strict 15%/20% that made almost everything "flat").
+function swComputeScore(closes, highs, lows, vols, delivs, niftyCloses){
+  const n = closes.length;
+  if(n<25) return {score:null};
+
+  let score=0;
+  const reasons=[];
+
+  // Swing trend (reuse same algorithm as mpComputeSwing, 2-bar window)
+  const win=2;
+  const swingHighs=[], swingLows=[];
+  for(let i=win;i<n-win;i++){
+    const wh=highs.slice(i-win,i+win+1);
+    if(highs[i]===Math.max(...wh)){
+      if(!swingHighs.length || i-swingHighs[swingHighs.length-1][0]>=win) swingHighs.push([i,highs[i]]);
+    }
+    const wl=lows.slice(i-win,i+win+1);
+    if(lows[i]===Math.min(...wl)){
+      if(!swingLows.length || i-swingLows[swingLows.length-1][0]>=win) swingLows.push([i,lows[i]]);
+    }
+  }
+  let trend='NEUTRAL';
+  if(swingHighs.length>=2 && swingLows.length>=2){
+    const hh = swingHighs[swingHighs.length-1][1] > swingHighs[swingHighs.length-2][1];
+    const hl = swingLows[swingLows.length-1][1]  > swingLows[swingLows.length-2][1];
+    if(hh&&hl) trend='HH+HL';
+    else if(!hh&&!hl) trend='LH+LL';
+    else if(hh&&!hl) trend='HH+LL';
+    else trend='LH+HL';
+  }
+
+  // 1. Early-stage HH+HL (25 pts)
+  if(trend==='HH+HL' && swingLows.length){
+    const daysSinceLow = (n-1) - swingLows[swingLows.length-1][0];
+    if(daysSinceLow<=8){
+      const pts = 25.0*Math.max(0,1-daysSinceLow/8.0);
+      score += pts;
+      reasons.push(`HH+HL (swing low ${daysSinceLow}d ago)`);
+    }
+  } else if(trend==='HH+LL'){
+    score += 6.0;
+    reasons.push('HH+LL (mixed structure)');
+  }
+
+  // 2. Near 20D high, not extended (20 pts)
+  let pullPct=null;
+  if(n>=20){
+    const hi20 = Math.max(...highs.slice(n-20));
+    if(hi20>0){
+      pullPct = (hi20-closes[n-1])/hi20*100;
+      if(pullPct>=0 && pullPct<=8.0){
+        const pts = 20.0*Math.max(0,1-pullPct/8.0);
+        score += pts;
+        reasons.push(`near 20D high (-${pullPct.toFixed(1)}%)`);
+      } else if(pullPct>25.0){
+        score -= 8.0;
+        reasons.push('far below 20D high');
+      }
+    }
+  }
+
+  // 3. Volume ratio + rising delivery% (20 pts)
+  let volRatio=null;
+  if(vols.length>=11 && vols[vols.length-1]){
+    const avg10 = vols.slice(-11,-1).reduce((a,b)=>a+b,0)/10.0;
+    volRatio = avg10 ? vols[vols.length-1]/avg10 : null;
+  }
+  let delRising=false;
+  if(delivs.length>=3){
+    const d3=delivs[delivs.length-3], d2=delivs[delivs.length-2], d1=delivs[delivs.length-1];
+    delRising = (d1>=d2 && d2>=d3 && d1>0);
+  }
+  if(volRatio!==null && volRatio>=1.5){ score+=12.0; reasons.push(`Vol ${volRatio.toFixed(1)}x avg`); }
+  else if(volRatio!==null && volRatio>=1.1){ score+=5.0; }
+  if(delRising){ score+=8.0; reasons.push('Del% rising 3d'); }
+
+  // 4. Relative strength vs Nifty, 10-session (15 pts)
+  let rs=null;
+  if(niftyCloses.length>=11 && closes.length>=11){
+    const stockRet = closes[n-11] ? (closes[n-1]-closes[n-11])/closes[n-11]*100 : null;
+    const ni = niftyCloses.length;
+    const niftyRet = niftyCloses[ni-11] ? (niftyCloses[ni-1]-niftyCloses[ni-11])/niftyCloses[ni-11]*100 : null;
+    if(stockRet!==null && niftyRet!==null){
+      rs = stockRet-niftyRet;
+      if(rs>0){ score+=Math.min(15.0,rs*1.5); reasons.push(`RS +${rs.toFixed(1)}% vs Nifty`); }
+      else if(rs<-3){ score-=5.0; reasons.push('underperforming Nifty'); }
+    }
+  }
+
+  // 5. ATR contraction (15 pts) — corrected thresholds: 8%/10%, 10D baseline
+  let atrTrend=null;
+  if(n>=17){
+    const atr = swComputeATR14(highs,lows,closes);
+    if(atr.length>=15){
+      const recent5 = atr.slice(-5).reduce((a,b)=>a+b,0)/5.0;
+      const prior10 = atr.slice(-15,-5).reduce((a,b)=>a+b,0)/10.0;
+      if(prior10>0){
+        const ratio = recent5/prior10;
+        if(ratio<0.92){
+          atrTrend='contracting';
+          const strength = Math.max(0,Math.min(1,(0.92-ratio)/0.22));
+          score += 3.0+12.0*strength;
+          reasons.push(`ATR contracting (${ratio.toFixed(2)}x)`);
+        } else if(ratio>1.10){
+          atrTrend='expanding';
+        } else {
+          atrTrend='flat';
+        }
+      }
+    }
+  }
+
+  // 6. Extended penalty
+  let extended=false;
+  if(n>=11 && closes[n-11]){
+    const ret10 = (closes[n-1]-closes[n-11])/closes[n-11]*100;
+    if(ret10>15.0){ extended=true; score-=10.0; reasons.push(`extended +${ret10.toFixed(1)}% in 10d`); }
+  }
+
+  score = Math.max(0,Math.min(100,Math.round(score*10)/10));
+
+  // Stop-loss + targets
+  const entry = closes[n-1];
+  const recentWindow = n>=10 ? lows.slice(-10) : lows.slice();
+  let slCandidate = Math.min(...recentWindow);
+  if(swingLows.length){
+    const recentStartIdx = n - recentWindow.length;
+    for(let i=swingLows.length-1;i>=0;i--){
+      if(swingLows[i][0]>=recentStartIdx){ slCandidate=swingLows[i][1]; break; }
+    }
+  }
+  let stopLoss = Math.round(slCandidate*0.99*100)/100;
+  let risk = entry-stopLoss;
+  if(risk<=0 || (risk/entry)>0.06){
+    risk = Math.round(entry*0.03*100)/100;
+    stopLoss = Math.round((entry-risk)*100)/100;
+  }
+
+  const atrFull = n>=12 ? swComputeATR14(highs,lows,closes) : [];
+  const atrLast = atrFull.length ? atrFull[atrFull.length-1] : null;
+  const dailyMove = (atrLast && atrLast>0) ? atrLast : entry*0.012;
+
+  const targetPcts=[5.0,8.0,12.0];
+  const targets = targetPcts.map((pct,i)=>{
+    const tgtPrice = Math.round(entry*(1+pct/100)*100)/100;
+    const dist = tgtPrice-entry;
+    const estSessions = dailyMove ? Math.max(3,Math.min(20,Math.round(dist/dailyMove))) : null;
+    return {level:i+1, price:tgtPrice, pctGain:pct, estSessions};
+  });
+
+  return {
+    score, reasons, entry: Math.round(entry*100)/100, stopLoss,
+    riskPerShare: Math.round(risk*100)/100, targets,
+    rsVsNifty: rs!==null ? Math.round(rs*10)/10 : null,
+    atrTrend, extended, volRatio: volRatio!==null ? Math.round(volRatio*10)/10 : null,
+  };
+}
+
+function runSwingScan(){
+  document.getElementById('sw-status').textContent = '⏳ Scanning… computing scores (may take 10-20 seconds)…';
+  document.getElementById('sw-status').style.color = 'var(--muted)';
+  setTimeout(swingScanWorker, 30);   // let UI paint the "scanning" message first
+}
+
+function swingScanWorker(){
+  try{
+    const sortedDates = swGetSortedHistDates();
+    if(sortedDates.length < 25){
+      document.getElementById('sw-status').textContent =
+        `⚠ Not enough history loaded (${sortedDates.length} days) — need 25+. Open History tab first to load more days.`;
+      document.getElementById('sw-status').style.color = 'var(--red)';
+      return;
+    }
+
+    let universe;
+    if(document.getElementById('sw-idx-only').checked){
+      universe = new Set();
+      Object.values(indexMap).forEach(set=>{ set.forEach(s=>universe.add(s)); });
+      if(!universe.size){
+        document.getElementById('sw-status').textContent = '⚠ No index files loaded — turn off Index Only or load indices.';
+        document.getElementById('sw-status').style.color = 'var(--red)';
+        return;
+      }
+    } else {
+      universe = new Set();
+      sortedDates.forEach(d=>{ historicalData[d].forEach(r=>universe.add(r.SYMBOL)); });
+    }
+
+    swingNiftyProxyCache = null;
+    const niftyCloses = swBuildNiftyProxy(sortedDates);
+    if(!niftyCloses.length){
+      console.warn('Swing scan: Nifty 50 proxy unavailable — RS component skipped, max score capped at 85.');
+    }
+
+    const minScore = parseFloat(document.getElementById('sw-minscore').value)||0;
+    const results = [];
+    universe.forEach(sym=>{
+      const {closes,highs,lows,vols,delivs} = swBuildSeriesForSymbol(sym, sortedDates);
+      if(closes.length<25) return;
+      const res = swComputeScore(closes,highs,lows,vols,delivs,niftyCloses);
+      if(res.score===null || res.score<minScore) return;
+      res.symbol = sym;
+      res.sector = swGetSector(sym);
+      results.push(res);
+    });
+
+    results.sort((a,b)=>b.score-a.score);
+    swingData = results;
+    swingSectorFilter = null;
+    renderSwingSetups();
+
+    const strong = results.filter(r=>r.score>=70).length;
+    document.getElementById('sw-status').textContent =
+      `✓ ${results.length} setups scored  |  ${strong} strong (≥70)  |  Sorted by score — tap a row for its Chart.`;
+    document.getElementById('sw-status').style.color = 'var(--green)';
+  }catch(e){
+    document.getElementById('sw-status').textContent = '⚠ Scan failed: '+e.message;
+    document.getElementById('sw-status').style.color = 'var(--red)';
+    console.error(e);
+  }
+}
+
+function renderSwingSetups(){
+  renderSwingSectorStrip();
+  renderSwingTable();
+}
+
+function renderSwingSectorStrip(){
+  const strip = document.getElementById('sw-sector-strip');
+  strip.innerHTML='';
+  if(!swingData.length) return;
+
+  const groups={};
+  swingData.forEach(r=>{
+    const sec=r.sector||'—';
+    (groups[sec]=groups[sec]||[]).push(r);
+  });
+  const secList = Object.entries(groups).map(([sec,rows])=>({
+    sec, avg: rows.reduce((s,r)=>s+r.score,0)/rows.length, n: rows.length
+  })).sort((a,b)=>b.avg-a.avg);
+
+  const allChip = document.createElement('div');
+  allChip.className = 'sw-sector-chip'+(swingSectorFilter===null?' active':'');
+  allChip.innerHTML = `<div>🔄 All</div><div class="sw-chip-score">${swingData.length}</div>`;
+  allChip.onclick = ()=>{ swingSectorFilter=null; renderSwingSetups(); };
+  strip.appendChild(allChip);
+
+  secList.forEach(({sec,avg,n})=>{
+    const chip = document.createElement('div');
+    chip.className = 'sw-sector-chip'+(swingSectorFilter===sec?' active':'');
+    chip.innerHTML = `<div>${sec}</div><div class="sw-chip-score">${avg.toFixed(0)}</div>`;
+    chip.onclick = ()=>{ swingSectorFilter=sec; renderSwingSetups(); };
+    strip.appendChild(chip);
+  });
+}
+
+function renderSwingTable(){
+  const tbody = document.getElementById('sw-table-body');
+  tbody.innerHTML='';
+  let rows = swingData;
+  if(swingSectorFilter!==null) rows = rows.filter(r=>r.sector===swingSectorFilter);
+
+  document.getElementById('sw-empty').style.display = rows.length ? 'none' : 'block';
+  if(!rows.length){
+    document.getElementById('sw-empty').textContent = swingData.length
+      ? 'No setups in this sector.' : 'No scan run yet — tap "Scan Now" above.';
+    return;
+  }
+
+  rows.forEach((r,i)=>{
+    const t=r.targets;
+    const riskPct = r.entry ? (r.riskPerShare/r.entry*100) : 0;
+    const rsTxt = r.rsVsNifty!==null ? `${r.rsVsNifty>=0?'+':''}${r.rsVsNifty.toFixed(1)}%` : '—';
+    const atrCls = r.atrTrend==='contracting'?'tight':r.atrTrend==='expanding'?'wide':'flat';
+    const atrLbl = r.atrTrend==='contracting'?'tight':r.atrTrend==='expanding'?'wide':(r.atrTrend?'flat':'—');
+    const volTxt = r.volRatio!==null ? r.volRatio.toFixed(1)+'×' : '—';
+
+    const tr=document.createElement('tr');
+    if(r.extended) tr.className='sw-extended';
+    else if(r.score>=70) tr.className='sw-strong';
+    else if(r.score>=50) tr.className='sw-mid';
+
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td class="sym" style="cursor:pointer" onclick="openDetail('${r.symbol}')">📈 ${r.symbol}</td>
+      <td style="text-align:left;font-size:.7rem">${r.sector}</td>
+      <td style="font-weight:800">${r.score.toFixed(0)}</td>
+      <td>₹${r.entry.toFixed(2)}</td>
+      <td>₹${r.stopLoss.toFixed(2)}</td>
+      <td>${riskPct.toFixed(1)}%</td>
+      <td>₹${t[0].price.toFixed(2)} (${t[0].estSessions}d)</td>
+      <td>₹${t[1].price.toFixed(2)} (${t[1].estSessions}d)</td>
+      <td>₹${t[2].price.toFixed(2)} (${t[2].estSessions}d)</td>
+      <td>${rsTxt}</td>
+      <td><span class="sw-atr ${atrCls}">${atrLbl}</span></td>
+      <td>${volTxt}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+
 function mpGetFilteredData(){
   let data = todayData.map(r=>{
     const close=r.CLOSE, prev=r.PREV_CLOSE;
@@ -1926,6 +2405,7 @@ function showSection(id){
   if(id==='history')renderHistory();
   if(id==='deals')loadDealsData();
   if(id==='pulse'){mpPopulateIndexFilter();renderMarketPulse();}
+  if(id==='swing'){renderSwingSetups();}
   if(id==='detail'){document.getElementById('snav-detail').style.display='block';}
 }
 
