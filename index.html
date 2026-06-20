@@ -589,15 +589,15 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
     <div id="mp-table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
       <table id="mp-table">
         <thead><tr>
-          <th>#</th>
-          <th style="text-align:left">Symbol</th>
-          <th>Close</th>
-          <th>Chg%</th>
-          <th>Del%</th>
-          <th>Volume</th>
-          <th>T/O(₹L)</th>
-          <th>Circuit</th>
-          <th>Trend</th>
+          <th onclick="sortMpTable('rank')">#</th>
+          <th onclick="sortMpTable('symbol')" style="text-align:left">Symbol</th>
+          <th onclick="sortMpTable('close')">Close</th>
+          <th onclick="sortMpTable('chg')">Chg%</th>
+          <th onclick="sortMpTable('delPct')">Del%</th>
+          <th onclick="sortMpTable('vol')">Volume</th>
+          <th onclick="sortMpTable('turnover')">T/O(₹L)</th>
+          <th onclick="sortMpTable('circuit')">Circuit</th>
+          <th onclick="sortMpTable('trend')">Trend</th>
         </tr></thead>
         <tbody id="mp-table-body"></tbody>
       </table>
@@ -661,19 +661,19 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
     <div id="sw-table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
       <table id="sw-table">
         <thead><tr>
-          <th>#</th>
-          <th style="text-align:left">Symbol</th>
-          <th style="text-align:left">Sector</th>
-          <th>Score</th>
-          <th>Entry</th>
-          <th>SL</th>
-          <th>Risk%</th>
+          <th onclick="sortSwTable('score')">#</th>
+          <th onclick="sortSwTable('symbol')" style="text-align:left">Symbol</th>
+          <th onclick="sortSwTable('sector')" style="text-align:left">Sector</th>
+          <th onclick="sortSwTable('score')">Score</th>
+          <th onclick="sortSwTable('entry')">Entry</th>
+          <th onclick="sortSwTable('stopLoss')">SL</th>
+          <th onclick="sortSwTable('risk')">Risk%</th>
           <th>T1 (5%)</th>
           <th>T2 (8%)</th>
           <th>T3 (12%)</th>
-          <th>RS vs N</th>
-          <th>ATR</th>
-          <th>Vol×</th>
+          <th onclick="sortSwTable('rsVsNifty')">RS vs N</th>
+          <th onclick="sortSwTable('atrTrend')">ATR</th>
+          <th onclick="sortSwTable('volRatio')">Vol×</th>
         </tr></thead>
         <tbody id="sw-table-body"></tbody>
       </table>
@@ -1677,6 +1677,8 @@ function buildIndexChips(){
 //  MARKET PULSE
 // ══════════════════════════════════════════════════
 let mpView = 'gainers';
+let mpManualSortCol = null;   // column-header sort override; null = use view default
+let mpManualSortAsc = false;
 let mpSwingCache = {};   // symbol -> {trend, badge}
 
 function mpPopulateIndexFilter(){
@@ -1696,10 +1698,28 @@ function mpSwitch(view){
   document.querySelectorAll('.mp-tab').forEach(b=>{
     b.classList.toggle('active', b.dataset.view===view);
   });
+
+  // Switching sub-tabs resets any manual column-sort override so each
+  // view starts with its own sensible default ordering again.
+  mpManualSortCol = null;
+  mpManualSortAsc = false;
+  document.querySelectorAll('#mp-table thead th').forEach(th=>{th.className='';});
+
   const isHeatmap = (view === 'heatmap');
   document.getElementById('mp-table-panel').style.display   = isHeatmap ? 'none' : 'block';
   document.getElementById('mp-heatmap-panel').style.display  = isHeatmap ? 'block' : 'none';
   document.getElementById('mp-index-panel').style.display    = isHeatmap ? 'block' : 'none';
+  renderMarketPulse();
+}
+
+function sortMpTable(col){
+  if(mpManualSortCol===col) mpManualSortAsc=!mpManualSortAsc;
+  else { mpManualSortCol=col; mpManualSortAsc=false; }
+
+  document.querySelectorAll('#mp-table thead th').forEach(th=>{th.className='';});
+  const th=[...document.querySelectorAll('#mp-table thead th')]
+    .find(t=>t.getAttribute('onclick')===`sortMpTable('${col}')`);
+  if(th) th.className = mpManualSortAsc ? 'sort-asc' : 'sort-desc';
   renderMarketPulse();
 }
 
@@ -1796,6 +1816,8 @@ function mpComputeSwing(sym){
 // ══════════════════════════════════════════════════
 let swingData = [];           // last scan results, sorted by score desc
 let swingSectorFilter = null; // null = show all sectors
+let swingManualSortCol = null;
+let swingManualSortAsc = false;
 let swingNiftyProxyCache = null;
 
 function swGetSector(sym){
@@ -2096,6 +2118,9 @@ function swingScanWorker(){
     results.sort((a,b)=>b.score-a.score);
     swingData = results;
     swingSectorFilter = null;
+    swingManualSortCol = null;
+    swingManualSortAsc = false;
+    document.querySelectorAll('#sw-table thead th').forEach(th=>{th.className='';});
     renderSwingSetups();
 
     const strong = results.filter(r=>r.score>=70).length;
@@ -2107,6 +2132,17 @@ function swingScanWorker(){
     document.getElementById('sw-status').style.color = 'var(--red)';
     console.error(e);
   }
+}
+
+function sortSwTable(col){
+  if(swingManualSortCol===col) swingManualSortAsc=!swingManualSortAsc;
+  else { swingManualSortCol=col; swingManualSortAsc=false; }
+
+  document.querySelectorAll('#sw-table thead th').forEach(th=>{th.className='';});
+  const th=[...document.querySelectorAll('#sw-table thead th')]
+    .find(t=>t.getAttribute('onclick')===`sortSwTable('${col}')`);
+  if(th) th.className = swingManualSortAsc ? 'sort-asc' : 'sort-desc';
+  renderSwingTable();
 }
 
 function renderSwingSetups(){
@@ -2148,6 +2184,34 @@ function renderSwingTable(){
   tbody.innerHTML='';
   let rows = swingData;
   if(swingSectorFilter!==null) rows = rows.filter(r=>r.sector===swingSectorFilter);
+
+  if(swingManualSortCol){
+    const col = swingManualSortCol, asc = swingManualSortAsc;
+    rows = [...rows];
+    if(col==='symbol' || col==='sector'){
+      rows.sort((a,b)=> asc ? String(a[col]).localeCompare(String(b[col]))
+                            : String(b[col]).localeCompare(String(a[col])));
+    } else if(col==='risk'){
+      rows.sort((a,b)=>{
+        const ra = a.entry ? a.riskPerShare/a.entry*100 : 0;
+        const rb = b.entry ? b.riskPerShare/b.entry*100 : 0;
+        return asc ? (ra-rb) : (rb-ra);
+      });
+    } else if(col==='atrTrend'){
+      const order={contracting:0, flat:1, expanding:2};
+      rows.sort((a,b)=>{
+        const va = order[a.atrTrend] ?? 3, vb = order[b.atrTrend] ?? 3;
+        return asc ? (va-vb) : (vb-va);
+      });
+    } else {
+      rows.sort((a,b)=>{
+        const va = a[col]; const vb = b[col];
+        const na = (va===null||va===undefined) ? -999 : va;
+        const nb = (vb===null||vb===undefined) ? -999 : vb;
+        return asc ? (na-nb) : (nb-na);
+      });
+    }
+  }
 
   document.getElementById('sw-empty').style.display = rows.length ? 'none' : 'block';
   if(!rows.length){
@@ -2254,6 +2318,36 @@ function mpRenderTable(data){
       });
       break;
   }
+
+  // Manual column-header sort overrides the view's default ordering
+  // above, while keeping whatever row FILTER that view block applied.
+  if(mpManualSortCol){
+    const col = mpManualSortCol, asc = mpManualSortAsc;
+    if(col==='circuit'){
+      const sevOrder={uc3:0,uc2:1,uc1:2,ucfix:3,lcfix:4,lc1:5,lc2:6,lc3:7,'':9};
+      rows.sort((a,b)=>{
+        const sa=mpCircuitBadge(a.symbol,a.chg,a.close,a.high,a.low).cls||'';
+        const sb=mpCircuitBadge(b.symbol,b.chg,b.close,b.high,b.low).cls||'';
+        const va=sevOrder[sa]??9, vb=sevOrder[sb]??9;
+        return asc ? (vb-va) : (va-vb);
+      });
+    } else if(col==='trend'){
+      const order={'HH+HL':0,'LH+HL':1,'HH+LL':2,'LH+LL':3,'NEUTRAL':4};
+      rows.sort((a,b)=>{
+        const va=order[mpComputeSwing(a.symbol).trend]??4;
+        const vb=order[mpComputeSwing(b.symbol).trend]??4;
+        return asc ? (vb-va) : (va-vb);
+      });
+    } else if(col==='symbol'){
+      rows.sort((a,b)=> asc ? a.symbol.localeCompare(b.symbol) : b.symbol.localeCompare(a.symbol));
+    } else {
+      rows.sort((a,b)=>{
+        const va=a[col]??0, vb=b[col]??0;
+        return asc ? (va-vb) : (vb-va);
+      });
+    }
+  }
+
   if(mpView!=='circuits' && mpView!=='trend') rows = rows.slice(0,50);
 
   const tbody = document.getElementById('mp-table-body');
@@ -3161,20 +3255,19 @@ function renderDeals(){
 function sortDeals(col){
   if(dealsSortCol===col) dealsSortDir*=-1;
   else{dealsSortCol=col; dealsSortDir=-1;}
-  document.querySelectorAll('#deals-table thead th').forEach(th=>{
-    const base=th.textContent.replace(/ [▲▼]$/,'');
-    th.textContent=base;
-    th.className='';
-  });
+  document.querySelectorAll('#deals-table thead th').forEach(th=>{th.className='';});
   const th=[...document.querySelectorAll('#deals-table thead th')]
     .find(t=>t.getAttribute('onclick')===`sortDeals('${col}')`);
-  if(th){
-    th.textContent+=(dealsSortDir===-1?' ▼':' ▲');
-    th.className=dealsSortDir===-1?'sort-desc':'sort-asc';
-  }
+  if(th) th.className = dealsSortDir===-1 ? 'sort-desc' : 'sort-asc';
   const numCols=['quantity','price','value'];
   dealsFiltered.sort((a,b)=>{
-    const va=a[col]??'', vb=b[col]??'';
+    let va, vb;
+    if(col==='value'){
+      va = (Number(a.quantity)||0) * (Number(a.price)||0);
+      vb = (Number(b.quantity)||0) * (Number(b.price)||0);
+    } else {
+      va=a[col]??''; vb=b[col]??'';
+    }
     if(numCols.includes(col)) return dealsSortDir*(Number(va)-Number(vb));
     return dealsSortDir*String(va).localeCompare(String(vb));
   });
@@ -3585,6 +3678,10 @@ function renderSSTable(){
 
 function sortSSTable(col){
   if(ssSortCol===col)ssSortDir*=-1;else{ssSortCol=col;ssSortDir=-1;}
+  document.querySelectorAll('#ss-table thead th').forEach(th=>{th.className='';});
+  const th=[...document.querySelectorAll('#ss-table thead th')]
+    .find(t=>t.getAttribute('onclick')===`sortSSTable('${col}')`);
+  if(th) th.className = ssSortDir===-1 ? 'sort-desc' : 'sort-asc';
   ssData.sort((a,b)=>{
     const va=a[col]??'',vb=b[col]??'';
     if(typeof va==='number') return ssSortDir*(va-vb);
