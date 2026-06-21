@@ -3199,17 +3199,21 @@ async function loadDealsData(){
 
   // ── Use snapshot deals (fast, no network) ──
   if(snapshotData && snapshotData.deals){
-    dealsData = snapshotData.deals.map(d=>({
-      date:      d.dt||'',
-      deal_type: d.t==='B'?'BULK':'BLOCK',
-      symbol:    d.sym||'',
-      client:    d.cl||'',
-      buy_sell:  d.bs==='B'?'BUY':d.bs==='S'?'SELL':'—',
-      quantity:  d.qty||0,
-      price:     d.px||0,
-      value:     Math.round((d.qty||0)*(d.px||0)/100000*100)/100,
-      remarks:   '',
-    }));
+    dealsData = snapshotData.deals.map(d=>{
+      const qty = Number(d.qty)||0;
+      const px  = Number(d.px)||0;
+      return {
+        date:      d.dt||'',
+        deal_type: d.t==='B'?'BULK':'BLOCK',
+        symbol:    d.sym||'',
+        client:    d.cl||'',
+        buy_sell:  d.bs==='B'?'BUY':d.bs==='S'?'SELL':'—',
+        quantity:  qty,
+        price:     px,
+        value:     Math.round(qty*px/100000*100)/100,
+        remarks:   '',
+      };
+    });
     dealsData.sort((a,b)=>b.date.localeCompare(a.date)||a.symbol.localeCompare(b.symbol));
     document.getElementById('deals-status').textContent = dealsData.length+' deals loaded';
     setStatus('✓ Ready','ok');
@@ -3300,22 +3304,35 @@ function renderDeals(){
   if(dealsFiltered.length){
     const buyRows  = dealsFiltered.filter(r=>r.buy_sell==='BUY');
     const sellRows = dealsFiltered.filter(r=>r.buy_sell==='SELL');
-    const buyQty   = buyRows.reduce((s,r)=>s+r.quantity,0);
-    const sellQty  = sellRows.reduce((s,r)=>s+r.quantity,0);
-    const buyVal   = buyRows.reduce((s,r)=>s+r.value,0);
-    const sellVal  = sellRows.reduce((s,r)=>s+r.value,0);
+    // Number(...) is a defensive belt-and-suspenders coercion here —
+    // quantity/value should already be numbers from the row constructor,
+    // but this guarantees the reduce() below can never silently fall
+    // back to string concatenation (0+"227859" → "0227859") even if an
+    // older cached snapshot.json still has string-typed qty/px values.
+    const buyQty   = buyRows.reduce((s,r)=>s+(Number(r.quantity)||0),0);
+    const sellQty  = sellRows.reduce((s,r)=>s+(Number(r.quantity)||0),0);
+    const buyVal   = buyRows.reduce((s,r)=>s+(Number(r.value)||0),0);
+    const sellVal  = sellRows.reduce((s,r)=>s+(Number(r.value)||0),0);
     const netQty   = buyQty - sellQty;
     const netVal   = buyVal - sellVal;
     const netQCls  = netQty>=0?'color:var(--green)':'color:var(--red)';
     const netVCls  = netVal>=0?'color:var(--green)':'color:var(--red)';
     const _s=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
     const _h=(id,v)=>{const el=document.getElementById(id);if(el)el.innerHTML=v;};
-    _s('dns-buy-qty',  'Buy Qty: '+buyQty.toLocaleString('en-IN'));
-    _s('dns-sell-qty', 'Sell Qty: '+sellQty.toLocaleString('en-IN'));
-    _h('dns-net-qty',  `<span style="${netQCls}">Net Qty: ${netQty>=0?'+':''}${netQty.toLocaleString('en-IN')}</span>`);
-    _s('dns-buy-val',  'Buy ₹L: '+buyVal.toFixed(1));
-    _s('dns-sell-val', 'Sell ₹L: '+sellVal.toFixed(1));
-    _h('dns-net-val',  `<span style="${netVCls}">Net ₹L: ${netVal>=0?'+':''}${netVal.toFixed(1)}</span>`);
+    // Qty rounded to nearest thousand with a "K" suffix for readability
+    // on rows with lakh-scale quantities (e.g. 22,78,590 → "22.8K" would
+    // be wrong for Indian lakh convention, so show as whole thousands:
+    // 227859 → "228K"). Full precise number still available via title=.
+    const fmtQtyK = n => {
+      const k = Math.round(n/1000);
+      return k.toLocaleString('en-IN')+'K';
+    };
+    _s('dns-buy-qty',  'Buy Qty: '+fmtQtyK(buyQty));
+    _s('dns-sell-qty', 'Sell Qty: '+fmtQtyK(sellQty));
+    _h('dns-net-qty',  `<span style="${netQCls}" title="${netQty.toLocaleString('en-IN')} exact">Net Qty: ${netQty>=0?'+':''}${fmtQtyK(netQty)}</span>`);
+    _s('dns-buy-val',  'Buy ₹L: '+buyVal.toFixed(2));
+    _s('dns-sell-val', 'Sell ₹L: '+sellVal.toFixed(2));
+    _h('dns-net-val',  `<span style="${netVCls}">Net ₹L: ${netVal>=0?'+':''}${netVal.toFixed(2)}</span>`);
     netSumEl.style.display='flex';
   } else {
     if(netSumEl) netSumEl.style.display='none';
