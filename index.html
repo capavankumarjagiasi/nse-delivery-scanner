@@ -1104,12 +1104,24 @@ async function loadAllData(){
       date: scanDateObj,
       id: null  // no Drive ID needed
     }];
-    // Add history dates to bhavFiles for vol-ratio compatibility
+    // Add history dates to bhavFiles for vol-ratio compatibility.
+    // NOTE: snapshotData.history_days can (and typically does) include
+    // today's own date again — the desktop's push just lists the most
+    // recent N bhavcopy files without excluding "today". Without this
+    // guard, the same calendar date ends up as TWO separate bhavFiles
+    // entries: one routed to todayData, one routed to historicalData
+    // (which has an approximated PREV_CLOSE), producing two slightly
+    // different candles for the same trading day at the end of every
+    // chart. Dedupe by dateStr to guarantee one candle per day.
+    const seenDates = new Set(bhavFiles.map(f=>f.dateStr));
     (snapshotData.history_days||[]).forEach(d=>{
       const dd=d; // DDMMYYYY
+      const dateStr = `${dd.slice(0,2)}-${dd.slice(2,4)}-${dd.slice(4,8)}`;
+      if(seenDates.has(dateStr)) return;   // skip duplicate of today (or any repeat)
+      seenDates.add(dateStr);
       bhavFiles.push({
         name:`sec_bhavdata_full_${dd}.csv`,
-        dateStr:`${dd.slice(0,2)}-${dd.slice(2,4)}-${dd.slice(4,8)}`,
+        dateStr,
         date:new Date(+dd.slice(4,8),+dd.slice(2,4)-1,+dd.slice(0,2)),
         id:null
       });
@@ -2890,7 +2902,15 @@ async function loadChartData(sym, days){
   }
 
   // Build full OHLCV array for this symbol: oldest→newest
-  const allDays = bhavFiles.slice().reverse(); // oldest first
+  // (allDays is deduped by date as a second safety net, in case
+  // bhavFiles ever picks up a repeated date from another code path —
+  // the primary fix is in loadAllData where bhavFiles is built)
+  const seenDays = new Set();
+  const allDays = bhavFiles.slice().reverse().filter(f=>{
+    if(seenDays.has(f.dateStr)) return false;
+    seenDays.add(f.dateStr);
+    return true;
+  });
   const arr = [];
   for(const f of allDays){
     const src = f===bhavFiles[0] ? todayData : (historicalData[f.dateStr]||[]);
