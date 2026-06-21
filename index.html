@@ -385,7 +385,7 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
   <button class="snav-btn" onclick="showSection('shortsell')">🔻 Short Sell</button>
   <button class="snav-btn" onclick="showSection('watchlist')">⭐ Watchlist</button>
   <button class="snav-btn" onclick="showSection('alerts')">🔔 Alerts</button>
-  <button class="snav-btn" id="snav-detail" style="display:none" onclick="showSection('detail')">📈 Chart</button>
+  <button class="snav-btn" id="snav-detail" data-section="detail" onclick="openChartTab()">📈 Chart</button>
 </div>
 
 <!-- ══════════ SCANNER SECTION ══════════ -->
@@ -722,6 +722,17 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
       <div id="detail-close" style="font-size:1.1rem;font-weight:800">—</div>
       <div id="detail-chg" style="font-size:.78rem">—</div>
     </div>
+  </div>
+
+  <!-- Symbol search — type any symbol to jump straight to its chart -->
+  <div style="background:var(--card);border-bottom:1px solid var(--border);padding:8px 12px;display:flex;gap:6px;align-items:center">
+    <input id="chart-sym-search" type="text" list="chart-sym-list"
+           placeholder="🔍 Type any symbol…" autocomplete="off" spellcheck="false"
+           style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:.85rem;font-weight:700;background:var(--bg);color:var(--text)"
+           oninput="chartSymOnInput(this.value)"
+           onkeydown="if(event.key==='Enter') chartSymGo()">
+    <datalist id="chart-sym-list"></datalist>
+    <button class="btn btn-primary" style="white-space:nowrap" onclick="chartSymGo()">Go</button>
   </div>
 
   <div style="padding:10px 12px;max-width:1200px;margin:0 auto">
@@ -2495,12 +2506,15 @@ function showSection(id){
   document.querySelectorAll('.snav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('sec-'+id).classList.add('active');
   // highlight matching nav btn
-  document.querySelectorAll('.snav-btn').forEach(b=>{ if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes(id)) b.classList.add('active'); });
+  document.querySelectorAll('.snav-btn').forEach(b=>{
+    const ds = b.getAttribute('data-section');
+    const matches = ds ? (ds===id) : (b.getAttribute('onclick')&&b.getAttribute('onclick').includes(id));
+    if(matches) b.classList.add('active');
+  });
   if(id==='history')renderHistory();
   if(id==='deals')loadDealsData();
   if(id==='pulse'){mpPopulateIndexFilter();renderMarketPulse();}
   if(id==='swing'){renderSwingSetups();}
-  if(id==='detail'){document.getElementById('snav-detail').style.display='block';}
 }
 
 // ══════════════════════════════════════════════════
@@ -2707,6 +2721,7 @@ function formatDate(d){const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug',
 
 let detailSymbol  = '';
 let detailStock   = null;      // from scanResults
+let detailReturnSection = 'scan';   // which tab "← Back" returns to
 let chartPeriod   = 65;        // default 3M
 let chartData     = [];        // [{date,open,high,low,close,vol,delPer}] oldest→newest
 let chartDataFull = {};        // cache: symbol -> full array
@@ -2714,50 +2729,124 @@ let chartDataFull = {};        // cache: symbol -> full array
 const MA_COLORS = {5:'#FF6F00',10:'#1565C0',20:'#2E7D11',50:'#6A1B9A',200:'#AD1457'};
 
 // ── Open detail screen ─────────────────────────
-function openDetail(sym){
-  const stock = scanResults.find(r=>r.SYMBOL===sym);
-  if(!stock) return;
+function openDetail(sym, returnTo){
+  sym = (sym||'').trim().toUpperCase();
+  if(!sym) return false;
+
+  // Prefer the richer scanResults row (has Score/Signal/VolRatio/Gap%)
+  // but fall back to todayData (always available — every stock in the
+  // snapshot) so tapping a symbol from Deals/Swing/Market Pulse/Search
+  // always opens the chart, not just symbols that happened to pass the
+  // last Scanner run.
+  let stock = scanResults.find(r=>r.SYMBOL===sym);
+  let fromScan = !!stock;
+  if(!stock) stock = todayData.find(r=>r.SYMBOL===sym);
+  if(!stock){
+    showToast('Symbol not found in latest data: '+sym, 'warning');
+    return false;
+  }
+
   detailSymbol = sym;
   detailStock  = stock;
+  // Remember where to go back to (Scanner by default, but if opened
+  // from elsewhere we return there instead of always landing on Scanner)
+  detailReturnSection = returnTo || (document.querySelector('.section.active')?.id||'sec-scan').replace('sec-','');
+
+  // Compute Chg% if not already present (todayData has no PCT_CHANGE)
+  const prevClose = stock.PREV_CLOSE;
+  const pctChange = (stock.PCT_CHANGE!=null) ? stock.PCT_CHANGE
+                   : (prevClose ? (stock.CLOSE-prevClose)/prevClose*100 : 0);
 
   // Populate header
   document.getElementById('detail-symbol').textContent = sym;
-  document.getElementById('detail-fno-badge').innerHTML = stock.IS_FNO ? '<span class="fno-badge">F&O</span>' : '';
+  document.getElementById('detail-fno-badge').innerHTML = (stock.IS_FNO || FNO_STOCKS.has(sym)) ? '<span class="fno-badge">F&O</span>' : '';
   const sigTag = stock.SIGNAL==='STRONG'?'<span class="tag tag-strong">STRONG</span>':
                  stock.SIGNAL==='WATCH' ?'<span class="tag tag-watch">WATCH</span>':
-                                          '<span class="tag tag-neg">NEG</span>';
+                 stock.SIGNAL==='NEG'   ?'<span class="tag tag-neg">NEG</span>':'';
   document.getElementById('detail-signal-tag').innerHTML = sigTag;
   document.getElementById('detail-close').textContent = '₹'+stock.CLOSE.toFixed(2);
-  const chgSign = stock.PCT_CHANGE>=0?'+':'';
-  document.getElementById('detail-chg').textContent = chgSign+stock.PCT_CHANGE.toFixed(2)+'%';
-  document.getElementById('detail-chg').className = stock.PCT_CHANGE>=0?'up':'down';
+  const chgSign = pctChange>=0?'+':'';
+  document.getElementById('detail-chg').textContent = chgSign+pctChange.toFixed(2)+'%';
+  document.getElementById('detail-chg').className = pctChange>=0?'up':'down';
+  const volTxt = stock.VOL_RATIO!=null ? stock.VOL_RATIO.toFixed(2)+'×' : 'N/A';
   document.getElementById('detail-sub').textContent =
-    `Del: ${stock.DELIV_PER.toFixed(1)}%  |  Vol Ratio: ${stock.VOL_RATIO!=null?stock.VOL_RATIO.toFixed(2)+'×':'N/A'}  |  T/O: ₹${stock.TURNOVER_LACS.toFixed(1)}L  |  Trades: ${Math.round(stock.NO_OF_TRADES).toLocaleString('en-IN')}`;
+    `Del: ${stock.DELIV_PER.toFixed(1)}%  |  Vol Ratio: ${volTxt}  |  T/O: ₹${stock.TURNOVER_LACS.toFixed(1)}L  |  Trades: ${Math.round(stock.NO_OF_TRADES).toLocaleString('en-IN')}`;
 
   // Key stats
-  renderDetailStats(stock);
+  renderDetailStats(stock, pctChange);
 
   // Show screen
   showSection('detail');
 
   // Load chart
   loadChartData(sym, chartPeriod);
+  return true;
 }
 
 function closeDetail(){
-  showSection('scan');
+  showSection(detailReturnSection || 'scan');
 }
 
-function renderDetailStats(stock){
+// ── Standalone Chart tab access (type any symbol, no scan required) ───
+function openChartTab(){
+  detailReturnSection = (document.querySelector('.section.active')?.id||'sec-scan').replace('sec-','');
+  if(detailReturnSection==='detail') detailReturnSection='scan';
+  showSection('detail');
+  if(!detailSymbol){
+    // First time opening with nothing selected yet — show empty state,
+    // focus the search box, and let the datalist populate.
+    document.getElementById('detail-symbol').textContent = 'Type a symbol…';
+    document.getElementById('detail-fno-badge').innerHTML = '';
+    document.getElementById('detail-signal-tag').innerHTML = '';
+    document.getElementById('detail-close').textContent = '—';
+    document.getElementById('detail-chg').textContent = '—';
+    document.getElementById('detail-chg').className = '';
+    document.getElementById('detail-sub').textContent = 'Search above or tap any symbol elsewhere in the app.';
+    document.getElementById('detail-stats').innerHTML = '';
+  }
+  chartSymRefreshList();
+  setTimeout(()=>{ document.getElementById('chart-sym-search')?.focus(); }, 50);
+}
+
+function chartSymRefreshList(){
+  const dl = document.getElementById('chart-sym-list');
+  if(!dl) return;
+  // Build once per data load — cheap enough to rebuild on open too
+  const syms = new Set();
+  todayData.forEach(r=>syms.add(r.SYMBOL));
+  scanResults.forEach(r=>syms.add(r.SYMBOL));
+  dl.innerHTML = [...syms].sort().map(s=>`<option value="${s}">`).join('');
+}
+
+function chartSymOnInput(val){
+  // datalist handles the dropdown suggestions natively; nothing else
+  // needed here except keeping the list fresh if data changed since
+  // the tab was opened.
+  if(!document.getElementById('chart-sym-list').childElementCount) chartSymRefreshList();
+}
+
+function chartSymGo(){
+  const val = (document.getElementById('chart-sym-search').value||'').trim().toUpperCase();
+  if(!val) return;
+  openDetail(val, detailReturnSection);
+  document.getElementById('chart-sym-search').value = '';
+}
+
+
+
+function renderDetailStats(stock, pctChange){
+  pctChange = (pctChange!=null) ? pctChange
+            : (stock.PCT_CHANGE!=null ? stock.PCT_CHANGE
+               : (stock.PREV_CLOSE ? (stock.CLOSE-stock.PREV_CLOSE)/stock.PREV_CLOSE*100 : 0));
   const items = [
     ['Close',    '₹'+stock.CLOSE.toFixed(2)],
-    ['Chg%',     (stock.PCT_CHANGE>=0?'+':'')+stock.PCT_CHANGE.toFixed(2)+'%'],
+    ['Chg%',     (pctChange>=0?'+':'')+pctChange.toFixed(2)+'%'],
     ['Del%',     stock.DELIV_PER.toFixed(1)+'%'],
-    ['Vol Ratio',stock.VOL_RATIO!=null?stock.VOL_RATIO.toFixed(2)+'×':'N/A'],
+    ['Vol Ratio',stock.VOL_RATIO!=null?stock.VOL_RATIO.toFixed(2)+'×':'—'],
     ['T/O ₹L',   stock.TURNOVER_LACS.toFixed(1)],
     ['Trades',   Math.round(stock.NO_OF_TRADES).toLocaleString('en-IN')],
     ['Gap%',     stock.GAP_PCT!=null?(stock.GAP_PCT>=0?'+':'')+stock.GAP_PCT.toFixed(2)+'%':'—'],
-    ['Score',    stock.SCORE.toFixed(1)],
+    ['Score',    stock.SCORE!=null?stock.SCORE.toFixed(1):'—'],
   ];
   document.getElementById('detail-stats').innerHTML = items.map(([l,v])=>
     `<div class="dstat"><div class="dstat-label">${l}</div><div class="dstat-val">${v}</div></div>`
@@ -3666,7 +3755,7 @@ function renderSSTable(){
       : net<0 ? 'color:#27ae60' : '';
     tr.innerHTML=`
       <td>${r.date}</td>
-      <td style="text-align:left;font-weight:700;color:var(--accent)">${r.symbol}</td>
+      <td style="text-align:left;font-weight:700;color:var(--accent);cursor:pointer" onclick="openDetail('${r.symbol}')">📈 ${r.symbol}</td>
       <td style="text-align:right">${r.qty>0?r.qty.toLocaleString('en-IN'):'—'}</td>
       <td style="text-align:right">${r.cov>0?r.cov.toLocaleString('en-IN'):'—'}</td>
       <td style="text-align:right;${netStyle}">${net!==0?net.toLocaleString('en-IN'):'—'}</td>
@@ -4175,20 +4264,23 @@ saveToHistory = function(){
 
 // Patch openDetail to add watchlist button
 const _origOpenDetail=openDetail;
-openDetail=function(sym){
-  _origOpenDetail(sym);
+openDetail=function(sym, returnTo){
+  const ok = _origOpenDetail(sym, returnTo);
+  if(!ok) return false;   // symbol not found — detail screen never opened, skip button setup
   // Add watchlist button to detail bar if not already there
   const bar=document.getElementById('detail-bar');
+  const resolvedSym = detailSymbol;
   if(bar&&!bar.querySelector('.wl-add-btn')){
     const btn=document.createElement('button');
     btn.className='wl-add-btn';
     btn.style.cssText='background:rgba(255,255,255,.2);border:none;color:#fff;padding:5px 10px;border-radius:6px;font-weight:700;cursor:pointer;font-size:.78rem;margin-left:4px';
     btn.textContent='⭐ Watchlist';
-    btn.onclick=()=>addToWatchlist(sym);
+    btn.onclick=()=>addToWatchlist(resolvedSym);
     bar.querySelector('button').after(btn);
   } else if(bar){
-    bar.querySelector('.wl-add-btn').onclick=()=>addToWatchlist(sym);
+    bar.querySelector('.wl-add-btn').onclick=()=>addToWatchlist(resolvedSym);
   }
+  return true;
 };
 
 // Patch loadAllData to run alerts + render watchlist + start scheduler
