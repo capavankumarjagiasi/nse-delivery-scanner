@@ -4502,7 +4502,7 @@ async function swCallAI(prompt){
   if(!k) throw new Error('No API key — click "⚙ AI Key" button to add one');
   let raw='';
   if(p==='gemini'){
-    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+k,{
+    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+k,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:500}})
     });
@@ -4561,8 +4561,9 @@ async function swAIAnalyse(){
   if(!k){ openSwApiModal(); return; }
 
   const minScore=parseFloat(document.getElementById('sw-minscore').value)||30;
-  let rows=swingData.filter(r=>r.score>=minScore);
+  let rows=swingData.filter(r=>r.score>=minScore).slice(0,12);
   if(!rows.length){ showToast('No stocks above min score','warning'); return; }
+  if(rows.length>8) showToast(`Analysing top ${rows.length} stocks — takes ~${Math.ceil(rows.length*1.5)}s`,'info');
 
   // Show panel
   document.getElementById('sw-ai-panel').style.display='block';
@@ -4588,16 +4589,47 @@ async function swAIAnalyse(){
   const openCount=0; // simplified — no open trade tracking in this page
   let tradeCount=0;
 
+  const delay = ms => new Promise(r => setTimeout(r, ms));
+
   for(let i=0;i<rows.length;i++){
     const r=rows[i];
     const cardEl=document.getElementById('sw-ai-card-'+i);
+
+    // Update status
+    document.getElementById('sw-mkt-banner').innerHTML=`<div class="sw-mkt-banner mkt-flat">🤖 Analysing ${i+1} of ${rows.length}: ${r.symbol}…</div>`;
+
     try{
       const result=await swCallAI(swBuildPrompt(r,niftyCtx,openCount));
       if(result.verdict==='TRADE') tradeCount++;
       if(cardEl) cardEl.outerHTML=swRenderCard(r,result,i);
     } catch(e){
-      if(cardEl) cardEl.querySelector('.sw-ai-reason-box').innerHTML=`<div class="sw-ai-reason" style="color:#e05a5a">⚠ ${e.message}</div>`;
+      // Check if rate limit — show friendly message
+      const isRateLimit = e.message && e.message.toLowerCase().includes('quota');
+      const errMsg = isRateLimit
+        ? '⏳ Rate limit hit — waiting 15s then retrying…'
+        : '⚠ '+e.message;
+      if(cardEl){
+        const rb = cardEl.querySelector('.sw-ai-reason-box');
+        if(rb) rb.innerHTML=`<div class="sw-ai-reason" style="color:#e8943a">${errMsg}</div>`;
+      }
+      if(isRateLimit){
+        // Wait 15s and retry once
+        await delay(15000);
+        try{
+          const result=await swCallAI(swBuildPrompt(r,niftyCtx,openCount));
+          if(result.verdict==='TRADE') tradeCount++;
+          if(cardEl) cardEl.outerHTML=swRenderCard(r,result,i);
+        } catch(e2){
+          if(cardEl){
+            const rb = cardEl.querySelector('.sw-ai-reason-box');
+            if(rb) rb.innerHTML=`<div class="sw-ai-reason" style="color:#e05a5a">⚠ Still rate limited. Try again in 1 min or reduce Min Score to fewer stocks.</div>`;
+          }
+        }
+      }
     }
+
+    // 1.2 second gap between each request — stays well within 60 RPM free limit
+    if(i < rows.length-1) await delay(1200);
   }
 
   document.getElementById('sw-ai-footer').textContent=`Analysis complete · ${tradeCount} TRADE signal${tradeCount!==1?'s':''} found · ${new Date().toLocaleTimeString('en-IN')}`;
