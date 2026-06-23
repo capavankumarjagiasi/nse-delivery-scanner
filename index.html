@@ -297,6 +297,71 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
 .weekly-section{margin-bottom:14px}
 .weekly-section h3{font-size:.82rem;font-weight:700;color:var(--accent);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border)}
 
+
+/* ══ AI SWING ANALYSIS PANEL ══ */
+#sw-ai-panel{margin-top:10px}
+.sw-ai-hdr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.sw-ai-title{font-size:.85rem;font-weight:700;color:var(--text);flex:1}
+.sw-ai-provider-badge{font-size:.68rem;padding:3px 8px;border-radius:3px;border:1px solid var(--border);color:var(--muted)}
+.sw-ai-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;transition:border-color .2s}
+.sw-ai-card.verdict-TRADE{border-left:3px solid #3db87a}
+.sw-ai-card.verdict-SKIP{border-left:3px solid #e05a5a}
+.sw-ai-card.verdict-WAIT{border-left:3px solid #e8943a}
+.sw-ai-card-head{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border);gap:8px}
+.sw-ai-sym{font-size:.92rem;font-weight:800;color:var(--text)}
+.sw-ai-sector{font-size:.65rem;color:var(--muted);margin-top:1px}
+.sw-ai-verdict-badge{font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:3px}
+.vb-TRADE{background:rgba(61,184,122,.12);color:#3db87a}
+.vb-SKIP{background:rgba(224,90,90,.12);color:#e05a5a}
+.vb-WAIT{background:rgba(232,148,58,.12);color:#e8943a}
+.vb-PENDING{background:rgba(150,150,150,.1);color:var(--muted)}
+.sw-ai-card-body{padding:8px 12px}
+.sw-ai-levels{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:7px}
+@media(max-width:480px){.sw-ai-levels{grid-template-columns:repeat(2,1fr)}}
+.sw-ai-lbox{padding:4px 7px;border-radius:4px;border:1px solid var(--border)}
+.sw-ai-lbox.le{border-color:rgba(74,144,217,.25);background:rgba(74,144,217,.05)}
+.sw-ai-lbox.ls{border-color:rgba(224,90,90,.25);background:rgba(224,90,90,.05)}
+.sw-ai-lbox.l1{border-color:rgba(61,184,122,.2);background:rgba(61,184,122,.05)}
+.sw-ai-lbox.l2{border-color:rgba(232,148,58,.2);background:rgba(232,148,58,.05)}
+.sw-ai-ll{font-size:.54rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
+.sw-ai-lv{font-size:.78rem;font-weight:700}
+.sw-ai-lbox.le .sw-ai-lv{color:#4a90d9}
+.sw-ai-lbox.ls .sw-ai-lv{color:#e05a5a}
+.sw-ai-lbox.l1 .sw-ai-lv{color:#3db87a}
+.sw-ai-lbox.l2 .sw-ai-lv{color:#e8943a}
+.sw-ai-metrics{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:7px}
+.sw-ai-tag{font-size:.62rem;padding:2px 7px;border-radius:2px;border:1px solid var(--border);color:var(--muted)}
+.sw-ai-tag.green{border-color:rgba(61,184,122,.3);color:#3db87a;background:rgba(61,184,122,.07)}
+.sw-ai-tag.red{border-color:rgba(224,90,90,.3);color:#e05a5a;background:rgba(224,90,90,.07)}
+.sw-ai-tag.amber{border-color:rgba(232,148,58,.3);color:#e8943a;background:rgba(232,148,58,.07)}
+.sw-ai-reason-box{border-radius:5px;padding:6px 9px;background:rgba(0,0,0,.07);margin-bottom:6px;border:1px solid var(--border)}
+.sw-ai-reason{font-size:.71rem;color:var(--text);line-height:1.6}
+.sw-ai-tip{font-size:.69rem;color:#e8943a;margin-top:3px;line-height:1.5}
+.sw-ai-flag{font-size:.68rem;color:#e05a5a;margin-top:3px}
+.sw-ai-checks{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.sw-ai-chk{font-size:.62rem;padding:2px 7px;border-radius:2px}
+.chk-ok{background:rgba(61,184,122,.1);color:#3db87a}
+.chk-no{background:rgba(224,90,90,.1);color:#e05a5a}
+.sw-ai-add-btn{font-size:.7rem;padding:4px 12px;margin-top:6px;background:var(--primary);color:#fff;border:none;border-radius:4px;cursor:pointer}
+.sw-ai-footer{text-align:center;font-size:.65rem;color:var(--muted);padding:8px 0 4px}
+/* Market context banner */
+.sw-mkt-banner{padding:7px 12px;border-radius:6px;margin-bottom:10px;font-size:.74rem;font-weight:600;display:flex;align-items:center;gap:8px}
+.mkt-bull{background:rgba(61,184,122,.1);border:1px solid rgba(61,184,122,.25);color:#3db87a}
+.mkt-bear{background:rgba(224,90,90,.1);border:1px solid rgba(224,90,90,.25);color:#e05a5a}
+.mkt-flat{background:rgba(232,148,58,.08);border:1px solid rgba(232,148,58,.2);color:#e8943a}
+/* API settings modal */
+#sw-api-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
+#sw-api-modal.open{display:flex}
+.sw-api-box{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px 20px;width:min(380px,90vw);max-height:90vh;overflow-y:auto}
+.sw-api-title{font-size:.92rem;font-weight:800;color:var(--text);margin-bottom:4px}
+.sw-api-sub{font-size:.7rem;color:var(--muted);margin-bottom:14px;line-height:1.5}
+.sw-api-toggle{display:flex;gap:6px;margin-bottom:12px}
+.sw-api-opt{flex:1;padding:7px;border:1px solid var(--border);border-radius:5px;font-size:.75rem;font-weight:700;cursor:pointer;background:var(--bg);color:var(--muted);text-align:center;transition:all .2s}
+.sw-api-opt.on{border-color:var(--primary);color:var(--primary);background:rgba(var(--primary-rgb),.07)}
+.sw-api-inp{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:5px;font-size:.78rem;background:var(--bg);color:var(--text);box-sizing:border-box;margin-bottom:6px}
+.sw-api-status{font-size:.65rem;margin-bottom:10px}
+.sw-api-link{font-size:.68rem;color:var(--primary);line-height:2}
+.sw-api-actions{display:flex;gap:6px;margin-top:10px}
 </style>
 </head>
 <body>
@@ -647,6 +712,8 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
           📊 Index Only
         </label>
         <button class="btn btn-primary" style="margin-left:auto" onclick="runSwingScan()">🔄 Scan Now</button>
+        <button class="btn btn-green" id="sw-ai-btn" onclick="swAIAnalyse()" style="display:none">🤖 Analyse with AI</button>
+        <button class="btn btn-outline" onclick="openSwApiModal()" title="AI Settings" style="padding:6px 10px">⚙ AI Key</button>
       </div>
       <div id="sw-status" style="font-size:.76rem;color:var(--muted);padding:6px 0;border-top:1px solid var(--border)">
         Tap 'Scan Now' to evaluate today's swing setups.
@@ -686,6 +753,47 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
 </div>
 
 <!-- ══════════ HISTORY SECTION ══════════ -->
+<!-- ══ AI SWING ANALYSIS PANEL ══ -->
+<div id="sw-ai-panel" style="display:none">
+  <div class="panel" style="margin-top:10px">
+    <div class="sw-ai-hdr" style="padding:10px 12px 0">
+      <div class="sw-ai-title">🤖 AI Swing Analysis</div>
+      <span class="sw-ai-provider-badge" id="sw-ai-prov-badge">Gemini</span>
+      <button class="btn btn-outline" onclick="swAIAnalyse()" style="font-size:.72rem;padding:4px 10px">↻ Re-analyse</button>
+    </div>
+    <div style="padding:0 12px 12px">
+      <div id="sw-mkt-banner"></div>
+      <div id="sw-ai-cards"></div>
+      <div class="sw-ai-footer" id="sw-ai-footer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ API KEY MODAL ══ -->
+<div id="sw-api-modal">
+  <div class="sw-api-box">
+    <div class="sw-api-title">🔑 AI Provider Settings</div>
+    <div class="sw-api-sub">Your key is saved only on this device (localStorage). It never leaves your browser.</div>
+    <div class="sw-api-toggle">
+      <div class="sw-api-opt on" id="sw-api-opt-gemini" onclick="swSetProvider('gemini')">🆓 Google Gemini<br><span style="font-size:.6rem;font-weight:400">Free · No card needed</span></div>
+      <div class="sw-api-opt" id="sw-api-opt-claude" onclick="swSetProvider('claude')">⚡ Claude<br><span style="font-size:.6rem;font-weight:400">Better quality · $5 min</span></div>
+    </div>
+    <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:5px" id="sw-api-key-lbl">Gemini API Key</div>
+    <div style="display:flex;gap:5px;margin-bottom:4px">
+      <input type="password" class="sw-api-inp" id="sw-api-key-inp" placeholder="Paste key here…" oninput="swSaveKey()" style="flex:1;margin:0">
+      <button class="btn btn-outline" onclick="swToggleKeyVis()" style="padding:6px 9px">👁</button>
+    </div>
+    <div class="sw-api-status" id="sw-api-key-status" style="color:var(--muted)">No key saved</div>
+    <div class="sw-api-link">
+      🆓 Gemini free key: <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a><br>
+      ⚡ Claude key: <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+    </div>
+    <div class="sw-api-actions">
+      <button class="btn btn-primary" onclick="closeSwApiModal()" style="flex:1">Done</button>
+    </div>
+  </div>
+</div>
+
 <div id="sec-history" class="section">
   <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
     <span style="font-size:.82rem;font-weight:700;color:var(--muted)">REVIEW PERIOD:</span>
@@ -4331,12 +4439,252 @@ loadAllData=async function(){
 };
 
 // ══════════════════════════════════════════════════
+//  AI SWING ANALYSIS
+// ══════════════════════════════════════════════════
+
+function swGetProvider(){ return localStorage.getItem('sw_ai_provider')||'gemini'; }
+function swGetKey(p){ return localStorage.getItem('sw_ai_key_'+(p||swGetProvider()))||''; }
+
+function swSetProvider(p){
+  localStorage.setItem('sw_ai_provider',p);
+  document.getElementById('sw-api-opt-gemini').classList.toggle('on',p==='gemini');
+  document.getElementById('sw-api-opt-claude').classList.toggle('on',p==='claude');
+  document.getElementById('sw-api-key-lbl').textContent = p==='gemini'?'Gemini API Key':'Claude API Key (sk-ant-...)';
+  const saved = swGetKey(p);
+  document.getElementById('sw-api-key-inp').value = saved;
+  swUpdateKeyStatus();
+}
+
+function swSaveKey(){
+  const p=swGetProvider();
+  const k=document.getElementById('sw-api-key-inp').value.trim();
+  if(k) localStorage.setItem('sw_ai_key_'+p,k);
+  else localStorage.removeItem('sw_ai_key_'+p);
+  swUpdateKeyStatus();
+}
+
+function swUpdateKeyStatus(){
+  const p=swGetProvider();
+  const k=swGetKey(p);
+  const el=document.getElementById('sw-api-key-status');
+  if(k){ el.textContent='✓ Key saved: '+k.slice(0,8)+'••••'+k.slice(-4); el.style.color='#3db87a'; }
+  else { el.textContent='No key saved — paste above'; el.style.color='#e8943a'; }
+  document.getElementById('sw-ai-prov-badge').textContent = p==='gemini'?'Gemini (Free)':'Claude';
+}
+
+function swToggleKeyVis(){
+  const inp=document.getElementById('sw-api-key-inp');
+  inp.type=inp.type==='password'?'text':'password';
+}
+
+function openSwApiModal(){
+  const p=swGetProvider();
+  document.getElementById('sw-api-opt-gemini').classList.toggle('on',p==='gemini');
+  document.getElementById('sw-api-opt-claude').classList.toggle('on',p==='claude');
+  document.getElementById('sw-api-key-lbl').textContent = p==='gemini'?'Gemini API Key':'Claude API Key (sk-ant-...)';
+  document.getElementById('sw-api-key-inp').value=swGetKey(p);
+  swUpdateKeyStatus();
+  document.getElementById('sw-api-modal').classList.add('open');
+}
+function closeSwApiModal(){ document.getElementById('sw-api-modal').classList.remove('open'); }
+document.addEventListener('click',e=>{
+  const modal=document.getElementById('sw-api-modal');
+  if(modal && modal.classList.contains('open') && e.target===modal) closeSwApiModal();
+});
+
+async function swCallAI(prompt){
+  const p=swGetProvider(); const k=swGetKey(p);
+  if(!k) throw new Error('No API key — click "⚙ AI Key" button to add one');
+  let raw='';
+  if(p==='gemini'){
+    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+k,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:500}})
+    });
+    const data=await res.json();
+    if(data.error) throw new Error('Gemini: '+(data.error.message||'error'));
+    raw=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+  } else {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:500,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    if(data.error) throw new Error('Claude: '+(data.error.message||'error'));
+    raw=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+  }
+  const m=raw.match(/\{[\s\S]*\}/);
+  if(!m) throw new Error('AI returned no JSON — try again');
+  return JSON.parse(m[0]);
+}
+
+function swBuildPrompt(r, niftyCtx, openCount){
+  const t=r.targets||[];
+  const riskPct=r.entry?(r.riskPerShare/r.entry*100).toFixed(1):3;
+  return `You are an expert NSE India swing trader. Analyse this EOD setup and give TRADE/WAIT/SKIP verdict.
+
+Stock: ${r.symbol}
+Sector: ${r.sector||'—'}
+Score: ${r.score.toFixed(0)}/100
+Entry zone: ₹${r.entry.toFixed(2)}
+Stop loss: ₹${r.stopLoss.toFixed(2)} (Risk: ${riskPct}%)
+Target 1 (5%): ₹${t[0]?t[0].price.toFixed(2):'—'} (~${t[0]?t[0].estSessions:'?'}d)
+Target 2 (8%): ₹${t[1]?t[1].price.toFixed(2):'—'}
+Target 3 (12%): ₹${t[2]?t[2].price.toFixed(2):'—'}
+RS vs Nifty: ${r.rsVsNifty!==null?((r.rsVsNifty>=0?'+':'')+r.rsVsNifty.toFixed(1)+'%'):'—'}
+ATR trend: ${r.atrTrend||'flat'}
+Volume ratio: ${r.volRatio!==null?r.volRatio.toFixed(1)+'x':'—'}
+Market: ${niftyCtx}
+Open trades: ${openCount}/3 max
+
+Rules:
+- SKIP if score<55, risk>5%, volRatio<1.5, or market bearish (Nifty <-0.5%)
+- WAIT if score 55-64 or market flat/uncertain
+- TRADE if score≥65, volRatio≥1.5, risk≤4%, market flat or bullish
+- SKIP everything if openCount>=3
+
+Reply ONLY in this JSON, no other text:
+{"verdict":"TRADE or WAIT or SKIP","confidence":0-100,"entry_ok":true/false,"sl_ok":true/false,"market_ok":true/false,"volume_ok":true/false,"reason":"2 sentences max, plain English","entry_tip":"one sentence on when/how to enter tomorrow","red_flags":"comma separated concerns or empty string"}`;
+}
+
+async function swAIAnalyse(){
+  if(!swingData||!swingData.length){
+    showToast('Run Scan Now first — no swing data found','warning'); return;
+  }
+  const k=swGetKey();
+  if(!k){ openSwApiModal(); return; }
+
+  const minScore=parseFloat(document.getElementById('sw-minscore').value)||30;
+  let rows=swingData.filter(r=>r.score>=minScore);
+  if(!rows.length){ showToast('No stocks above min score','warning'); return; }
+
+  // Show panel
+  document.getElementById('sw-ai-panel').style.display='block';
+  document.getElementById('sw-ai-panel').scrollIntoView({behavior:'smooth',block:'start'});
+
+  // Market context from Nifty if available
+  let niftyCtx='Market data not available — treat as neutral';
+  let mktClass='mkt-flat', mktIcon='🟡', mktMsg='Market context unknown';
+  const niftyEl=document.getElementById('nifty-display')||document.getElementById('nifty-val');
+  if(niftyEl){
+    const txt=niftyEl.textContent||'';
+    niftyCtx=txt.trim()||niftyCtx;
+  }
+
+  // Render market banner
+  document.getElementById('sw-mkt-banner').innerHTML=`<div class="sw-mkt-banner ${mktClass}">${mktIcon} ${mktMsg} &nbsp;·&nbsp; Analysing ${rows.length} setup${rows.length>1?'s':''} with AI…</div>`;
+
+  // Skeleton cards
+  const cardsEl=document.getElementById('sw-ai-cards');
+  cardsEl.innerHTML=rows.map((r,i)=>swSkeletonCard(r,i)).join('');
+  document.getElementById('sw-ai-footer').textContent='';
+
+  const openCount=0; // simplified — no open trade tracking in this page
+  let tradeCount=0;
+
+  for(let i=0;i<rows.length;i++){
+    const r=rows[i];
+    const cardEl=document.getElementById('sw-ai-card-'+i);
+    try{
+      const result=await swCallAI(swBuildPrompt(r,niftyCtx,openCount));
+      if(result.verdict==='TRADE') tradeCount++;
+      if(cardEl) cardEl.outerHTML=swRenderCard(r,result,i);
+    } catch(e){
+      if(cardEl) cardEl.querySelector('.sw-ai-reason-box').innerHTML=`<div class="sw-ai-reason" style="color:#e05a5a">⚠ ${e.message}</div>`;
+    }
+  }
+
+  document.getElementById('sw-ai-footer').textContent=`Analysis complete · ${tradeCount} TRADE signal${tradeCount!==1?'s':''} found · ${new Date().toLocaleTimeString('en-IN')}`;
+  document.getElementById('sw-mkt-banner').innerHTML=`<div class="sw-mkt-banner ${mktClass}">${mktIcon} ${rows.length} setups analysed · ${tradeCount} TRADE · ${rows.length-tradeCount} skipped</div>`;
+}
+
+function swSkeletonCard(r,i){
+  const t=r.targets||[];
+  const riskPct=r.entry?(r.riskPerShare/r.entry*100).toFixed(1):3;
+  return `<div class="sw-ai-card" id="sw-ai-card-${i}">
+    <div class="sw-ai-card-head">
+      <div><div class="sw-ai-sym">${r.symbol}</div><div class="sw-ai-sector">${r.sector||'—'} · Score ${r.score.toFixed(0)}</div></div>
+      <span class="sw-ai-verdict-badge vb-PENDING">Analysing…</span>
+    </div>
+    <div class="sw-ai-card-body">
+      <div class="sw-ai-levels">
+        <div class="sw-ai-lbox le"><div class="sw-ai-ll">Entry</div><div class="sw-ai-lv">₹${r.entry.toFixed(2)}</div></div>
+        <div class="sw-ai-lbox ls"><div class="sw-ai-ll">Stop Loss</div><div class="sw-ai-lv">₹${r.stopLoss.toFixed(2)}</div></div>
+        <div class="sw-ai-lbox l1"><div class="sw-ai-ll">Target 1</div><div class="sw-ai-lv">${t[0]?'₹'+t[0].price.toFixed(2):'—'}</div></div>
+        <div class="sw-ai-lbox l2"><div class="sw-ai-ll">Target 2</div><div class="sw-ai-lv">${t[1]?'₹'+t[1].price.toFixed(2):'—'}</div></div>
+      </div>
+      <div class="sw-ai-reason-box"><div class="sw-ai-reason" style="color:var(--muted)">⏳ Sending to AI…</div></div>
+    </div>
+  </div>`;
+}
+
+function swRenderCard(r,res,i){
+  const t=r.targets||[];
+  const riskPct=r.entry?(r.riskPerShare/r.entry*100).toFixed(1):3;
+  const vc=res.verdict||'WAIT';
+  const volTxt=r.volRatio!==null?r.volRatio.toFixed(1)+'×':'—';
+  const rsTxt=r.rsVsNifty!==null?((r.rsVsNifty>=0?'+':'')+r.rsVsNifty.toFixed(1)+'%'):'—';
+  const qty=r.entry>0?Math.floor(50000/r.entry):0;
+  const rr=r.riskPerShare>0?((t[0]?t[0].price-r.entry:r.entry*0.05)/r.riskPerShare).toFixed(1):'—';
+
+  const checks=[['Entry zone','entry_ok'],['SL level','sl_ok'],['Market','market_ok'],['Volume','volume_ok']];
+
+  return `<div class="sw-ai-card verdict-${vc}" id="sw-ai-card-${i}">
+    <div class="sw-ai-card-head">
+      <div><div class="sw-ai-sym">${r.symbol}</div><div class="sw-ai-sector">${r.sector||'—'} · Score ${r.score.toFixed(0)}/100</div></div>
+      <span class="sw-ai-verdict-badge vb-${vc}">${vc==='TRADE'?'✅':'vc'==='SKIP'?'❌':'⏳'} ${vc} · ${res.confidence}%</span>
+    </div>
+    <div class="sw-ai-card-body">
+      <div class="sw-ai-levels">
+        <div class="sw-ai-lbox le"><div class="sw-ai-ll">Entry</div><div class="sw-ai-lv">₹${r.entry.toFixed(2)}</div></div>
+        <div class="sw-ai-lbox ls"><div class="sw-ai-ll">Stop Loss</div><div class="sw-ai-lv">₹${r.stopLoss.toFixed(2)}</div></div>
+        <div class="sw-ai-lbox l1"><div class="sw-ai-ll">Target 1</div><div class="sw-ai-lv">${t[0]?'₹'+t[0].price.toFixed(2):'—'}</div></div>
+        <div class="sw-ai-lbox l2"><div class="sw-ai-ll">Target 2</div><div class="sw-ai-lv">${t[1]?'₹'+t[1].price.toFixed(2):'—'}</div></div>
+      </div>
+      <div class="sw-ai-metrics">
+        <span class="sw-ai-tag ${r.volRatio>=3?'green':r.volRatio>=1.5?'amber':'red'}">Vol ${volTxt}</span>
+        <span class="sw-ai-tag ${r.rsVsNifty>=0?'green':'red'}">RS ${rsTxt}</span>
+        <span class="sw-ai-tag ${riskPct<=3?'green':riskPct<=5?'amber':'red'}">Risk ${riskPct}%</span>
+        <span class="sw-ai-tag">R:R ${rr}×</span>
+        <span class="sw-ai-tag">Qty ~${qty}</span>
+        <span class="sw-ai-tag">₹${(qty*r.entry).toLocaleString('en-IN',{maximumFractionDigits:0})}</span>
+      </div>
+      <div class="sw-ai-reason-box">
+        <div class="sw-ai-reason">${res.reason||''}</div>
+        ${res.entry_tip?`<div class="sw-ai-tip">→ ${res.entry_tip}</div>`:''}
+        ${res.red_flags?`<div class="sw-ai-flag">⚠ ${res.red_flags}</div>`:''}
+        <div class="sw-ai-checks">${checks.map(([l,k])=>`<span class="sw-ai-chk ${res[k]?'chk-ok':'chk-no'}">${res[k]?'✓':'✗'} ${l}</span>`).join('')}</div>
+      </div>
+      ${vc==='TRADE'?`<button class="sw-ai-add-btn" onclick="swCopyLevels('${r.symbol}',${r.entry.toFixed(2)},${r.stopLoss.toFixed(2)},${t[0]?t[0].price.toFixed(2):0},${t[1]?t[1].price.toFixed(2):0},${qty})">📋 Copy levels</button>`:''}
+    </div>
+  </div>`;
+}
+
+function swCopyLevels(sym,entry,sl,t1,t2,qty){
+  const txt=`${sym} | Entry ₹${entry} | SL ₹${sl} | T1 ₹${t1} | T2 ₹${t2} | Qty ~${qty}`;
+  navigator.clipboard.writeText(txt).then(()=>showToast('Levels copied!','success')).catch(()=>showToast('Copy failed','warning'));
+}
+
+// Show AI button after scan completes — hook into runSwingScan
+const _origRunSwingScan = runSwingScan;
+function runSwingScan(){
+  _origRunSwingScan();
+  setTimeout(()=>{
+    if(swingData && swingData.length>0){
+      document.getElementById('sw-ai-btn').style.display='inline-block';
+    }
+  }, 500);
+}
+
+// ══════════════════════════════════════════════════
 //  INIT CALLS
 // ══════════════════════════════════════════════════
 // Render alerts and watchlist on startup
 document.addEventListener('DOMContentLoaded',()=>{
   renderAlerts();
   renderWatchlist();
+  swUpdateKeyStatus();
 });
 
 </script>
