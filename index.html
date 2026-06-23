@@ -356,8 +356,9 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
 .sw-api-title{font-size:.92rem;font-weight:800;color:var(--text);margin-bottom:4px}
 .sw-api-sub{font-size:.7rem;color:var(--muted);margin-bottom:14px;line-height:1.5}
 .sw-api-toggle{display:flex;gap:6px;margin-bottom:12px}
-.sw-api-opt{flex:1;padding:7px;border:1px solid var(--border);border-radius:5px;font-size:.75rem;font-weight:700;cursor:pointer;background:var(--bg);color:var(--muted);text-align:center;transition:all .2s}
-.sw-api-opt.on{border-color:var(--primary);color:var(--primary);background:rgba(var(--primary-rgb),.07)}
+.sw-api-opt{flex:1;padding:7px;border:1.5px solid var(--border);border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer;background:var(--bg);color:var(--text);text-align:center;transition:all .2s;user-select:none}
+.sw-api-opt:hover{border-color:var(--primary);color:var(--primary)}
+.sw-api-opt.on{border-color:var(--primary);color:var(--primary);background:rgba(59,130,246,.08);box-shadow:0 0 0 1px var(--primary)}
 .sw-api-inp{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:5px;font-size:.78rem;background:var(--bg);color:var(--text);box-sizing:border-box;margin-bottom:6px}
 .sw-api-status{font-size:.65rem;margin-bottom:10px}
 .sw-api-link{font-size:.68rem;color:var(--primary);line-height:2}
@@ -713,7 +714,7 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
         </label>
         <button class="btn btn-primary" style="margin-left:auto" onclick="runSwingScan()">🔄 Scan Now</button>
         <button class="btn btn-green" id="sw-ai-btn" onclick="swAIAnalyse()" style="display:none">🤖 Analyse with AI</button>
-        <button class="btn btn-outline" onclick="openSwApiModal()" title="AI Settings" style="padding:6px 10px">⚙ AI Key</button>
+        <button class="btn btn-outline" onclick="openSwApiModal()" title="AI Settings" style="padding:6px 12px;font-size:.78rem">🔑 AI Key</button>
       </div>
       <div id="sw-status" style="font-size:.76rem;color:var(--muted);padding:6px 0;border-top:1px solid var(--border)">
         Tap 'Scan Now' to evaluate today's swing setups.
@@ -775,8 +776,12 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
     <div class="sw-api-title">🔑 AI Provider Settings</div>
     <div class="sw-api-sub">Your key is saved only on this device (localStorage). It never leaves your browser.</div>
     <div class="sw-api-toggle">
-      <div class="sw-api-opt on" id="sw-api-opt-gemini" onclick="swSetProvider('gemini')">🆓 Google Gemini<br><span style="font-size:.6rem;font-weight:400">Free · No card needed</span></div>
-      <div class="sw-api-opt" id="sw-api-opt-claude" onclick="swSetProvider('claude')">⚡ Claude<br><span style="font-size:.6rem;font-weight:400">Better quality · $5 min</span></div>
+      <div class="sw-api-opt on" id="sw-api-opt-gemini" onclick="swSetProvider('gemini')" style="padding:10px 8px;line-height:1.4">
+        <div>🆓 Google Gemini</div><div style="font-size:.62rem;font-weight:400;color:inherit;opacity:.8;margin-top:2px">Free · No card</div>
+      </div>
+      <div class="sw-api-opt" id="sw-api-opt-claude" onclick="swSetProvider('claude')" style="padding:10px 8px;line-height:1.4">
+        <div>⚡ Claude</div><div style="font-size:.62rem;font-weight:400;color:inherit;opacity:.8;margin-top:2px">Better · $5 min</div>
+      </div>
     </div>
     <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:5px" id="sw-api-key-lbl">Gemini API Key</div>
     <div style="display:flex;gap:5px;margin-bottom:4px">
@@ -4666,16 +4671,19 @@ function swCopyLevels(sym,entry,sl,t1,t2,qty){
   navigator.clipboard.writeText(txt).then(()=>showToast('Levels copied!','success')).catch(()=>showToast('Copy failed','warning'));
 }
 
-// Show AI button after scan completes — hook into runSwingScan
-const _origRunSwingScan = runSwingScan;
-function runSwingScan(){
-  _origRunSwingScan();
-  setTimeout(()=>{
-    if(swingData && swingData.length>0){
-      document.getElementById('sw-ai-btn').style.display='inline-block';
-    }
-  }, 500);
-}
+// Show AI button after scan — safely patched after definition
+(function(){
+  const _orig = window.runSwingScan;
+  window.runSwingScan = function(){
+    _orig.apply(this, arguments);
+    setTimeout(()=>{
+      if(typeof swingData !== 'undefined' && swingData.length > 0){
+        const btn = document.getElementById('sw-ai-btn');
+        if(btn) btn.style.display = 'inline-block';
+      }
+    }, 800);
+  };
+})();
 
 // ══════════════════════════════════════════════════
 //  INIT CALLS
