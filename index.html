@@ -372,15 +372,15 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
 /* API settings modal */
 #sw-api-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
 #sw-api-modal.open{display:flex}
-.sw-api-box{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px 20px;width:min(380px,90vw);max-height:90vh;overflow-y:auto}
-.sw-api-title{font-size:.92rem;font-weight:800;color:var(--text);margin-bottom:4px}
-.sw-api-sub{font-size:.7rem;color:var(--muted);margin-bottom:14px;line-height:1.5}
+.sw-api-box{background:#ffffff;border:1px solid #d0d5dd;border-radius:10px;padding:18px 20px;width:min(380px,90vw);max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.28)}
+.sw-api-title{font-size:.92rem;font-weight:800;color:#111827;margin-bottom:4px}
+.sw-api-sub{font-size:.7rem;color:#6b7280;margin-bottom:14px;line-height:1.5}
 .sw-api-toggle{display:flex;gap:6px;margin-bottom:12px}
-.sw-api-opt{flex:1;padding:7px;border:1.5px solid var(--border);border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer;background:var(--bg);color:var(--text);text-align:center;transition:all .2s;user-select:none}
+.sw-api-opt{flex:1;padding:7px;border:1.5px solid #d1d5db;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer;background:#f9fafb;color:#374151;text-align:center;transition:all .2s;user-select:none}
 .sw-api-opt:hover{border-color:var(--primary);color:var(--primary)}
 .sw-api-opt.on{border-color:var(--primary);color:var(--primary);background:rgba(59,130,246,.08);box-shadow:0 0 0 1px var(--primary)}
-.sw-api-inp{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:5px;font-size:.78rem;background:var(--bg);color:var(--text);box-sizing:border-box;margin-bottom:6px}
-.sw-api-status{font-size:.65rem;margin-bottom:10px}
+.sw-api-inp{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:5px;font-size:.78rem;background:#fff;color:#111827;box-sizing:border-box;margin-bottom:6px}
+.sw-api-status{font-size:.65rem;margin-bottom:10px;color:#374151}
 .sw-api-link{font-size:.68rem;color:var(--primary);line-height:2}
 .sw-api-actions{display:flex;gap:6px;margin-top:10px}
 </style>
@@ -734,7 +734,6 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
           📊 Index Only
         </label>
         <button class="btn btn-primary" style="margin-left:auto" onclick="runSwingScan()">🔄 Scan Now</button>
-        <button class="btn btn-green" id="sw-ai-btn" onclick="swAIAnalyse()" style="display:none">🤖 Analyse with AI</button>
         <button class="btn btn-outline" onclick="openSwApiModal()" title="AI Settings" style="padding:6px 12px;font-size:.78rem">🔑 AI Key</button>
       </div>
       <div id="sw-status" style="font-size:.76rem;color:var(--muted);padding:6px 0;border-top:1px solid var(--border)">
@@ -763,6 +762,7 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
           <th onclick="sortSwTable('rsVsNifty')">RS vs N</th>
           <th onclick="sortSwTable('atrTrend')">ATR</th>
           <th onclick="sortSwTable('volRatio')">Vol×</th>
+          <th>AI</th>
         </tr></thead>
         <tbody id="sw-table-body"></tbody>
       </table>
@@ -1423,24 +1423,50 @@ async function loadHistoryBackground(){
     const resp = await fetch(`${HISTORY_URL}?_t=${Date.now()}`,{cache:'no-store'});
     if(!resp.ok) throw new Error(`history.json HTTP ${resp.status}`);
     const pkg = await resp.json();
-    // Populate historicalData in slim format → convert to full format for vol ratio
-    historicalData={};
+    // Populate historicalData — MERGE into existing rather than overwrite,
+    // so any dates already loaded (e.g. from bhavFiles) are preserved.
+    if(!historicalData) historicalData={};
     for(const [dateStr, rows] of Object.entries(pkg.history||{})){
       // Convert DDMMYYYY key to DD-MM-YYYY for compatibility
       const dk = `${dateStr.slice(0,2)}-${dateStr.slice(2,4)}-${dateStr.slice(4,8)}`;
-      historicalData[dk] = rows.map(r=>({
-        SYMBOL:       r.S,
-        OPEN:         r.O,
-        HIGH:         r.H,
-        LOW:          r.L,
-        CLOSE:        r.C,
-        TTL_TRD_QNTY: r.V,
-        DELIV_PER:    r.D,
-        PREV_CLOSE:   r.C,  // approximate
-        TURNOVER_LACS:0,
-        NO_OF_TRADES: 0,
-      }));
+      if(!historicalData[dk]){   // don't overwrite a date already loaded
+        historicalData[dk] = rows.map(r=>({
+          SYMBOL:       r.S,
+          OPEN:         r.O,
+          HIGH:         r.H,
+          LOW:          r.L,
+          CLOSE:        r.C,
+          TTL_TRD_QNTY: r.V,
+          DELIV_PER:    r.D,
+          PREV_CLOSE:   r.C,  // approximate for history rows
+          TURNOVER_LACS:0,
+          NO_OF_TRADES: 0,
+        }));
+      }
     }
+
+    // Always inject today's snapshot rows into historicalData so that
+    // swBuildSeriesForSymbol includes the latest trading day in its series.
+    // Use exact CLOSE/PREV_CLOSE from snapshot (not approximated).
+    if(snapshotData && snapshotData.today && snapshotData.scan_date){
+      const sd = snapshotData.scan_date; // DDMMYYYY
+      const dk = `${sd.slice(0,2)}-${sd.slice(2,4)}-${sd.slice(4,8)}`;
+      if(!historicalData[dk]){
+        historicalData[dk] = snapshotData.today.map(r=>({
+          SYMBOL:       r.SYMBOL,
+          OPEN:         r.OPEN,
+          HIGH:         r.HIGH,
+          LOW:          r.LOW,
+          CLOSE:        r.CLOSE,
+          TTL_TRD_QNTY: r.TTL_TRD_QNTY,
+          DELIV_PER:    r.DELIV_PER,
+          PREV_CLOSE:   r.PREV_CLOSE,
+          TURNOVER_LACS:r.TURNOVER_LACS||0,
+          NO_OF_TRADES: r.NO_OF_TRADES||0,
+        }));
+      }
+    }
+
     historyLoaded=true;
     const daycount = Object.keys(historicalData).length;
     setStatus(`✓ Ready — ${todayData.length} stocks | ${daycount}d history loaded | ${snapshotData?.scan_date_fmt||''}`, 'ok');
@@ -2481,6 +2507,7 @@ function renderSwingTable(){
       <td>${rsTxt}</td>
       <td><span class="sw-atr ${atrCls}">${atrLbl}</span></td>
       <td>${volTxt}</td>
+      <td><button class="btn" style="font-size:.65rem;padding:3px 8px;background:#1a6b2e;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap" onclick="swAIAnalyseSingle('${r.symbol}',${i})">🤖 AI</button></td>
     `;
     tbody.appendChild(tr);
   });
@@ -3517,7 +3544,16 @@ function setChartPeriod(days){
   document.querySelectorAll('.period-btn').forEach(b=>{
     b.classList.toggle('active', +b.dataset.p===days);
   });
-  if(detailSymbol) loadChartData(detailSymbol, days);
+  if(detailSymbol){
+    // Clear cached slice for this symbol so loadChartData rebuilds from full array
+    if(chartDataFull[detailSymbol]){
+      chartData = chartDataFull[detailSymbol].slice(-days);
+      redrawChart();
+      renderPeriodStats(chartData);
+    } else {
+      loadChartData(detailSymbol, days);
+    }
+  }
 }
 
 // ── Compute MA ─────────────────────────────────
@@ -5008,6 +5044,52 @@ Rules:
 
 Reply ONLY in this JSON, no other text:
 {"verdict":"TRADE or WAIT or SKIP","confidence":0-100,"entry_ok":true/false,"sl_ok":true/false,"market_ok":true/false,"volume_ok":true/false,"reason":"2 sentences max, plain English","entry_tip":"one sentence on when/how to enter tomorrow","red_flags":"comma separated concerns or empty string"}`;
+}
+
+// ── Per-row single stock AI analysis ──────────────────────────
+async function swAIAnalyseSingle(sym, rowIdx){
+  const r = swingData.find(x=>x.symbol===sym);
+  if(!r){ showToast('Stock not found in scan data','warning'); return; }
+  const k = swGetKey();
+  if(!k){ openSwApiModal(); return; }
+
+  // Find or create a result row beneath the stock row in the table
+  const tbody = document.getElementById('sw-table-body');
+  const rows   = tbody.querySelectorAll('tr');
+  const existId = 'sw-ai-inline-'+sym;
+
+  // If result row already exists, remove it (toggle off)
+  const existing = document.getElementById(existId);
+  if(existing){ existing.remove(); return; }
+
+  // Mark button as loading
+  const btn = tbody.querySelector(`button[onclick*="swAIAnalyseSingle('${sym}'"]`);
+  if(btn){ btn.textContent='⏳'; btn.disabled=true; }
+
+  // Show panel for results
+  document.getElementById('sw-ai-panel').style.display='block';
+
+  let niftyCtx = 'Market data not available';
+  const niftyEl = document.getElementById('nifty-display')||document.getElementById('nifty-val');
+  if(niftyEl) niftyCtx = niftyEl.textContent.trim()||niftyCtx;
+
+  try{
+    const result = await swCallAI(swBuildPrompt(r, niftyCtx, 0));
+
+    // Render inline result card in the panel
+    const cardsEl = document.getElementById('sw-ai-cards');
+    cardsEl.innerHTML = swRenderCard(r, result, 0);
+    document.getElementById('sw-ai-panel').scrollIntoView({behavior:'smooth', block:'start'});
+
+    const vLabel = result.verdict==='TRADE'?'✅ TRADE':result.verdict==='SKIP'?'❌ SKIP':'⏳ WAIT';
+    document.getElementById('sw-mkt-banner').innerHTML =
+      `<div class="sw-mkt-banner mkt-flat">🤖 AI analysis for <strong>${sym}</strong> — ${vLabel}</div>`;
+
+    if(btn){ btn.textContent='🤖 AI'; btn.disabled=false; btn.style.background='#0c447c'; }
+  } catch(e){
+    showToast('AI error: '+e.message,'warning');
+    if(btn){ btn.textContent='🤖 AI'; btn.disabled=false; btn.style.background='#1a6b2e'; }
+  }
 }
 
 async function swAIAnalyse(){
