@@ -298,67 +298,74 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
 .weekly-section h3{font-size:.82rem;font-weight:700;color:var(--accent);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border)}
 
 
+/* ══ MOMENTUM BREAKOUT SCANNER ══ */
+.mb-score-badge{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;font-size:.85rem;font-weight:800;border:2px solid transparent}
+.mb-score-hot{background:#FFF3E0;color:#E65100;border-color:#FFB74D}
+.mb-score-warm{background:#FFF8E1;color:#F9A825;border-color:#FFD54F}
+.mb-score-cool{background:#F3F4F6;color:var(--muted);border-color:var(--border)}
+.mb-tag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:.60rem;font-weight:800;letter-spacing:.03em;margin:1px}
+.mb-tag-green{background:rgba(46,125,17,.1);color:#1A6B2E;border:1px solid rgba(46,125,17,.2)}
+.mb-tag-amber{background:rgba(232,148,58,.1);color:#7B4F0A;border:1px solid rgba(232,148,58,.2)}
+.mb-tag-red{background:rgba(183,28,28,.1);color:#B71C1C;border:1px solid rgba(183,28,28,.2)}
+.mb-tag-blue{background:rgba(24,95,165,.1);color:#0C447C;border:1px solid rgba(24,95,165,.2)}
+.mb-tag-purple{background:rgba(103,58,183,.1);color:#512DA8;border:1px solid rgba(103,58,183,.2)}
+#mb-table tr.mb-fire{background:#FFF8F0}
+#mb-table tr.mb-warm{background:#FFFDE7}
+.mb-breakout-fresh{color:#E65100;font-weight:800}
+.mb-breakout-stale{color:var(--muted)}
+.mb-sector-chip{padding:8px 12px;font-size:.74rem;font-weight:700;color:var(--text);background:var(--card);border:1.5px solid var(--border);border-radius:10px;white-space:nowrap;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:70px}
+.mb-sector-chip .mb-chip-score{font-size:.9rem;font-weight:800}
+.mb-sector-chip.active{background:#B71C1C;color:#fff;border-color:#B71C1C}
+.mb-sector-chip.active .mb-chip-score{color:#fff}
+.mb-sector-chip:hover:not(.active){border-color:#B71C1C}
 /* ══ AI SWING ANALYSIS PANEL ══ */
-#sw-ai-panel{margin-top:14px}
-.sw-ai-hdr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px 8px;border-bottom:1px solid var(--border)}
-.sw-ai-title{font-size:1rem;font-weight:800;color:var(--text);flex:1}
-.sw-ai-provider-badge{font-size:.72rem;padding:4px 10px;border-radius:4px;border:1px solid var(--border);color:var(--muted);background:var(--bg)}
-/* Card */
-.sw-ai-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden}
-.sw-ai-card.verdict-TRADE{border-left:4px solid #3db87a}
-.sw-ai-card.verdict-SKIP{border-left:4px solid #e05a5a}
-.sw-ai-card.verdict-WAIT{border-left:4px solid #e8943a}
-/* Card header */
-.sw-ai-card-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);gap:8px;flex-wrap:wrap}
-.sw-ai-sym{font-size:1.15rem;font-weight:900;color:var(--text);letter-spacing:.01em}
-.sw-ai-sector{font-size:.78rem;color:var(--muted);margin-top:2px}
-.sw-ai-verdict-badge{font-size:.82rem;font-weight:800;padding:5px 14px;border-radius:5px;white-space:nowrap}
-.vb-TRADE{background:rgba(61,184,122,.15);color:#3db87a;border:1px solid rgba(61,184,122,.3)}
-.vb-SKIP{background:rgba(224,90,90,.13);color:#e05a5a;border:1px solid rgba(224,90,90,.25)}
-.vb-WAIT{background:rgba(232,148,58,.13);color:#e8943a;border:1px solid rgba(232,148,58,.25)}
-.vb-PENDING{background:rgba(150,150,150,.1);color:var(--muted);border:1px solid var(--border)}
-/* Card body */
-.sw-ai-card-body{padding:14px 16px}
-/* Levels grid — 2 col on mobile, 4 on wide */
-.sw-ai-levels{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-@media(min-width:600px){.sw-ai-levels{grid-template-columns:repeat(4,1fr)}}
-.sw-ai-lbox{padding:8px 10px;border-radius:6px;border:1px solid var(--border)}
-.sw-ai-lbox.le{border-color:rgba(74,144,217,.3);background:rgba(74,144,217,.06)}
-.sw-ai-lbox.ls{border-color:rgba(224,90,90,.3);background:rgba(224,90,90,.06)}
-.sw-ai-lbox.l1{border-color:rgba(61,184,122,.25);background:rgba(61,184,122,.06)}
-.sw-ai-lbox.l2{border-color:rgba(232,148,58,.25);background:rgba(232,148,58,.06)}
-.sw-ai-ll{font-size:.65rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
-.sw-ai-lv{font-size:.95rem;font-weight:800}
+#sw-ai-panel{margin-top:10px}
+.sw-ai-hdr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.sw-ai-title{font-size:.85rem;font-weight:700;color:var(--text);flex:1}
+.sw-ai-provider-badge{font-size:.68rem;padding:3px 8px;border-radius:3px;border:1px solid var(--border);color:var(--muted)}
+.sw-ai-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;transition:border-color .2s}
+.sw-ai-card.verdict-TRADE{border-left:3px solid #3db87a}
+.sw-ai-card.verdict-SKIP{border-left:3px solid #e05a5a}
+.sw-ai-card.verdict-WAIT{border-left:3px solid #e8943a}
+.sw-ai-card-head{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border);gap:8px}
+.sw-ai-sym{font-size:.92rem;font-weight:800;color:var(--text)}
+.sw-ai-sector{font-size:.65rem;color:var(--muted);margin-top:1px}
+.sw-ai-verdict-badge{font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:3px}
+.vb-TRADE{background:rgba(61,184,122,.12);color:#3db87a}
+.vb-SKIP{background:rgba(224,90,90,.12);color:#e05a5a}
+.vb-WAIT{background:rgba(232,148,58,.12);color:#e8943a}
+.vb-PENDING{background:rgba(150,150,150,.1);color:var(--muted)}
+.sw-ai-card-body{padding:8px 12px}
+.sw-ai-levels{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:7px}
+@media(max-width:480px){.sw-ai-levels{grid-template-columns:repeat(2,1fr)}}
+.sw-ai-lbox{padding:4px 7px;border-radius:4px;border:1px solid var(--border)}
+.sw-ai-lbox.le{border-color:rgba(74,144,217,.25);background:rgba(74,144,217,.05)}
+.sw-ai-lbox.ls{border-color:rgba(224,90,90,.25);background:rgba(224,90,90,.05)}
+.sw-ai-lbox.l1{border-color:rgba(61,184,122,.2);background:rgba(61,184,122,.05)}
+.sw-ai-lbox.l2{border-color:rgba(232,148,58,.2);background:rgba(232,148,58,.05)}
+.sw-ai-ll{font-size:.54rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
+.sw-ai-lv{font-size:.78rem;font-weight:700}
 .sw-ai-lbox.le .sw-ai-lv{color:#4a90d9}
 .sw-ai-lbox.ls .sw-ai-lv{color:#e05a5a}
 .sw-ai-lbox.l1 .sw-ai-lv{color:#3db87a}
 .sw-ai-lbox.l2 .sw-ai-lv{color:#e8943a}
-/* Metrics row */
-.sw-ai-metrics{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
-.sw-ai-tag{font-size:.74rem;font-weight:600;padding:4px 10px;border-radius:4px;border:1px solid var(--border);color:var(--muted)}
-.sw-ai-tag.green{border-color:rgba(61,184,122,.35);color:#3db87a;background:rgba(61,184,122,.08)}
-.sw-ai-tag.red{border-color:rgba(224,90,90,.35);color:#e05a5a;background:rgba(224,90,90,.08)}
-.sw-ai-tag.amber{border-color:rgba(232,148,58,.35);color:#e8943a;background:rgba(232,148,58,.08)}
-/* Reason box */
-.sw-ai-reason-box{border-radius:7px;padding:12px 14px;background:rgba(0,0,0,.12);margin-bottom:10px;border:1px solid var(--border)}
-.sw-ai-reason{font-size:.84rem;color:var(--text);line-height:1.65;font-weight:400}
-.sw-ai-tip{font-size:.8rem;color:#e8943a;margin-top:6px;line-height:1.6;font-weight:500}
-.sw-ai-flag{font-size:.78rem;color:#e05a5a;margin-top:5px;font-weight:500}
-/* Checks */
-.sw-ai-checks{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.sw-ai-chk{font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:4px}
-.chk-ok{background:rgba(61,184,122,.12);color:#3db87a}
+.sw-ai-metrics{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:7px}
+.sw-ai-tag{font-size:.62rem;padding:2px 7px;border-radius:2px;border:1px solid var(--border);color:var(--muted)}
+.sw-ai-tag.green{border-color:rgba(61,184,122,.3);color:#3db87a;background:rgba(61,184,122,.07)}
+.sw-ai-tag.red{border-color:rgba(224,90,90,.3);color:#e05a5a;background:rgba(224,90,90,.07)}
+.sw-ai-tag.amber{border-color:rgba(232,148,58,.3);color:#e8943a;background:rgba(232,148,58,.07)}
+.sw-ai-reason-box{border-radius:5px;padding:6px 9px;background:rgba(0,0,0,.07);margin-bottom:6px;border:1px solid var(--border)}
+.sw-ai-reason{font-size:.71rem;color:var(--text);line-height:1.6}
+.sw-ai-tip{font-size:.69rem;color:#e8943a;margin-top:3px;line-height:1.5}
+.sw-ai-flag{font-size:.68rem;color:#e05a5a;margin-top:3px}
+.sw-ai-checks{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.sw-ai-chk{font-size:.62rem;padding:2px 7px;border-radius:2px}
+.chk-ok{background:rgba(61,184,122,.1);color:#3db87a}
 .chk-no{background:rgba(224,90,90,.1);color:#e05a5a}
-/* Add btn */
-.sw-ai-add-btn{font-size:.78rem;padding:7px 16px;margin-top:8px;background:var(--primary);color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:700;letter-spacing:.02em}
-.sw-ai-add-btn:hover{opacity:.88}
-/* Footer */
-.sw-ai-footer{text-align:center;font-size:.74rem;color:var(--muted);padding:10px 0 6px}
-/* Market banner */
-.sw-mkt-banner{padding:10px 14px;border-radius:7px;margin-bottom:12px;font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:10px}
-.mkt-bull{background:rgba(61,184,122,.1);border:1px solid rgba(61,184,122,.25);color:#3db87a}
-.mkt-bear{background:rgba(224,90,90,.1);border:1px solid rgba(224,90,90,.25);color:#e05a5a}
-.mkt-flat{background:rgba(232,148,58,.08);border:1px solid rgba(232,148,58,.2);color:#e8943a}
+.sw-ai-add-btn{font-size:.7rem;padding:4px 12px;margin-top:6px;background:var(--primary);color:#fff;border:none;border-radius:4px;cursor:pointer}
+.sw-ai-footer{text-align:center;font-size:.65rem;color:var(--muted);padding:8px 0 4px}
+/* Market context banner */
+.sw-mkt-banner{padding:7px 12px;border-radius:6px;margin-bottom:10px;font-size:.74rem;font-weight:600;display:flex;align-items:center;gap:8px}
 .mkt-bull{background:rgba(61,184,122,.1);border:1px solid rgba(61,184,122,.25);color:#3db87a}
 .mkt-bear{background:rgba(224,90,90,.1);border:1px solid rgba(224,90,90,.25);color:#e05a5a}
 .mkt-flat{background:rgba(232,148,58,.08);border:1px solid rgba(232,148,58,.2);color:#e8943a}
@@ -459,6 +466,7 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
   <button class="snav-btn" onclick="showSection('scan')">📊 Scanner</button>
   <button class="snav-btn" onclick="showSection('pulse')">⚡ Market Pulse</button>
   <button class="snav-btn" onclick="showSection('swing')">🎯 Swing Setup</button>
+  <button class="snav-btn" onclick="showSection('momentum')">🚀 Momentum</button>
   <button class="snav-btn" onclick="showSection('history')">📋 History &amp; P&amp;L</button>
   <button class="snav-btn" onclick="showSection('deals')">🔴 Deals</button>
   <button class="snav-btn" onclick="showSection('shortsell')">🔻 Short Sell</button>
@@ -766,10 +774,87 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
 
 </div>
 
+<!-- ══════════ MOMENTUM BREAKOUT SECTION ══════════ -->
+<div id="sec-momentum" class="section">
+
+  <div class="panel" style="margin-top:10px">
+    <div class="panel-hdr" style="background:linear-gradient(135deg,#B71C1C,#880E4F)">🚀 Momentum Breakout Scanner</div>
+    <div style="padding:10px 12px">
+      <div style="font-size:.74rem;color:var(--muted);margin-bottom:8px">
+        Target 10–20% in 3–5 sessions · Tight breakout stop · High-conviction setups only
+      </div>
+
+      <!-- Score breakdown chips -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;font-size:.70rem">
+        <span style="display:flex;align-items:center;gap:3px;padding:3px 9px;border-radius:12px;background:rgba(230,81,0,.1);color:#E65100;border:1px solid rgba(230,81,0,.2);font-weight:700">🔴 Fresh Breakout 30pts</span>
+        <span style="display:flex;align-items:center;gap:3px;padding:3px 9px;border-radius:12px;background:rgba(245,124,0,.1);color:#E65100;border:1px solid rgba(245,124,0,.2);font-weight:700">📊 Vol Explosion 25pts</span>
+        <span style="display:flex;align-items:center;gap:3px;padding:3px 9px;border-radius:12px;background:rgba(46,125,17,.1);color:#1A6B2E;border:1px solid rgba(46,125,17,.2);font-weight:700">📦 Del Spike 20pts</span>
+        <span style="display:flex;align-items:center;gap:3px;padding:3px 9px;border-radius:12px;background:rgba(24,95,165,.1);color:#0C447C;border:1px solid rgba(24,95,165,.2);font-weight:700">🎯 Tight Stop 15pts</span>
+        <span style="display:flex;align-items:center;gap:3px;padding:3px 9px;border-radius:12px;background:rgba(103,58,183,.1);color:#512DA8;border:1px solid rgba(103,58,183,.2);font-weight:700">🏦 Sector Conf. 10pts</span>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <select id="mb-minscore"
+                style="padding:6px 8px;border:1px solid var(--border);border-radius:5px;font-size:.82rem;background:var(--bg);color:var(--text)">
+          <option value="0">Min Score: 0</option>
+          <option value="30">Min Score: 30</option>
+          <option value="40" selected>Min Score: 40</option>
+          <option value="50">Min Score: 50</option>
+          <option value="60">Min Score: 60</option>
+          <option value="70">Min Score: 70</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:5px;font-size:.78rem;font-weight:700;color:var(--muted);white-space:nowrap">
+          <input type="checkbox" id="mb-idx-only" checked style="width:auto">
+          📊 Index Only
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:.78rem;font-weight:700;color:var(--muted);white-space:nowrap">
+          <input type="checkbox" id="mb-fo-only" style="width:auto">
+          ⚡ F&amp;O Only
+        </label>
+        <button class="btn btn-primary" style="margin-left:auto;background:linear-gradient(135deg,#B71C1C,#880E4F);border:none" onclick="runMomentumScan()">🚀 Scan Now</button>
+      </div>
+      <div id="mb-status" style="font-size:.76rem;color:var(--muted);padding:6px 0;border-top:1px solid var(--border)">
+        Tap 'Scan Now' to find today's breakout candidates. Expect 0–5 results on a typical day.
+      </div>
+    </div>
+  </div>
+
+  <!-- Sector filter strip -->
+  <div id="mb-sector-strip" style="display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:6px;margin-bottom:8px;padding-bottom:2px"></div>
+
+  <div class="panel" id="mb-table-panel">
+    <div id="mb-table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table id="mb-table">
+        <thead><tr>
+          <th>#</th>
+          <th style="text-align:left" onclick="sortMbTable('symbol')">Symbol</th>
+          <th style="text-align:left" onclick="sortMbTable('sector')">Sector</th>
+          <th onclick="sortMbTable('score')">Score</th>
+          <th onclick="sortMbTable('entry')">Entry</th>
+          <th onclick="sortMbTable('stopLoss')">SL</th>
+          <th onclick="sortMbTable('risk')">Risk%</th>
+          <th>T1 (+10%)</th>
+          <th>T2 (+15%)</th>
+          <th>T3 (+20%)</th>
+          <th onclick="sortMbTable('volRatio')">Vol×</th>
+          <th onclick="sortMbTable('delSpike')">Del Spike</th>
+          <th>Breakout</th>
+          <th>Tags</th>
+        </tr></thead>
+        <tbody id="mb-table-body"></tbody>
+      </table>
+    </div>
+    <div id="mb-empty" style="padding:30px 16px;text-align:center;color:var(--muted);font-size:.85rem">
+      No scan run yet — tap 'Scan Now' above.
+    </div>
+  </div>
+
+</div>
+
 <!-- ══════════ HISTORY SECTION ══════════ -->
 <!-- ══ AI SWING ANALYSIS PANEL ══ -->
-<div id="sw-ai-panel" style="display:none;padding:0 8px">
-  <div class="panel" style="margin-top:10px;max-width:900px;margin-left:auto;margin-right:auto">
+<div id="sw-ai-panel" style="display:none">
+  <div class="panel" style="margin-top:10px">
     <div class="sw-ai-hdr" style="padding:10px 12px 0">
       <div class="sw-ai-title">🤖 AI Swing Analysis</div>
       <span class="sw-ai-provider-badge" id="sw-ai-prov-badge">Gemini</span>
@@ -2402,6 +2487,364 @@ function renderSwingTable(){
 }
 
 
+// ══════════════════════════════════════════════════════════════
+//  MOMENTUM BREAKOUT SCANNER
+//  Scoring model (0-100):
+//    Fresh Breakout      30 pts  — close = N-day high, <2 sessions old
+//    Volume Explosion    25 pts  — today vol >= 2.5x 10-day avg
+//    Delivery Spike      20 pts  — today del% jumps vs 5-day avg
+//    Tight Stop          15 pts  — distance from breakout base <= 3%
+//    Sector Confirmation 10 pts  — sector peers also rising today
+//  Targets: T1 +10%, T2 +15%, T3 +20%  (3-5 session horizon)
+// ══════════════════════════════════════════════════════════════
+
+let mbData = [];
+let mbSectorFilter = null;
+let mbManualSortCol = null;
+let mbManualSortAsc = false;
+
+// FO stock set derived from FO_SECTOR_MAP keys
+function mbIsFO(sym){ return Object.prototype.hasOwnProperty.call(FO_SECTOR_MAP, sym); }
+
+// Sector peers green today — uses todayData to check if >=60% of
+// sector peers (F&O universe, same sector) closed up today.
+function mbSectorConfScore(sym){
+  const e = FO_SECTOR_MAP[sym];
+  if(!e) return 0;
+  const sector = e[0];
+  const peers = Object.entries(FO_SECTOR_MAP)
+    .filter(([s,[sec]])=> sec===sector && s!==sym)
+    .map(([s])=>s);
+  if(peers.length < 2) return 0;
+
+  const todayMap = {};
+  todayData.forEach(r=>{ todayMap[r.SYMBOL]=r; });
+
+  let up=0, total=0;
+  peers.forEach(s=>{
+    const r = todayMap[s];
+    if(r && r.PREV_CLOSE>0){
+      total++;
+      if(r.CLOSE > r.PREV_CLOSE) up++;
+    }
+  });
+  if(total < 2) return 0;
+  const pct = up/total;
+  if(pct >= 0.6) return 10;
+  if(pct >= 0.4) return 5;
+  return 0;
+}
+
+// Core momentum breakout score (0-100)
+function mbComputeScore(closes, highs, lows, vols, delivs, sym){
+  const n = closes.length;
+  if(n < 15) return {score:null};
+
+  let score = 0;
+  const tags = [];   // factor badges for the UI
+
+  // ── Factor 1: Fresh Breakout (30 pts) ──────────────────────
+  // Close is at or near highest close in last 10-15 days,
+  // AND the breakout happened within the last 1-2 sessions.
+  const lookback = Math.min(15, n);
+  const windowCloses = closes.slice(n-lookback);
+  const maxClose = Math.max(...windowCloses);
+  const priorMaxClose = n>=lookback+1 ? Math.max(...closes.slice(n-lookback-1, n-1)) : Math.max(...closes.slice(0, n-1));
+  const todayClose = closes[n-1];
+  const prevClose  = closes[n-2];
+
+  // Is today a new N-day high close?
+  const isTodayBreakout   = todayClose >= maxClose * 0.995;
+  // Was yesterday a breakout (close >= prior-lookback max)?
+  const isYestBreakout    = n>=lookback+2 && prevClose >= Math.max(...closes.slice(n-lookback-2, n-2)) * 0.995;
+
+  let breakoutFreshness = null; // 0 = today, 1 = yesterday
+  if(isTodayBreakout){
+    // Scored higher if today specifically broke out
+    const pts = prevClose < priorMaxClose*0.995 ? 30 : 22; // true breakout day vs continuation
+    score += pts;
+    breakoutFreshness = 0;
+    tags.push({label:'🔴 BK Today', cls:'mb-tag-green'});
+  } else if(isYestBreakout && todayClose >= priorMaxClose * 0.98){
+    // Yesterday's breakout holding — still fresh
+    score += 18;
+    breakoutFreshness = 1;
+    tags.push({label:'🟡 BK Yest', cls:'mb-tag-amber'});
+  } else {
+    // Not a fresh breakout — check if near recent high (max -3%)
+    const nearHigh = (maxClose - todayClose) / maxClose * 100;
+    if(nearHigh <= 3) {
+      score += 8;
+      tags.push({label:'Near High', cls:'mb-tag-amber'});
+    }
+  }
+
+  // ── Factor 2: Volume Explosion (25 pts) ────────────────────
+  let volRatio = null;
+  if(vols.length >= 11 && vols[n-1] > 0){
+    const avg10 = vols.slice(n-11, n-1).reduce((a,b)=>a+b, 0) / 10;
+    if(avg10 > 0){
+      volRatio = vols[n-1] / avg10;
+      if(volRatio >= 3.0){       score += 25; tags.push({label:`Vol ${volRatio.toFixed(1)}×`, cls:'mb-tag-green'}); }
+      else if(volRatio >= 2.5){  score += 20; tags.push({label:`Vol ${volRatio.toFixed(1)}×`, cls:'mb-tag-green'}); }
+      else if(volRatio >= 2.0){  score += 13; tags.push({label:`Vol ${volRatio.toFixed(1)}×`, cls:'mb-tag-amber'}); }
+      else if(volRatio >= 1.5){  score +=  6; tags.push({label:`Vol ${volRatio.toFixed(1)}×`, cls:'mb-tag-amber'}); }
+      else {                                   tags.push({label:`Vol ${volRatio.toFixed(1)}×`, cls:'mb-tag-red'}); }
+    }
+  }
+
+  // ── Factor 3: Delivery Spike (20 pts) ──────────────────────
+  // Today's delivery% vs its own trailing 5-day average — sudden conviction
+  let delSpike = null;
+  if(delivs.length >= 6 && delivs[n-1] > 0){
+    const avg5del = delivs.slice(n-6, n-1).reduce((a,b)=>a+b, 0) / 5;
+    if(avg5del > 0){
+      delSpike = delivs[n-1] - avg5del;  // percentage-point jump
+      const delRatio = delivs[n-1] / avg5del;
+      if(delRatio >= 2.0 && delivs[n-1] >= 40){      score += 20; tags.push({label:`Del +${delSpike.toFixed(0)}pp`, cls:'mb-tag-green'}); }
+      else if(delRatio >= 1.5 && delivs[n-1] >= 30){ score += 14; tags.push({label:`Del +${delSpike.toFixed(0)}pp`, cls:'mb-tag-green'}); }
+      else if(delRatio >= 1.2 && delivs[n-1] >= 25){ score +=  8; tags.push({label:`Del +${delSpike.toFixed(0)}pp`, cls:'mb-tag-amber'}); }
+      else if(delSpike < -10){                         score -=  5; tags.push({label:'Del↓', cls:'mb-tag-red'}); }
+    }
+  }
+
+  // ── Factor 4: Tight Breakout Stop (15 pts) ─────────────────
+  // Find the base: lowest low of the 3-5 sessions just before breakout
+  // (pre-breakout consolidation floor). Stop should be <= 3% below entry.
+  const entry = todayClose;
+  const baseWindow = Math.min(5, n-1);
+  // The "base" is the low of the consolidation period just before today
+  const baseLow = Math.min(...lows.slice(n-1-baseWindow, n-1));
+  const breakoutBase = Math.max(baseLow, entry * 0.94); // cap at -6%
+  const stopLossRaw = breakoutBase * 0.995; // 0.5% buffer below base
+  const riskPct = (entry - stopLossRaw) / entry * 100;
+
+  let stopScore = 0;
+  if(riskPct <= 1.5)      { stopScore = 15; tags.push({label:`SL ${riskPct.toFixed(1)}%`, cls:'mb-tag-green'}); }
+  else if(riskPct <= 2.5) { stopScore = 12; tags.push({label:`SL ${riskPct.toFixed(1)}%`, cls:'mb-tag-green'}); }
+  else if(riskPct <= 3.0) { stopScore =  8; tags.push({label:`SL ${riskPct.toFixed(1)}%`, cls:'mb-tag-amber'}); }
+  else if(riskPct <= 4.0) { stopScore =  4; tags.push({label:`SL ${riskPct.toFixed(1)}%`, cls:'mb-tag-amber'}); }
+  else                     {                  tags.push({label:`SL ${riskPct.toFixed(1)}%`, cls:'mb-tag-red'}); }
+  score += stopScore;
+
+  // Enforce stop: if risk > 5%, invalidate — tight stop is a hard constraint
+  if(riskPct > 5) score -= 10;
+
+  // ── Factor 5: Sector Confirmation (10 pts) ─────────────────
+  const sectorPts = mbSectorConfScore(sym);
+  score += sectorPts;
+  if(sectorPts >= 10)  tags.push({label:'Sector✓', cls:'mb-tag-purple'});
+  else if(sectorPts>=5) tags.push({label:'Sector~', cls:'mb-tag-amber'});
+
+  // ── F&O tag ────────────────────────────────────────────────
+  if(mbIsFO(sym)) tags.push({label:'F&O', cls:'mb-tag-blue'});
+
+  // ── Clamp ──────────────────────────────────────────────────
+  score = Math.max(0, Math.min(100, Math.round(score * 10) / 10));
+
+  // ── Targets (fixed % bands for 3-5 day horizon) ────────────
+  const stopLoss = Math.round(stopLossRaw * 100) / 100;
+  const risk = entry - stopLoss;
+  const targetPcts = [10, 15, 20];
+  const targets = targetPcts.map((pct, i) => ({
+    level: i + 1,
+    price: Math.round(entry * (1 + pct/100) * 100) / 100,
+    pctGain: pct,
+    estDays: i === 0 ? '1-2d' : i === 1 ? '~3d' : '~5d',
+  }));
+
+  return {
+    score, tags, entry: Math.round(entry * 100) / 100,
+    stopLoss, riskPerShare: Math.round(risk * 100) / 100,
+    riskPct: Math.round(riskPct * 10) / 10,
+    targets, volRatio: volRatio !== null ? Math.round(volRatio * 10) / 10 : null,
+    delSpike: delSpike !== null ? Math.round(delSpike * 10) / 10 : null,
+    breakoutFreshness,
+    sectorPts,
+  };
+}
+
+function runMomentumScan(){
+  document.getElementById('mb-status').textContent = '⏳ Scanning… this may take 10–20 seconds…';
+  document.getElementById('mb-status').style.color = 'var(--muted)';
+  setTimeout(mbScanWorker, 30);
+}
+
+function mbScanWorker(){
+  try{
+    const sortedDates = swGetSortedHistDates();  // reuse swing helper
+    if(sortedDates.length < 15){
+      document.getElementById('mb-status').textContent =
+        `⚠ Not enough history (${sortedDates.length} days) — need 15+. Open History tab first.`;
+      document.getElementById('mb-status').style.color = 'var(--red)';
+      return;
+    }
+
+    // Build universe
+    let universe;
+    const idxOnly  = document.getElementById('mb-idx-only').checked;
+    const foOnly   = document.getElementById('mb-fo-only').checked;
+
+    if(idxOnly){
+      universe = new Set();
+      Object.values(indexMap).forEach(set=>{ set.forEach(s=>universe.add(s)); });
+      if(!universe.size){
+        document.getElementById('mb-status').textContent = '⚠ No index files loaded — turn off Index Only or load indices.';
+        document.getElementById('mb-status').style.color = 'var(--red)';
+        return;
+      }
+    } else {
+      universe = new Set();
+      sortedDates.forEach(d=>{ historicalData[d].forEach(r=>universe.add(r.SYMBOL)); });
+    }
+
+    if(foOnly){
+      universe = new Set([...universe].filter(s=>mbIsFO(s)));
+    }
+
+    const minScore = parseFloat(document.getElementById('mb-minscore').value) || 0;
+    const results = [];
+
+    universe.forEach(sym=>{
+      const {closes,highs,lows,vols,delivs} = swBuildSeriesForSymbol(sym, sortedDates);
+      if(closes.length < 15) return;
+      const res = mbComputeScore(closes, highs, lows, vols, delivs, sym);
+      if(res.score === null || res.score < minScore) return;
+      res.symbol = sym;
+      res.sector = swGetSector(sym);
+      results.push(res);
+    });
+
+    results.sort((a,b) => b.score - a.score);
+    mbData = results;
+    mbSectorFilter = null;
+    mbManualSortCol = null;
+    mbManualSortAsc = false;
+    document.querySelectorAll('#mb-table thead th').forEach(th=>{ th.className=''; });
+    renderMomentumSetups();
+
+    const fire = results.filter(r=>r.score>=70).length;
+    const freshBK = results.filter(r=>r.breakoutFreshness===0).length;
+    document.getElementById('mb-status').textContent =
+      `🚀 ${results.length} candidates  |  ${fire} fire (≥70)  |  ${freshBK} fresh breakout today  |  Sorted by score — tap row for Chart.`;
+    document.getElementById('mb-status').style.color = results.length ? 'var(--green)' : 'var(--muted)';
+  } catch(e){
+    document.getElementById('mb-status').textContent = '⚠ Scan failed: ' + e.message;
+    document.getElementById('mb-status').style.color = 'var(--red)';
+    console.error(e);
+  }
+}
+
+function sortMbTable(col){
+  if(mbManualSortCol===col) mbManualSortAsc = !mbManualSortAsc;
+  else { mbManualSortCol = col; mbManualSortAsc = false; }
+  document.querySelectorAll('#mb-table thead th').forEach(th=>{ th.className=''; });
+  const th = [...document.querySelectorAll('#mb-table thead th')]
+    .find(t => t.getAttribute('onclick') === `sortMbTable('${col}')`);
+  if(th) th.className = mbManualSortAsc ? 'sort-asc' : 'sort-desc';
+  renderMomentumTable();
+}
+
+function renderMomentumSetups(){
+  renderMbSectorStrip();
+  renderMomentumTable();
+}
+
+function renderMbSectorStrip(){
+  const strip = document.getElementById('mb-sector-strip');
+  strip.innerHTML = '';
+  if(!mbData.length) return;
+
+  const groups = {};
+  mbData.forEach(r=>{
+    const sec = r.sector || '—';
+    (groups[sec] = groups[sec] || []).push(r);
+  });
+  const secList = Object.entries(groups)
+    .map(([sec,rows])=>({ sec, avg: rows.reduce((s,r)=>s+r.score,0)/rows.length, n: rows.length }))
+    .sort((a,b)=>b.avg-a.avg);
+
+  const allChip = document.createElement('div');
+  allChip.className = 'mb-sector-chip' + (mbSectorFilter===null ? ' active' : '');
+  allChip.innerHTML = `<div>🔄 All</div><div class="mb-chip-score">${mbData.length}</div>`;
+  allChip.onclick = ()=>{ mbSectorFilter=null; renderMomentumSetups(); };
+  strip.appendChild(allChip);
+
+  secList.forEach(({sec,avg,n})=>{
+    const chip = document.createElement('div');
+    chip.className = 'mb-sector-chip' + (mbSectorFilter===sec ? ' active' : '');
+    chip.innerHTML = `<div>${sec}</div><div class="mb-chip-score">${avg.toFixed(0)}</div>`;
+    chip.onclick = ()=>{ mbSectorFilter=sec; renderMomentumSetups(); };
+    strip.appendChild(chip);
+  });
+}
+
+function renderMomentumTable(){
+  const tbody = document.getElementById('mb-table-body');
+  tbody.innerHTML = '';
+  let rows = mbData;
+  if(mbSectorFilter !== null) rows = rows.filter(r=>r.sector===mbSectorFilter);
+
+  if(mbManualSortCol){
+    const col = mbManualSortCol, asc = mbManualSortAsc;
+    rows = [...rows];
+    if(col==='symbol' || col==='sector'){
+      rows.sort((a,b)=> asc
+        ? String(a[col]).localeCompare(String(b[col]))
+        : String(b[col]).localeCompare(String(a[col])));
+    } else if(col==='risk'){
+      rows.sort((a,b)=> asc ? (a.riskPct-b.riskPct) : (b.riskPct-a.riskPct));
+    } else {
+      rows.sort((a,b)=>{
+        const va = a[col]; const vb = b[col];
+        const na = (va===null||va===undefined) ? -999 : va;
+        const nb = (vb===null||vb===undefined) ? -999 : vb;
+        return asc ? (na-nb) : (nb-na);
+      });
+    }
+  }
+
+  const empty = document.getElementById('mb-empty');
+  empty.style.display = rows.length ? 'none' : 'block';
+  if(!rows.length){
+    empty.textContent = mbData.length
+      ? 'No setups in this sector.'
+      : 'No scan run yet — tap "Scan Now" above.';
+    return;
+  }
+
+  rows.forEach((r,i)=>{
+    const t = r.targets;
+    const volTxt   = r.volRatio !== null ? r.volRatio.toFixed(1) + '×' : '—';
+    const delTxt   = r.delSpike !== null ? (r.delSpike >= 0 ? '+' : '') + r.delSpike.toFixed(1) + 'pp' : '—';
+    const bkCls    = r.breakoutFreshness === 0 ? 'mb-breakout-fresh' : r.breakoutFreshness === 1 ? '' : 'mb-breakout-stale';
+    const bkLbl    = r.breakoutFreshness === 0 ? '🔴 Today' : r.breakoutFreshness === 1 ? '🟡 Yest' : '—';
+    const scoreCls = r.score >= 70 ? 'mb-score-hot' : r.score >= 50 ? 'mb-score-warm' : 'mb-score-cool';
+    const rowCls   = r.score >= 70 ? 'mb-fire' : r.score >= 50 ? 'mb-warm' : '';
+    const tagsHtml = r.tags.map(tg=>`<span class="mb-tag ${tg.cls}">${tg.label}</span>`).join('');
+
+    const tr = document.createElement('tr');
+    if(rowCls) tr.className = rowCls;
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td class="sym" style="cursor:pointer;white-space:nowrap" onclick="openDetail('${r.symbol}')">📈 ${r.symbol}</td>
+      <td style="text-align:left;font-size:.68rem">${r.sector}</td>
+      <td style="text-align:center"><span class="mb-score-badge ${scoreCls}">${r.score.toFixed(0)}</span></td>
+      <td>₹${r.entry.toFixed(2)}</td>
+      <td style="color:var(--red)">₹${r.stopLoss.toFixed(2)}</td>
+      <td style="color:${r.riskPct<=2?'var(--green)':r.riskPct<=3.5?'var(--amber)':'var(--red)'};font-weight:700">${r.riskPct.toFixed(1)}%</td>
+      <td style="color:var(--green);font-weight:700">₹${t[0].price.toFixed(2)} <span style="font-size:.65rem;color:var(--muted)">${t[0].estDays}</span></td>
+      <td style="color:#2E7D11;font-weight:700">₹${t[1].price.toFixed(2)} <span style="font-size:.65rem;color:var(--muted)">${t[1].estDays}</span></td>
+      <td style="color:#1A237E;font-weight:700">₹${t[2].price.toFixed(2)} <span style="font-size:.65rem;color:var(--muted)">${t[2].estDays}</span></td>
+      <td style="${r.volRatio!==null&&r.volRatio>=2.5?'color:var(--green);font-weight:800':'color:var(--muted)'}">${volTxt}</td>
+      <td style="${r.delSpike!==null&&r.delSpike>5?'color:var(--green);font-weight:700':'color:var(--muted)'}">${delTxt}</td>
+      <td class="${bkCls}">${bkLbl}</td>
+      <td style="white-space:nowrap">${tagsHtml}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
 function mpGetFilteredData(){
   let data = todayData.map(r=>{
     const close=r.CLOSE, prev=r.PREV_CLOSE;
@@ -2653,6 +3096,7 @@ function showSection(id){
   if(id==='deals')loadDealsData();
   if(id==='pulse'){mpPopulateIndexFilter();renderMarketPulse();}
   if(id==='swing'){renderSwingSetups();}
+  if(id==='momentum'){renderMomentumSetups();}
 }
 
 // ══════════════════════════════════════════════════
@@ -4515,7 +4959,7 @@ async function swCallAI(prompt){
   if(!k) throw new Error('No API key — click "⚙ AI Key" button to add one');
   let raw='';
   if(p==='gemini'){
-    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key='+k,{
+    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+k,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:500}})
     });
@@ -4664,7 +5108,7 @@ function swSkeletonCard(r,i){
         <div class="sw-ai-lbox l1"><div class="sw-ai-ll">Target 1</div><div class="sw-ai-lv">${t[0]?'₹'+t[0].price.toFixed(2):'—'}</div></div>
         <div class="sw-ai-lbox l2"><div class="sw-ai-ll">Target 2</div><div class="sw-ai-lv">${t[1]?'₹'+t[1].price.toFixed(2):'—'}</div></div>
       </div>
-      <div class="sw-ai-reason-box"><div class="sw-ai-reason" style="color:var(--muted);font-size:.84rem">⏳ Sending to AI — please wait…</div></div>
+      <div class="sw-ai-reason-box"><div class="sw-ai-reason" style="color:var(--muted)">⏳ Sending to AI…</div></div>
     </div>
   </div>`;
 }
