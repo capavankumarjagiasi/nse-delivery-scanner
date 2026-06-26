@@ -874,11 +874,11 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
     <div class="sw-api-title">🔑 AI Provider Settings</div>
     <div class="sw-api-sub">Your key is saved only on this device (localStorage). It never leaves your browser.</div>
     <div class="sw-api-toggle">
-      <div class="sw-api-opt on" id="sw-api-opt-gemini" onclick="swSetProvider('gemini')" style="padding:10px 8px;line-height:1.4">
+      <div class="sw-api-opt" id="sw-api-opt-gemini" onclick="swSetProvider('gemini')" style="padding:10px 8px;line-height:1.4">
         <div>🆓 Google Gemini</div><div style="font-size:.62rem;font-weight:400;color:inherit;opacity:.8;margin-top:2px">Free · No card</div>
       </div>
-      <div class="sw-api-opt" id="sw-api-opt-claude" onclick="swSetProvider('claude')" style="padding:10px 8px;line-height:1.4">
-        <div>⚡ Claude</div><div style="font-size:.62rem;font-weight:400;color:inherit;opacity:.8;margin-top:2px">Better · $5 min</div>
+      <div class="sw-api-opt on" id="sw-api-opt-claude" onclick="swSetProvider('claude')" style="padding:10px 8px;line-height:1.4">
+        <div>⚡ Claude (Recommended)</div><div style="font-size:.62rem;font-weight:400;color:inherit;opacity:.8;margin-top:2px">Better · $5 min</div>
       </div>
     </div>
     <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:5px" id="sw-api-key-lbl">Gemini API Key</div>
@@ -4940,7 +4940,7 @@ loadAllData=async function(){
 //  AI SWING ANALYSIS
 // ══════════════════════════════════════════════════
 
-function swGetProvider(){ return localStorage.getItem('sw_ai_provider')||'gemini'; }
+function swGetProvider(){ return localStorage.getItem('sw_ai_provider')||'claude'; }
 function swGetKey(p){ return localStorage.getItem('sw_ai_key_'+(p||swGetProvider()))||''; }
 
 function swSetProvider(p){
