@@ -956,12 +956,15 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
       <div class="panel-hdr">
         <!-- Period selector -->
         <div style="display:flex;gap:4px;flex-wrap:wrap" id="period-btns">
-          <button class="period-btn" data-p="7" onclick="setChartPeriod(7)">7D</button>
-          <button class="period-btn" data-p="15" onclick="setChartPeriod(15)">15D</button>
-          <button class="period-btn" data-p="30" onclick="setChartPeriod(30)">1M</button>
-          <button class="period-btn active" data-p="65" onclick="setChartPeriod(65)">3M</button>
-          <button class="period-btn" data-p="130" onclick="setChartPeriod(130)">6M</button>
-          <button class="period-btn" data-p="250" onclick="setChartPeriod(250)">1Y</button>
+          <button class="period-btn" data-p="7"    onclick="setChartPeriod(7)">7D</button>
+          <button class="period-btn" data-p="15"   onclick="setChartPeriod(15)">15D</button>
+          <button class="period-btn" data-p="30"   onclick="setChartPeriod(30)">1M</button>
+          <button class="period-btn active" data-p="65"  onclick="setChartPeriod(65)">3M</button>
+          <button class="period-btn" data-p="130"  onclick="setChartPeriod(130)">6M</button>
+          <button class="period-btn" data-p="250"  onclick="setChartPeriod(250)">1Y</button>
+          <button class="period-btn" data-p="500"  onclick="setChartPeriod(500)">2Y</button>
+          <button class="period-btn" data-p="750"  onclick="setChartPeriod(750)">3Y</button>
+          <button class="period-btn" data-p="9999" onclick="setChartPeriod(9999)">Max</button>
         </div>
         <!-- MA selector -->
         <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
@@ -1217,6 +1220,10 @@ const STORAGE_KEY_HIST  = 'nse_scan_history_v1';
 const GITHUB_PAGES_BASE = 'https://capavankumarjagiasi.github.io/nse-delivery-scanner';
 const SNAPSHOT_URL      = `${GITHUB_PAGES_BASE}/snapshot.json`;
 const HISTORY_URL       = `${GITHUB_PAGES_BASE}/history.json`;
+const CHART_YEAR_URL    = (yr) => `${GITHUB_PAGES_BASE}/chart_${yr}.json`;
+
+// Cache of already-loaded year files: {2024: {SYM: [[D,O,H,L,C,V,DP],...], ...}, ...}
+const chartYearCache = {};
 
 let PROXY_URL = localStorage.getItem(STORAGE_KEY_PROXY) || '';
 
@@ -3463,67 +3470,146 @@ function renderDetailStats(stock, pctChange){
 }
 
 // ── Load chart data ────────────────────────────
+async function loadChartYear(year){
+  if(chartYearCache[year]) return chartYearCache[year];
+  try{
+    const resp = await fetch(`${CHART_YEAR_URL(year)}?_t=${year}`,{cache:'force-cache'});
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const pkg  = await resp.json();
+    chartYearCache[year] = pkg.data || {};
+    console.log(`chart_${year}.json loaded: ${Object.keys(chartYearCache[year]).length} symbols`);
+    return chartYearCache[year];
+  }catch(e){
+    console.warn(`chart_${year}.json not available:`, e.message);
+    chartYearCache[year] = {}; // mark as attempted so we don't retry
+    return {};
+  }
+}
+
+// Build full OHLCV array for a symbol from all loaded year caches + historicalData
+function buildChartSeriesFromYears(sym, yearsNeeded){
+  const rows = []; // will dedup by date
+  const seenDates = new Set();
+
+  // 1. From year JSON files (oldest years first)
+  for(const yr of yearsNeeded.slice().sort()){
+    const ydata = chartYearCache[yr];
+    if(!ydata) continue;
+    const symRows = ydata[sym];
+    if(!symRows) continue;
+    for(const [dc, o, h, l, c, v, dp] of symRows){
+      // dc = DDMMYYYY
+      const dateStr = `${dc.slice(0,2)}-${dc.slice(2,4)}-${dc.slice(4,8)}`;
+      if(seenDates.has(dateStr)) continue;
+      seenDates.add(dateStr);
+      rows.push({
+        date: dateStr,
+        dateObj: new Date(+dc.slice(4,8), +dc.slice(2,4)-1, +dc.slice(0,2)),
+        open: o, high: h, low: l, close: c, vol: v, delPer: dp,
+        pctChg: 0, delivVol: 0,
+      });
+    }
+  }
+
+  // 2. From historicalData (recent 31 days) — fill any gaps and add today
+  const histDates = Object.keys(historicalData||{}).sort((a,b)=>{
+    const pa=a.split('-'), pb=b.split('-');
+    return new Date(+pa[2],+pa[1]-1,+pa[0]) - new Date(+pb[2],+pb[1]-1,+pb[0]);
+  });
+  for(const dateStr of histDates){
+    if(seenDates.has(dateStr)) continue;
+    const row = (historicalData[dateStr]||[]).find(r=>r.SYMBOL===sym);
+    if(row){
+      seenDates.add(dateStr);
+      const p=dateStr.split('-');
+      rows.push({
+        date: dateStr,
+        dateObj: new Date(+p[2],+p[1]-1,+p[0]),
+        open: row.OPEN, high: row.HIGH, low: row.LOW, close: row.CLOSE,
+        vol: row.TTL_TRD_QNTY, delPer: row.DELIV_PER, delivVol: row.DELIV_QTY||0,
+        pctChg: row.PREV_CLOSE>0?((row.CLOSE-row.PREV_CLOSE)/row.PREV_CLOSE)*100:0,
+      });
+    }
+  }
+
+  // Sort oldest→newest
+  rows.sort((a,b)=>a.dateObj-b.dateObj);
+  return rows;
+}
+
 async function loadChartData(sym, days){
-  // Check full cache first
-  if(chartDataFull[sym] && chartDataFull[sym].length>=days){
+  // Check full cache — if we already have enough bars, just slice
+  if(chartDataFull[sym] && chartDataFull[sym].length >= days){
     chartData = chartDataFull[sym].slice(-days);
-    redrawChart();
-    renderPeriodStats(chartData);
-    return;
+    redrawChart(); renderPeriodStats(chartData); return;
   }
 
   document.getElementById('chart-loading').style.display='block';
   document.getElementById('chart-container').style.display='none';
 
-  // If history not yet loaded, wait for it
+  // Ensure recent history (31 days) is loaded
   if(!historyLoaded && snapshotData){
-    document.getElementById('chart-loading-msg').textContent='Waiting for history data…';
+    document.getElementById('chart-loading-msg').textContent='Loading recent history…';
     await loadHistoryBackground();
   }
 
-  // If still need Drive files (Drive fallback path only)
-  if(!snapshotData){
-    const needed = bhavFiles.slice(0, days+5);
-    const toLoad = needed.filter(f=>!historicalData[f.dateStr]);
-    let loaded=0;
-    for(const f of toLoad){
-      try{
-        document.getElementById('chart-loading-msg').textContent =
-          `Loading ${f.dateStr} (${loaded+1}/${toLoad.length})…`;
-        document.getElementById('chart-progress').style.width =
-          Math.round((loaded/Math.max(toLoad.length,1))*100)+'%';
-        historicalData[f.dateStr] = await loadBhavcopy(f);
-        loaded++;
-      }catch(e){ console.warn('Skip chart file:',f.dateStr); }
+  // Determine which year files we need
+  const curYear  = new Date().getFullYear();
+  const needYears = [];
+  if(days > 31){
+    // Work out how many years back we need
+    const today     = new Date();
+    const startDate = new Date(today); startDate.setDate(today.getDate() - days - 30);
+    for(let yr = startDate.getFullYear(); yr <= curYear; yr++){
+      needYears.push(yr);
     }
   }
 
-  // Build full OHLCV array for this symbol: oldest→newest
-  // (allDays is deduped by date as a second safety net, in case
-  // bhavFiles ever picks up a repeated date from another code path —
-  // the primary fix is in loadAllData where bhavFiles is built)
-  const seenDays = new Set();
-  const allDays = bhavFiles.slice().reverse().filter(f=>{
-    if(seenDays.has(f.dateStr)) return false;
-    seenDays.add(f.dateStr);
-    return true;
-  });
-  const arr = [];
-  for(const f of allDays){
-    const src = f===bhavFiles[0] ? todayData : (historicalData[f.dateStr]||[]);
-    const row = src.find(r=>r.SYMBOL===sym);
-    if(row){
-      arr.push({
-        date:    f.dateStr,
-        dateObj: f.date,
-        open:    row.OPEN,
-        high:    row.HIGH,
-        low:     row.LOW,
-        close:   row.CLOSE,
-        vol:     row.TTL_TRD_QNTY,
-        delivVol:row.DELIV_QTY||0,
-        delPer:  row.DELIV_PER,
-        pctChg:  row.PREV_CLOSE>0?((row.CLOSE-row.PREV_CLOSE)/row.PREV_CLOSE)*100:0,
+  // Lazy-load any year files not yet in cache
+  for(let i=0; i<needYears.length; i++){
+    const yr = needYears[i];
+    if(!chartYearCache[yr]){
+      document.getElementById('chart-loading-msg').textContent =
+        `Loading ${yr} chart data… (${i+1}/${needYears.length})`;
+      document.getElementById('chart-progress').style.width =
+        Math.round(((i+1)/needYears.length)*100)+'%';
+      await loadChartYear(yr);
+    }
+  }
+
+  // Build the full series
+  let arr;
+  if(needYears.length > 0){
+    arr = buildChartSeriesFromYears(sym, needYears);
+  } else {
+    // Short period — use existing historicalData + bhavFiles (original path)
+    if(!snapshotData){
+      const needed = bhavFiles.slice(0, days+5);
+      const toLoad = needed.filter(f=>!historicalData[f.dateStr]);
+      let loaded=0;
+      for(const f of toLoad){
+        try{
+          document.getElementById('chart-loading-msg').textContent =
+            `Loading ${f.dateStr} (${loaded+1}/${toLoad.length})…`;
+          historicalData[f.dateStr] = await loadBhavcopy(f);
+          loaded++;
+        }catch(e){ console.warn('Skip chart file:',f.dateStr); }
+      }
+    }
+    const seenDays = new Set();
+    const allDays = bhavFiles.slice().reverse().filter(f=>{
+      if(seenDays.has(f.dateStr)) return false;
+      seenDays.add(f.dateStr); return true;
+    });
+    arr = [];
+    for(const f of allDays){
+      const src = f===bhavFiles[0] ? todayData : (historicalData[f.dateStr]||[]);
+      const row = src.find(r=>r.SYMBOL===sym);
+      if(row) arr.push({
+        date: f.dateStr, dateObj: f.date,
+        open: row.OPEN, high: row.HIGH, low: row.LOW, close: row.CLOSE,
+        vol: row.TTL_TRD_QNTY, delivVol: row.DELIV_QTY||0, delPer: row.DELIV_PER,
+        pctChg: row.PREV_CLOSE>0?((row.CLOSE-row.PREV_CLOSE)/row.PREV_CLOSE)*100:0,
       });
     }
   }
@@ -3535,8 +3621,7 @@ async function loadChartData(sym, days){
   document.getElementById('chart-container').style.display='block';
   document.getElementById('chart-progress').style.width='0%';
 
-  redrawChart();
-  renderPeriodStats(chartData);
+  redrawChart(); renderPeriodStats(chartData);
 }
 
 function setChartPeriod(days){
@@ -3545,12 +3630,15 @@ function setChartPeriod(days){
     b.classList.toggle('active', +b.dataset.p===days);
   });
   if(detailSymbol){
-    // Clear cached slice for this symbol so loadChartData rebuilds from full array
-    if(chartDataFull[detailSymbol]){
-      chartData = chartDataFull[detailSymbol].slice(-days);
-      redrawChart();
-      renderPeriodStats(chartData);
+    const cached = chartDataFull[detailSymbol];
+    if(cached && cached.length >= days){
+      // Already have enough bars — just re-slice
+      chartData = days >= 9999 ? cached : cached.slice(-days);
+      redrawChart(); renderPeriodStats(chartData);
     } else {
+      // Need more data — clear cache for this symbol so loadChartData
+      // will fetch the required year files
+      if(days > 31) delete chartDataFull[detailSymbol];
       loadChartData(detailSymbol, days);
     }
   }
