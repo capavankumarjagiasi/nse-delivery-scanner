@@ -166,6 +166,21 @@ tbody td.indices-col{text-align:left;font-size:.70rem;color:var(--muted);max-wid
 #sw-table tr.sw-strong{background:var(--green-bg)}
 #sw-table tr.sw-mid{background:#FFF8E1}
 #sw-table tr.sw-extended{background:var(--red-bg)}
+#sw-table tr.sw-on-demand{background:#C8E6C9}
+#sw-table tr.sw-near-supply{background:#FFE0B2}
+.sw-regime-banner{padding:7px 14px;font-size:.78rem;font-weight:700;border-radius:6px;margin-bottom:8px;display:none}
+.sw-regime-hh{background:#1A6B2E;color:#fff}
+.sw-regime-mixed{background:#854F0B;color:#fff}
+.sw-regime-ll{background:#B71C1C;color:#fff}
+.sw-regime-neutral{background:#5F5E5A;color:#fff}
+/* ── Position Tracker ── */
+.pos-mode-btn{padding:5px 14px;font-size:.78rem;font-weight:700;border:1.5px solid var(--border);border-radius:5px;cursor:pointer;background:var(--card);color:var(--muted)}
+.pos-mode-btn.active{background:#1A6B2E;color:#fff;border-color:#1A6B2E}
+.pos-mode-btn.paper.active{background:#0C447C;border-color:#0C447C}
+.pos-open{background:#E8F5E9}.pos-sl{background:#FFEBEE}.pos-profit{background:#E3F2FD}.pos-closed{background:#F5F8FC}
+/* ── Backtest ── */
+.bt-t1{background:#E8F5E9}.bt-t2{background:#C8E6C9}.bt-t3{background:#A5D6A7}
+.bt-sl{background:#FFEBEE}.bt-open{background:#F5F8FC}
 .sw-atr{display:inline-block;padding:1px 6px;border-radius:5px;font-size:.64rem;font-weight:700}
 .sw-atr.tight{background:var(--green-bg);color:var(--green)}
 .sw-atr.wide{background:var(--red-bg);color:var(--red)}
@@ -467,6 +482,8 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
   <button class="snav-btn" onclick="showSection('pulse')">⚡ Market Pulse</button>
   <button class="snav-btn" onclick="showSection('swing')">🎯 Swing Setup</button>
   <button class="snav-btn" onclick="showSection('momentum')">🚀 Momentum</button>
+  <button class="snav-btn" onclick="showSection('positions')">💼 Positions</button>
+  <button class="snav-btn" onclick="showSection('backtest')">🔬 Backtest</button>
   <button class="snav-btn" onclick="showSection('history')">📋 History &amp; P&amp;L</button>
   <button class="snav-btn" onclick="showSection('deals')">🔴 Deals</button>
   <button class="snav-btn" onclick="showSection('shortsell')">🔻 Short Sell</button>
@@ -745,6 +762,8 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
   <!-- Sector filter strip -->
   <div id="sw-sector-strip" style="display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:6px;margin-bottom:8px;padding-bottom:2px"></div>
 
+  <div id="sw-regime-banner" class="sw-regime-banner"></div>
+
   <div class="panel" id="sw-table-panel">
     <div id="sw-table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
       <table id="sw-table">
@@ -759,9 +778,13 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
           <th>T1 (5%)</th>
           <th>T2 (8%)</th>
           <th>T3 (12%)</th>
+          <th onclick="sortSwTable('rr1')">RR@T1</th>
+          <th onclick="sortSwTable('hv20')">HV20%</th>
           <th onclick="sortSwTable('rsVsNifty')">RS vs N</th>
           <th onclick="sortSwTable('atrTrend')">ATR</th>
           <th onclick="sortSwTable('volRatio')">Vol×</th>
+          <th onclick="sortSwTable('nearestDemand')">Demand</th>
+          <th onclick="sortSwTable('nearestSupply')">Supply</th>
           <th>AI</th>
         </tr></thead>
         <tbody id="sw-table-body"></tbody>
@@ -849,6 +872,138 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
     </div>
   </div>
 
+</div>
+
+<!-- ══════════ POSITIONS SECTION ══════════ -->
+<div id="sec-positions" class="section">
+  <div class="panel" style="margin-top:10px">
+    <div class="panel-hdr" style="background:linear-gradient(135deg,#1A6B2E,#0C447C)">💼 Position Tracker</div>
+    <div style="padding:10px 12px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
+        <button class="pos-mode-btn active" id="pos-real-btn" onclick="posSwitchMode('REAL')">📊 Real</button>
+        <button class="pos-mode-btn paper" id="pos-paper-btn" onclick="posSwitchMode('PAPER')">📝 Paper</button>
+        <button class="btn btn-primary" style="margin-left:auto;font-size:.78rem;padding:5px 12px" onclick="posShowAddDialog()">➕ Add Position</button>
+        <button class="btn btn-outline" style="font-size:.78rem;padding:5px 12px" onclick="posExportCSV()">💾 CSV</button>
+      </div>
+      <div id="pos-summary" style="font-size:.76rem;color:var(--muted);padding:4px 0;border-top:1px solid var(--border)">
+        No positions yet. Add your first trade or paper trade above.
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="pos-table-panel">
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table id="pos-table">
+        <thead><tr>
+          <th style="text-align:left">Symbol</th>
+          <th style="text-align:left">Sector</th>
+          <th>Entry Dt</th><th>Entry ₹</th><th>Qty</th>
+          <th>SL ₹</th><th>T1 ₹</th><th>RR@T1</th><th>HV20%</th>
+          <th>CMP ₹</th><th>P&amp;L ₹</th><th>P&amp;L%</th>
+          <th>→SL%</th><th>→T1%</th>
+          <th>Score</th><th>Trend</th><th>Status</th><th>Action</th>
+        </tr></thead>
+        <tbody id="pos-table-body"></tbody>
+      </table>
+    </div>
+    <div id="pos-empty" style="padding:24px;text-align:center;color:var(--muted);font-size:.85rem">
+      No positions in this mode. Click '➕ Add Position' to add your first trade.
+    </div>
+  </div>
+
+  <!-- Add/Edit modal -->
+  <div id="pos-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:10px;padding:20px;width:min(440px,94vw);max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.25)">
+      <div style="font-size:.95rem;font-weight:800;color:#111;margin-bottom:14px" id="pos-modal-title">➕ Add Position</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="pos-modal-fields"></div>
+      <div style="margin-top:8px">
+        <label style="font-size:.75rem;color:#6b7280;display:block;margin-bottom:2px">Notes</label>
+        <input id="pos-notes-inp" style="width:100%;padding:7px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box" placeholder="Optional notes">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="posCloseModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="posSavePosition()">💾 Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Close position modal -->
+  <div id="pos-close-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:10px;padding:20px;width:min(340px,94vw);box-shadow:0 8px 32px rgba(0,0,0,.25)">
+      <div style="font-size:.95rem;font-weight:800;color:#111;margin-bottom:14px">✅ Close Position</div>
+      <label style="font-size:.75rem;color:#6b7280">Exit Price (₹)</label>
+      <input id="pos-exit-price" style="width:100%;padding:7px;border:1px solid #d1d5db;border-radius:5px;font-size:.85rem;margin-bottom:8px;box-sizing:border-box">
+      <label style="font-size:.75rem;color:#6b7280">Exit Date</label>
+      <input id="pos-exit-date" style="width:100%;padding:7px;border:1px solid #d1d5db;border-radius:5px;font-size:.85rem;margin-bottom:8px;box-sizing:border-box">
+      <label style="font-size:.75rem;color:#6b7280">Reason</label>
+      <select id="pos-exit-reason" style="width:100%;padding:7px;border:1px solid #d1d5db;border-radius:5px;font-size:.85rem;margin-bottom:14px">
+        <option>T1_HIT</option><option>T2_HIT</option><option>T3_HIT</option>
+        <option>SL_HIT</option><option>MANUAL</option><option>TRAIL_SL</option>
+      </select>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="posCloseCloseModal()">Cancel</button>
+        <button class="btn" style="background:#1A6B2E;color:#fff;border:none" onclick="posConfirmClose()">✅ Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ BACKTEST SECTION ══════════ -->
+<div id="sec-backtest" class="section">
+  <div class="panel" style="margin-top:10px">
+    <div class="panel-hdr" style="background:linear-gradient(135deg,#B71C1C,#880E4F)">🔬 Swing Setup Backtester</div>
+    <div style="padding:10px 12px">
+      <div style="font-size:.74rem;color:var(--muted);margin-bottom:8px">
+        Simulates every qualifying setup in your history · checks if SL or T1/T2/T3 was hit first · saves results permanently
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
+        <label style="font-size:.76rem;font-weight:700;color:var(--muted)">Min Score:
+          <select id="bt-minscore" style="padding:5px;border:1px solid var(--border);border-radius:4px;font-size:.78rem;background:var(--bg);color:var(--text)">
+            <option value="45">45</option><option value="50">50</option>
+            <option value="55" selected>55</option><option value="60">60</option>
+            <option value="65">65</option>
+          </select>
+        </label>
+        <label style="font-size:.76rem;font-weight:700;color:var(--muted)">Fwd window:
+          <input id="bt-fwd" type="number" value="20" min="5" max="40"
+                 style="width:50px;padding:5px;border:1px solid var(--border);border-radius:4px;font-size:.78rem;background:var(--bg);color:var(--text)">
+        </label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:.76rem;font-weight:700;color:var(--muted)">
+          <input type="checkbox" id="bt-hhhl-only" checked style="width:auto"> HH+HL Only
+        </label>
+        <button class="btn" style="margin-left:auto;background:#B71C1C;color:#fff;border:none;font-size:.78rem;padding:6px 14px" onclick="runBacktest()">▶ Run Backtest</button>
+        <button class="btn btn-outline" style="font-size:.78rem;padding:6px 12px" onclick="btExportCSV()">💾 CSV</button>
+      </div>
+      <div id="bt-status" style="font-size:.76rem;color:var(--muted);padding:6px 0;border-top:1px solid var(--border)">
+        Uses your loaded history.json data. Results show how past setups would have performed.
+      </div>
+      <div style="height:6px;background:var(--border);border-radius:3px;margin-top:6px;overflow:hidden">
+        <div id="bt-progress" style="height:100%;background:#B71C1C;width:0%;transition:width .3s"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bt-summary" style="padding:8px 14px;font-size:.82rem;font-weight:700;color:var(--text);display:none"></div>
+
+  <div class="panel">
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table id="bt-table">
+        <thead><tr>
+          <th style="text-align:left">Symbol</th>
+          <th style="text-align:left">Sector</th>
+          <th>Signal</th><th>Score</th><th>Trend</th><th>Nifty</th>
+          <th>Entry</th><th>SL</th><th>T1</th>
+          <th>RR@T1</th><th>HV20%</th>
+          <th>Outcome</th><th>Exit ₹</th><th>Sessions</th>
+          <th>P&amp;L%</th><th>MaxAdv%</th>
+        </tr></thead>
+        <tbody id="bt-table-body"></tbody>
+      </table>
+    </div>
+    <div id="bt-empty" style="padding:24px;text-align:center;color:var(--muted);font-size:.85rem">
+      Run a backtest to see results. Uses data already loaded in history.json.
+    </div>
+  </div>
 </div>
 
 <!-- ══════════ HISTORY SECTION ══════════ -->
@@ -2177,6 +2332,125 @@ function swComputeATR14(highs, lows, closes){
 // Core 0-100 swing-setup score — mirrors desktop _compute_swing_score
 // exactly, including the corrected ATR thresholds (8%/10% — NOT the
 // original overly-strict 15%/20% that made almost everything "flat").
+// ══ Demand / Supply Zone Engine ══════════════════════════════════════════
+function computeDemandSupplyZones(dates, opens, highs, lows, closes,
+                                   lookback=250, bouncePct=3.0,
+                                   bounceSessions=3, bufPct=0.5){
+  const n=closes.length;
+  if(n<20) return {demand:[],supply:[],nearestDemand:null,nearestSupply:null};
+  const startI=Math.max(0,n-lookback);
+  const demand=[],supply=[];
+  const entry=closes[n-1];
+  const buf=bufPct/100;
+
+  for(let i=startI+5;i<n-1;i++){
+    const lowI=lows[i];
+    // DEMAND: local low?
+    const backL=lows.slice(Math.max(0,i-5),i);
+    const fwdL=lows.slice(i+1,Math.min(n,i+6));
+    if(backL.length && fwdL.length &&
+       lowI<Math.min(...backL) && lowI<Math.min(...fwdL)){
+      // Bounce check
+      const fwdC=closes.slice(i+1,Math.min(n,i+1+bounceSessions));
+      if(fwdC.length && Math.max(...fwdC)>=lowI*(1+bouncePct/100)){
+        const floor=lowI*(1-buf);
+        if(closes.slice(i+1).every(c=>c>=floor)){
+          const ceiling=Math.max(opens[i]||lowI*1.005, lowI*1.005);
+          const ageDays=n-1-i;
+          const touches=closes.slice(i+1).filter((_,j)=>{
+            const lo=lows[i+1+j]||0;
+            return lo<=ceiling*1.01 && closes[i+1+j]>=floor;
+          }).length;
+          const strength=touches+Math.max(0,5-Math.floor(ageDays/25));
+          demand.push({floor:Math.round(floor*100)/100,
+                       ceiling:Math.round(ceiling*100)/100,
+                       ageDays,touches,strength,
+                       low:Math.round(lowI*100)/100});
+        }
+      }
+    }
+    // SUPPLY: local high?
+    const highI=highs[i];
+    const backH=highs.slice(Math.max(0,i-5),i);
+    const fwdH=highs.slice(i+1,Math.min(n,i+6));
+    if(backH.length && fwdH.length &&
+       highI>Math.max(...backH) && highI>Math.max(...fwdH)){
+      const fwdC=closes.slice(i+1,Math.min(n,i+1+bounceSessions));
+      if(fwdC.length && Math.min(...fwdC)<=highI*(1-bouncePct/100)){
+        const ceiling=highI*(1+buf);
+        if(closes.slice(i+1).every(c=>c<=ceiling)){
+          const floor=Math.min(opens[i]||highI*0.995, highI*0.995);
+          const ageDays=n-1-i;
+          const touches=closes.slice(i+1).filter((_,j)=>{
+            const hi=highs[i+1+j]||0;
+            return hi>=floor*0.99 && closes[i+1+j]<=ceiling;
+          }).length;
+          const strength=touches+Math.max(0,5-Math.floor(ageDays/25));
+          supply.push({floor:Math.round(floor*100)/100,
+                       ceiling:Math.round(ceiling*100)/100,
+                       ageDays,touches,strength,
+                       high:Math.round(highI*100)/100});
+        }
+      }
+    }
+  }
+
+  demand.sort((a,b)=>b.strength-a.strength||a.ageDays-b.ageDays);
+  supply.sort((a,b)=>b.strength-a.strength||a.ageDays-b.ageDays);
+  const topDemand=demand.slice(0,5), topSupply=supply.slice(0,5);
+
+  // Nearest demand below entry, nearest supply above entry
+  let nearestDemand=null;
+  for(const z of [...topDemand].sort((a,b)=>b.ceiling-a.ceiling)){
+    if(z.ceiling<entry){nearestDemand=z.ceiling;break;}
+  }
+  let nearestSupply=null;
+  for(const z of [...topSupply].sort((a,b)=>a.floor-b.floor)){
+    if(z.floor>entry){nearestSupply=z.floor;break;}
+  }
+  return {demand:topDemand,supply:topSupply,nearestDemand,nearestSupply};
+}
+
+function swComputeNiftyRegime(niftyCloses){
+  if(!niftyCloses||niftyCloses.length<10) return 'NEUTRAL';
+  const n=niftyCloses.length;
+  const win=2;
+  const sHi=[],sLo=[];
+  for(let i=win;i<n-win;i++){
+    const wh=niftyCloses.slice(i-win,i+win+1);
+    if(niftyCloses[i]===Math.max(...wh)) sHi.push(niftyCloses[i]);
+    if(niftyCloses[i]===Math.min(...wh)) sLo.push(niftyCloses[i]);
+  }
+  if(sHi.length>=2&&sLo.length>=2){
+    const hh=sHi[sHi.length-1]>sHi[sHi.length-2];
+    const hl=sLo[sLo.length-1]>sLo[sLo.length-2];
+    if(hh&&hl)return'HH+HL';
+    if(!hh&&!hl)return'LH+LL';
+    if(hh&&!hl)return'HH+LL';
+    return'LH+HL';
+  }
+  return'NEUTRAL';
+}
+
+function updateNiftyRegimeBanner(regime){
+  const el=document.getElementById('sw-regime-banner');
+  if(!el)return;
+  const cfg={
+    'HH+HL':['🟢 Nifty HH+HL — Uptrend. Full size (1% risk/trade).','sw-regime-hh'],
+    'HH+LL':['🟡 Nifty Mixed (HH+LL) — Cautious. Use 0.5% risk.','sw-regime-mixed'],
+    'LH+HL':['🟡 Nifty Mixed (LH+HL) — Cautious. Use 0.5% risk.','sw-regime-mixed'],
+    'LH+LL':['🔴 Nifty LH+LL — Downtrend. Avoid new longs or 0.25% risk.','sw-regime-ll'],
+    'NEUTRAL':['⚪ Nifty Neutral — No clear trend. Use smallest size only.','sw-regime-neutral'],
+  };
+  const [text,cls]=cfg[regime]||cfg['NEUTRAL'];
+  el.textContent=text;
+  el.className='sw-regime-banner '+cls;
+  el.style.display='block';
+  window._swNiftyRegime=regime; // store for position sizing hints
+}
+
+// ══ Demand / Supply Zone Engine ══════════════════════════════════════════
+
 function swComputeScore(closes, highs, lows, vols, delivs, niftyCloses){
   const n = closes.length;
   if(n<25) return {score:null};
@@ -2326,11 +2600,56 @@ function swComputeScore(closes, highs, lows, vols, delivs, niftyCloses){
     return {level:i+1, price:tgtPrice, pctGain:pct, estSessions};
   });
 
+  // HV20: 20-day annualised historical volatility
+  let hv20 = null;
+  if(n>=21){
+    const dailyRets=[];
+    for(let i=n-20;i<n;i++){
+      if(closes[i-1]>0) dailyRets.push(Math.log(closes[i]/closes[i-1]));
+    }
+    if(dailyRets.length>=15){
+      const mean=dailyRets.reduce((a,b)=>a+b,0)/dailyRets.length;
+      const variance=dailyRets.reduce((s,r)=>s+(r-mean)**2,0)/(dailyRets.length-1);
+      hv20=Math.round(Math.sqrt(variance*252)*1000)/10; // annualised %
+    }
+  }
+
+  // R/R at T1
+  const rr1 = risk>0 ? Math.round((targets[0].price-entry)/risk*100)/100 : null;
+
+  // Demand / Supply zones
+  const zones = computeDemandSupplyZones(
+    closes.map((_,i)=>i.toString()), // placeholder dates
+    new Array(n).fill(0),             // opens (not available in PWA scorer — use 0)
+    highs, lows, closes, Math.min(n,250));
+
+  // Zone scoring
+  const nd=zones.nearestDemand, ns=zones.nearestSupply;
+  if(nd!==null){
+    const distPct=(entry-nd)/entry*100;
+    if(distPct<=2.0){ score=Math.min(100,score+8); reasons.push(`On demand ₹${nd.toFixed(0)}`); }
+    else if(distPct<=5.0){ score=Math.min(100,score+4); }
+  }
+  if(ns!==null){
+    const distPct=(ns-entry)/entry*100;
+    if(distPct<=2.0){ score=Math.max(0,score-8); reasons.push(`Supply ₹${ns.toFixed(0)} overhead`); }
+    else if(distPct<=4.0){ score=Math.max(0,score-3); }
+  }
+  score=Math.max(0,Math.min(100,Math.round(score*10)/10));
+
   return {
     score, reasons, entry: Math.round(entry*100)/100, stopLoss,
     riskPerShare: Math.round(risk*100)/100, targets,
     rsVsNifty: rs!==null ? Math.round(rs*10)/10 : null,
-    atrTrend, extended, volRatio: volRatio!==null ? Math.round(volRatio*10)/10 : null,
+    atrTrend, extended,
+    volRatio: volRatio!==null ? Math.round(volRatio*10)/10 : null,
+    swingTrend: trend,
+    hv20, rr1,
+    demandZones:    zones.demand,
+    supplyZones:    zones.supply,
+    nearestDemand:  nd,
+    nearestSupply:  ns,
+    delPctToday:    delivs.length ? Math.round(delivs[delivs.length-1]*10)/10 : null,
   };
 }
 
@@ -2370,6 +2689,10 @@ function swingScanWorker(){
       console.warn('Swing scan: Nifty 50 proxy unavailable — RS component skipped, max score capped at 85.');
     }
 
+    // Nifty regime banner
+    const niftyRegime = swComputeNiftyRegime(niftyCloses);
+    updateNiftyRegimeBanner(niftyRegime);
+
     const minScore = parseFloat(document.getElementById('sw-minscore').value)||0;
     const results = [];
     universe.forEach(sym=>{
@@ -2379,6 +2702,7 @@ function swingScanWorker(){
       if(res.score===null || res.score<minScore) return;
       res.symbol = sym;
       res.sector = swGetSector(sym);
+      res.niftyRegime = niftyRegime;
       results.push(res);
     });
 
@@ -2391,8 +2715,12 @@ function swingScanWorker(){
     renderSwingSetups();
 
     const strong = results.filter(r=>r.score>=70).length;
+    const hhhl   = results.filter(r=>r.swingTrend==='HH+HL').length;
+    const onDem  = results.filter(r=>r.nearestDemand!==null &&
+                     (r.entry-r.nearestDemand)/r.entry<=0.03).length;
     document.getElementById('sw-status').textContent =
-      `✓ ${results.length} setups scored  |  ${strong} strong (≥70)  |  Sorted by score — tap a row for its Chart.`;
+      `✓ ${results.length} setups scored  |  ${strong} strong (≥70)  |  `+
+      `${hhhl} HH+HL  |  ${onDem} on/near demand zone  |  Sorted by score — tap a row for its Chart.`;
     document.getElementById('sw-status').style.color = 'var(--green)';
   }catch(e){
     document.getElementById('sw-status').textContent = '⚠ Scan failed: '+e.message;
@@ -2470,6 +2798,12 @@ function renderSwingTable(){
         const va = order[a.atrTrend] ?? 3, vb = order[b.atrTrend] ?? 3;
         return asc ? (va-vb) : (vb-va);
       });
+    } else if(col==='nearestDemand' || col==='nearestSupply'){
+      rows.sort((a,b)=>{
+        const na = a[col]===null||a[col]===undefined ? -999 : a[col];
+        const nb = b[col]===null||b[col]===undefined ? -999 : b[col];
+        return asc ? (na-nb) : (nb-na);
+      });
     } else {
       rows.sort((a,b)=>{
         const va = a[col]; const vb = b[col];
@@ -2494,9 +2828,17 @@ function renderSwingTable(){
     const atrCls = r.atrTrend==='contracting'?'tight':r.atrTrend==='expanding'?'wide':'flat';
     const atrLbl = r.atrTrend==='contracting'?'tight':r.atrTrend==='expanding'?'wide':(r.atrTrend?'flat':'—');
     const volTxt = r.volRatio!==null ? r.volRatio.toFixed(1)+'×' : '—';
+    const rr1Txt = r.rr1!==null ? r.rr1.toFixed(2) : '—';
+    const hv20Txt = r.hv20!==null ? r.hv20.toFixed(0)+'%' : '—';
+    const demandTxt = r.nearestDemand!==null ? '₹'+r.nearestDemand.toFixed(2) : '—';
+    const supplyTxt = r.nearestSupply!==null ? '₹'+r.nearestSupply.toFixed(2) : '—';
 
     const tr=document.createElement('tr');
-    if(r.extended) tr.className='sw-extended';
+    const onDemand  = r.nearestDemand!==null && (r.entry-r.nearestDemand)/r.entry<=0.02;
+    const nearSupply= r.nearestSupply!==null && (r.nearestSupply-r.entry)/r.entry<=0.02;
+    if(onDemand) tr.className='sw-on-demand';
+    else if(nearSupply) tr.className='sw-near-supply';
+    else if(r.extended) tr.className='sw-extended';
     else if(r.score>=70) tr.className='sw-strong';
     else if(r.score>=50) tr.className='sw-mid';
 
@@ -2511,10 +2853,17 @@ function renderSwingTable(){
       <td>₹${t[0].price.toFixed(2)} (${t[0].estSessions}d)</td>
       <td>₹${t[1].price.toFixed(2)} (${t[1].estSessions}d)</td>
       <td>₹${t[2].price.toFixed(2)} (${t[2].estSessions}d)</td>
+      <td style="font-weight:700">${rr1Txt}</td>
+      <td>${hv20Txt}</td>
       <td>${rsTxt}</td>
       <td><span class="sw-atr ${atrCls}">${atrLbl}</span></td>
       <td>${volTxt}</td>
-      <td><button class="btn" style="font-size:.65rem;padding:3px 8px;background:#1a6b2e;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap" onclick="swAIAnalyseSingle('${r.symbol}',${i})">🤖 AI</button></td>
+      <td style="font-size:.68rem;color:#1A6B2E;font-weight:${onDemand?'800':'400'}">${demandTxt}</td>
+      <td style="font-size:.68rem;color:#B71C1C;font-weight:${nearSupply?'800':'400'}">${supplyTxt}</td>
+      <td>
+        <button class="btn" style="font-size:.65rem;padding:3px 8px;background:#1a6b2e;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;margin-bottom:2px" onclick="swAIAnalyseSingle('${r.symbol}',${i})">🤖 AI</button>
+        <button class="btn" style="font-size:.65rem;padding:3px 8px;background:#0C447C;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap" onclick='posAddFromSwing(${JSON.stringify(r).replace(/'/g,"&apos;")})'>➕ Pos</button>
+      </td>
     `;
     tbody.appendChild(tr);
   });
@@ -3131,6 +3480,8 @@ function showSection(id){
   if(id==='pulse'){mpPopulateIndexFilter();renderMarketPulse();}
   if(id==='swing'){renderSwingSetups();}
   if(id==='momentum'){renderMomentumSetups();}
+  if(id==='positions'){renderPositions();}
+  if(id==='backtest'){renderBacktestResults();}
 }
 
 // ══════════════════════════════════════════════════
@@ -3719,6 +4070,33 @@ function redrawChart(){
   html += `<text x="${PAD_L+2}" y="${labelY1}" font-size="8" fill="#8090A0" font-weight="700">VOL</text>`;
   const labelY2 = PAD_TOP + H_CANDLE + GAP + H_VOL + GAP + 10;
   html += `<text x="${PAD_L+2}" y="${labelY2}" font-size="8" fill="#E65100" font-weight="700">DEL%</text>`;
+
+  // ── Demand / Supply Zones ───────────────────
+  try{
+    const zOpens  = chartData.map(d=>d.open);
+    const zHighs  = highs, zLows = lows, zCloses = closes;
+    const zones = computeDemandSupplyZones(
+      chartData.map(d=>d.date), zOpens, zHighs, zLows, zCloses,
+      Math.min(n,250));
+    zones.demand.slice(0,4).forEach(z=>{
+      const yTop = scaleP(Math.min(z.ceiling,priceMax));
+      const yBot = scaleP(Math.max(z.floor,priceMin));
+      if(yBot>yTop){
+        html += `<rect x="${PAD_L}" y="${yTop}" width="${W-PAD_L-PAD_R}" height="${yBot-yTop}" fill="#1A6B2E" opacity="0.10"/>`;
+        html += `<line x1="${PAD_L}" y1="${yTop}" x2="${W-PAD_R}" y2="${yTop}" stroke="#1A6B2E" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.6"/>`;
+        html += `<text x="${PAD_L+4}" y="${yTop+10}" font-size="7.5" fill="#1A6B2E" font-weight="700">D ₹${z.ceiling.toFixed(0)} (${z.touches}T)</text>`;
+      }
+    });
+    zones.supply.slice(0,4).forEach(z=>{
+      const yTop = scaleP(Math.min(z.ceiling,priceMax));
+      const yBot = scaleP(Math.max(z.floor,priceMin));
+      if(yBot>yTop){
+        html += `<rect x="${PAD_L}" y="${yTop}" width="${W-PAD_L-PAD_R}" height="${yBot-yTop}" fill="#B71C1C" opacity="0.08"/>`;
+        html += `<line x1="${PAD_L}" y1="${yBot}" x2="${W-PAD_R}" y2="${yBot}" stroke="#B71C1C" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.6"/>`;
+        html += `<text x="${PAD_L+4}" y="${yBot-3}" font-size="7.5" fill="#B71C1C" font-weight="700">S ₹${z.floor.toFixed(0)} (${z.touches}T)</text>`;
+      }
+    });
+  }catch(e){ console.warn('Zone overlay error:',e); }
 
   // ── Candlesticks ───────────────────────────
   for(let i=0;i<n;i++){
@@ -5343,6 +5721,433 @@ function swCopyLevels(sym,entry,sl,t1,t2,qty){
     }, 800);
   };
 })();
+
+
+// ══════════════════════════════════════════════════
+//  POSITION TRACKER (localStorage based)
+// ══════════════════════════════════════════════════
+const POS_STORAGE_KEY = 'nse_scanner_positions_v1';
+let posMode = 'REAL';
+let posEditId = null;
+
+function getPositions(){
+  try{ return JSON.parse(localStorage.getItem(POS_STORAGE_KEY)||'[]'); }
+  catch(e){ return []; }
+}
+function savePositions(arr){
+  localStorage.setItem(POS_STORAGE_KEY, JSON.stringify(arr));
+}
+
+function posSwitchMode(mode){
+  posMode = mode;
+  document.getElementById('pos-real-btn').classList.toggle('active', mode==='REAL');
+  document.getElementById('pos-paper-btn').classList.toggle('active', mode==='PAPER');
+  renderPositions();
+}
+
+function renderPositions(){
+  const all = getPositions();
+  const rows = all.filter(p=>p.mode===posMode);
+  const tbody = document.getElementById('pos-table-body');
+  tbody.innerHTML = '';
+
+  const todayMap = {};
+  if(typeof todayData!=='undefined'){
+    todayData.forEach(r=>{ todayMap[r.SYMBOL]=r; });
+  }
+
+  let openCnt=0, closedCnt=0, totalPnl=0;
+  rows.sort((a,b)=>{
+    if(a.status==='OPEN' && b.status!=='OPEN') return -1;
+    if(a.status!=='OPEN' && b.status==='OPEN') return 1;
+    return (b.entryDate||'').localeCompare(a.entryDate||'');
+  });
+
+  rows.forEach(p=>{
+    const live = todayMap[p.symbol];
+    const cmp = live ? live.CLOSE : (p.exitPrice || p.entryPrice);
+    const isOpen = p.status==='OPEN';
+    const plRs  = isOpen ? Math.round((cmp-p.entryPrice)*p.qty*100)/100 : (p.pnl||0);
+    const plPct = isOpen ? Math.round((cmp-p.entryPrice)/p.entryPrice*10000)/100 : (p.pnlPct||0);
+    const distSl = p.slPrice ? Math.round((p.slPrice-p.entryPrice)/p.entryPrice*1000)/10 : null;
+    const distT1 = p.t1Price ? Math.round((p.t1Price-p.entryPrice)/p.entryPrice*1000)/10 : null;
+
+    if(isOpen){ openCnt++; totalPnl+=plRs; } else closedCnt++;
+
+    let cls = isOpen ? 'pos-open' : 'pos-closed';
+    if(p.status==='SL_HIT') cls='pos-sl';
+    else if(!isOpen && plPct>0) cls='pos-profit';
+
+    const tr = document.createElement('tr');
+    tr.className = cls;
+    tr.innerHTML = `
+      <td class="sym" style="cursor:pointer" onclick="openDetail('${p.symbol}')">📈 ${p.symbol}</td>
+      <td style="text-align:left;font-size:.68rem">${p.sector||'—'}</td>
+      <td>${p.entryDate||'—'}</td>
+      <td>₹${p.entryPrice.toFixed(2)}</td>
+      <td>${p.qty}</td>
+      <td>${p.slPrice?'₹'+p.slPrice.toFixed(2):'—'}</td>
+      <td>${p.t1Price?'₹'+p.t1Price.toFixed(2):'—'}</td>
+      <td>${p.rr1!=null?p.rr1.toFixed(2):'—'}</td>
+      <td>${p.hv20!=null?p.hv20.toFixed(0)+'%':'—'}</td>
+      <td>₹${cmp?cmp.toFixed(2):'—'}</td>
+      <td style="color:${plRs>=0?'var(--green)':'var(--red)'};font-weight:700">₹${plRs>=0?'+':''}${plRs.toFixed(2)}</td>
+      <td style="color:${plPct>=0?'var(--green)':'var(--red)'};font-weight:700">${plPct>=0?'+':''}${plPct.toFixed(2)}%</td>
+      <td>${distSl!=null?distSl.toFixed(1)+'%':'—'}</td>
+      <td>${distT1!=null?distT1.toFixed(1)+'%':'—'}</td>
+      <td>${p.score!=null?Math.round(p.score):'—'}</td>
+      <td style="font-size:.68rem">${p.swingTrend||'—'}</td>
+      <td style="font-size:.7rem;font-weight:700">${p.status}</td>
+      <td>
+        ${isOpen?`<button class="btn" style="font-size:.62rem;padding:2px 6px;background:#1A6B2E;color:#fff;border:none;border-radius:3px;cursor:pointer" onclick="posShowCloseModal('${p.id}')">Close</button>`:''}
+        <button class="btn" style="font-size:.62rem;padding:2px 6px;background:#B71C1C;color:#fff;border:none;border-radius:3px;cursor:pointer" onclick="posDeletePosition('${p.id}')">Del</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('pos-empty').style.display = rows.length ? 'none' : 'block';
+  document.getElementById('pos-summary').textContent =
+    `${posMode==='REAL'?'Real':'Paper'} — ${openCnt} open  |  ${closedCnt} closed  |  Open P&L: ₹${totalPnl>=0?'+':''}${totalPnl.toFixed(0)}`;
+  document.getElementById('pos-summary').style.color = totalPnl>=0 ? 'var(--green)' : 'var(--red)';
+}
+
+function posShowAddDialog(prefill){
+  posEditId = null;
+  const pf = prefill || {};
+  const fieldsHtml = `
+    <div style="grid-column:1/-1"><label style="font-size:.72rem;color:#6b7280">Mode</label>
+      <select id="pos-f-mode" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem">
+        <option value="REAL" ${posMode==='REAL'?'selected':''}>📊 Real</option>
+        <option value="PAPER" ${posMode==='PAPER'?'selected':''}>📝 Paper</option>
+      </select>
+    </div>
+    <div><label style="font-size:.72rem;color:#6b7280">Symbol</label>
+      <input id="pos-f-symbol" value="${pf.symbol||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
+    <div><label style="font-size:.72rem;color:#6b7280">Sector</label>
+      <input id="pos-f-sector" value="${pf.sector||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
+    <div><label style="font-size:.72rem;color:#6b7280">Entry Date</label>
+      <input id="pos-f-entrydate" value="${new Date().toLocaleDateString('en-GB').replace(/\//g,'-')}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
+    <div><label style="font-size:.72rem;color:#6b7280">Entry Price</label>
+      <input id="pos-f-entryprice" type="number" step="0.01" value="${pf.entry||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
+    <div><label style="font-size:.72rem;color:#6b7280">Qty</label>
+      <input id="pos-f-qty" type="number" value="1" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
+    <div><label style="font-size:.72rem;color:#6b7280">Stop Loss</label>
+      <input id="pos-f-sl" type="number" step="0.01" value="${pf.stopLoss||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
+    <div><label style="font-size:.72rem;color:#6b7280">T1 Target</label>
+      <input id="pos-f-t1" type="number" step="0.01" value="${pf.t1||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
+    <div><label style="font-size:.72rem;color:#6b7280">T2 Target</label>
+      <input id="pos-f-t2" type="number" step="0.01" value="${pf.t2||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
+    <div><label style="font-size:.72rem;color:#6b7280">Score</label>
+      <input id="pos-f-score" type="number" value="${pf.score||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
+    <div><label style="font-size:.72rem;color:#6b7280">Trend</label>
+      <input id="pos-f-trend" value="${pf.swingTrend||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
+    <div><label style="font-size:.72rem;color:#6b7280">HV20%</label>
+      <input id="pos-f-hv20" type="number" step="0.1" value="${pf.hv20||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
+  `;
+  document.getElementById('pos-modal-fields').innerHTML = fieldsHtml;
+  document.getElementById('pos-notes-inp').value = '';
+  document.getElementById('pos-modal-title').textContent = '➕ Add Position';
+  document.getElementById('pos-modal').style.display = 'flex';
+}
+
+function posCloseModal(){ document.getElementById('pos-modal').style.display='none'; }
+
+function posSavePosition(){
+  try{
+    const mode = document.getElementById('pos-f-mode').value;
+    const symbol = document.getElementById('pos-f-symbol').value.trim().toUpperCase();
+    const entryPrice = parseFloat(document.getElementById('pos-f-entryprice').value)||0;
+    if(!symbol || !entryPrice){ showToast('Symbol and Entry Price required','warning'); return; }
+    const pos = {
+      id: Date.now().toString(),
+      mode, symbol,
+      sector: document.getElementById('pos-f-sector').value.trim(),
+      entryDate: document.getElementById('pos-f-entrydate').value.trim(),
+      entryPrice, qty: parseInt(document.getElementById('pos-f-qty').value)||1,
+      slPrice: parseFloat(document.getElementById('pos-f-sl').value)||null,
+      t1Price: parseFloat(document.getElementById('pos-f-t1').value)||null,
+      t2Price: parseFloat(document.getElementById('pos-f-t2').value)||null,
+      score: parseFloat(document.getElementById('pos-f-score').value)||null,
+      swingTrend: document.getElementById('pos-f-trend').value.trim(),
+      hv20: parseFloat(document.getElementById('pos-f-hv20').value)||null,
+      notes: document.getElementById('pos-notes-inp').value.trim(),
+      status: 'OPEN', createdAt: new Date().toISOString(),
+    };
+    if(pos.t1Price && pos.slPrice && (entryPrice-pos.slPrice)>0){
+      pos.rr1 = Math.round((pos.t1Price-entryPrice)/(entryPrice-pos.slPrice)*100)/100;
+    }
+    const all = getPositions();
+    all.push(pos);
+    savePositions(all);
+    posCloseModal();
+    posSwitchMode(mode);
+    showToast(`${symbol} added to ${mode==='REAL'?'Real':'Paper'} positions`,'success');
+  }catch(e){ showToast('Error saving position: '+e.message,'warning'); }
+}
+
+function posAddFromSwing(r){
+  const t = r.targets||[];
+  posShowAddDialog({
+    symbol: r.symbol, sector: r.sector, entry: r.entry, stopLoss: r.stopLoss,
+    t1: t[0]?t[0].price:null, t2: t[1]?t[1].price:null,
+    score: r.score, swingTrend: r.swingTrend, hv20: r.hv20,
+  });
+}
+
+let posCloseTargetId = null;
+function posShowCloseModal(id){
+  posCloseTargetId = id;
+  document.getElementById('pos-exit-price').value='';
+  document.getElementById('pos-exit-date').value=new Date().toLocaleDateString('en-GB').replace(/\//g,'-');
+  document.getElementById('pos-exit-reason').value='MANUAL';
+  document.getElementById('pos-close-modal').style.display='flex';
+}
+function posCloseCloseModal(){ document.getElementById('pos-close-modal').style.display='none'; }
+
+function posConfirmClose(){
+  const xp = parseFloat(document.getElementById('pos-exit-price').value)||0;
+  if(!xp){ showToast('Enter exit price','warning'); return; }
+  const xdate = document.getElementById('pos-exit-date').value.trim();
+  const reason = document.getElementById('pos-exit-reason').value;
+  const all = getPositions();
+  const pos = all.find(p=>p.id===posCloseTargetId);
+  if(pos){
+    pos.exitPrice = xp; pos.exitDate = xdate; pos.exitReason = reason;
+    pos.pnl = Math.round((xp-pos.entryPrice)*pos.qty*100)/100;
+    pos.pnlPct = Math.round((xp-pos.entryPrice)/pos.entryPrice*10000)/100;
+    pos.status = ['T1_HIT','T2_HIT','T3_HIT','SL_HIT'].includes(reason) ? reason : 'CLOSED';
+    savePositions(all);
+  }
+  posCloseCloseModal();
+  renderPositions();
+}
+
+function posDeletePosition(id){
+  if(!confirm('Delete this position?')) return;
+  let all = getPositions();
+  all = all.filter(p=>p.id!==id);
+  savePositions(all);
+  renderPositions();
+}
+
+function posExportCSV(){
+  const rows = getPositions().filter(p=>p.mode===posMode);
+  if(!rows.length){ showToast('No positions to export','warning'); return; }
+  const headers = ['Symbol','Sector','EntryDate','EntryPrice','Qty','SL','T1','T2','RR1','HV20',
+                    'Score','Trend','Status','ExitDate','ExitPrice','PnL','PnL%','Notes'];
+  let csv = headers.join(',')+'\n';
+  rows.forEach(p=>{
+    csv += [p.symbol,p.sector,p.entryDate,p.entryPrice,p.qty,p.slPrice,p.t1Price,p.t2Price,
+            p.rr1,p.hv20,p.score,p.swingTrend,p.status,p.exitDate||'',p.exitPrice||'',
+            p.pnl||'',p.pnlPct||'',`"${(p.notes||'').replace(/"/g,'""')}"`].join(',')+'\n';
+  });
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `positions_${posMode}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ══════════════════════════════════════════════════
+//  BACKTEST (client-side, uses loaded history.json)
+// ══════════════════════════════════════════════════
+const BT_STORAGE_KEY = 'nse_scanner_backtest_v1';
+let btResults = [];
+
+async function runBacktest(){
+  if(!historyLoaded){
+    showToast('Loading history data first…','warning');
+    await loadHistoryBackground();
+  }
+  const sortedDates = swGetSortedHistDates();
+  if(sortedDates.length < 30){
+    document.getElementById('bt-status').textContent =
+      '⚠ Not enough history loaded (need 30+ days). Open Swing Setup first to load data.';
+    document.getElementById('bt-status').style.color = 'var(--red)';
+    return;
+  }
+
+  const minScore = parseFloat(document.getElementById('bt-minscore').value)||55;
+  const fwdWindow = parseInt(document.getElementById('bt-fwd').value)||20;
+  const hhhlOnly = document.getElementById('bt-hhhl-only').checked;
+
+  document.getElementById('bt-status').textContent = '⏳ Running backtest…';
+  document.getElementById('bt-status').style.color = 'var(--muted)';
+  document.getElementById('bt-progress').style.width = '0%';
+
+  // Need at least 25 days history + fwdWindow forward days to test a date
+  const testableDates = sortedDates.slice(25, sortedDates.length - fwdWindow);
+  if(!testableDates.length){
+    document.getElementById('bt-status').textContent =
+      '⚠ Not enough forward data — reduce forward window or load more history.';
+    document.getElementById('bt-status').style.color = 'var(--red)';
+    return;
+  }
+
+  const universe = swGetUniverse ? swGetUniverse() :
+    new Set(sortedDates.flatMap(d=>(historicalData[d]||[]).map(r=>r.SYMBOL)));
+
+  const trades = [];
+  for(let di=0; di<testableDates.length; di++){
+    const sigDate = testableDates[di];
+    if(di % 5 === 0){
+      const pct = Math.round(di/testableDates.length*100);
+      document.getElementById('bt-progress').style.width = pct+'%';
+      document.getElementById('bt-status').textContent = `⏳ Testing ${sigDate} (${di}/${testableDates.length})…`;
+      await new Promise(r=>setTimeout(r,0)); // yield to UI
+    }
+
+    const dateIdx = sortedDates.indexOf(sigDate);
+    const histSlice = sortedDates.slice(0, dateIdx+1);
+    const fwdSlice  = sortedDates.slice(dateIdx+1, dateIdx+1+fwdWindow);
+    if(!fwdSlice.length) continue;
+
+    const niftyCloses = swBuildNiftyProxyForDates ? swBuildNiftyProxyForDates(histSlice) : [];
+    const niftyTrend  = swComputeNiftyRegime(niftyCloses);
+
+    for(const sym of universe){
+      const {closes,highs,lows,vols,delivs} = swBuildSeriesForSymbol(sym, histSlice);
+      if(closes.length<25) continue;
+      const res = swComputeScore(closes,highs,lows,vols,delivs,niftyCloses);
+      if(res.score===null || res.score<minScore) continue;
+      if(hhhlOnly && res.swingTrend!=='HH+HL') continue;
+
+      const entry=res.entry, sl=res.stopLoss;
+      const t1=res.targets[0]?.price, t2=res.targets[1]?.price, t3=res.targets[2]?.price;
+
+      let outcome='OPEN', exitPrice=entry, sessions=fwdSlice.length, mae=0;
+      for(let si=0; si<fwdSlice.length; si++){
+        const fd = fwdSlice[si];
+        const frow = (historicalData[fd]||[]).find(r=>r.SYMBOL===sym);
+        if(!frow) continue;
+        const fmae = (frow.LOW-entry)/entry*100;
+        if(fmae<mae) mae=fmae;
+        if(sl && frow.LOW<=sl){ outcome='SL_HIT'; exitPrice=sl; sessions=si+1; break; }
+        if(t3 && frow.CLOSE>=t3){ outcome='T3_HIT'; exitPrice=t3; sessions=si+1; break; }
+        if(t2 && frow.CLOSE>=t2){ outcome='T2_HIT'; exitPrice=t2; sessions=si+1; break; }
+        if(t1 && frow.CLOSE>=t1){ outcome='T1_HIT'; exitPrice=t1; sessions=si+1; break; }
+      }
+      const pnlPct = entry ? Math.round((exitPrice-entry)/entry*10000)/100 : 0;
+
+      trades.push({
+        sym, sigDate, score:res.score, swingTrend:res.swingTrend,
+        niftyTrend, entry, sl, t1, rr1:res.rr1, hv20:res.hv20,
+        outcome, exitPrice, sessions, pnlPct, maxAdverse:Math.round(mae*100)/100,
+      });
+    }
+  }
+
+  btResults = trades;
+  localStorage.setItem(BT_STORAGE_KEY, JSON.stringify({
+    runDate:new Date().toISOString(), params:{minScore,fwdWindow,hhhlOnly}, trades
+  }));
+  document.getElementById('bt-progress').style.width='100%';
+  renderBacktestResults();
+}
+
+function renderBacktestResults(){
+  if(!btResults.length){
+    const saved = localStorage.getItem(BT_STORAGE_KEY);
+    if(saved){
+      try{ btResults = JSON.parse(saved).trades || []; }catch(e){}
+    }
+  }
+  const tbody = document.getElementById('bt-table-body');
+  tbody.innerHTML='';
+  document.getElementById('bt-empty').style.display = btResults.length ? 'none' : 'block';
+  if(!btResults.length) return;
+
+  const n=btResults.length;
+  const t1h=btResults.filter(t=>t.outcome==='T1_HIT').length;
+  const t2h=btResults.filter(t=>t.outcome==='T2_HIT').length;
+  const t3h=btResults.filter(t=>t.outcome==='T3_HIT').length;
+  const slh=btResults.filter(t=>t.outcome==='SL_HIT').length;
+  const ope=btResults.filter(t=>t.outcome==='OPEN').length;
+  const wr = n ? Math.round((t1h+t2h+t3h)/n*1000)/10 : 0;
+  const avgPnl = n ? Math.round(btResults.reduce((s,t)=>s+t.pnlPct,0)/n*100)/100 : 0;
+  const avgT1Sess = t1h ? Math.round(btResults.filter(t=>t.outcome==='T1_HIT')
+                        .reduce((s,t)=>s+t.sessions,0)/t1h*10)/10 : 0;
+
+  const summaryEl = document.getElementById('bt-summary');
+  summaryEl.style.display='block';
+  summaryEl.style.color = avgPnl>=0 ? 'var(--green)' : 'var(--red)';
+  summaryEl.innerHTML =
+    `📊 ${n} setups  |  ✅ T1:${t1h}(${Math.round(t1h/n*100)}%) T2:${t2h} T3:${t3h}  |  `+
+    `❌ SL:${slh}(${Math.round(slh/n*100)}%)  |  Open:${ope}  |  `+
+    `Win rate: ${wr}%  |  Avg P&L: ${avgPnl>=0?'+':''}${avgPnl}%  |  Avg sessions to T1: ${avgT1Sess}d`;
+
+  [...btResults].sort((a,b)=>b.pnlPct-a.pnlPct).forEach(t=>{
+    const tr = document.createElement('tr');
+    const clsMap = {T1_HIT:'bt-t1',T2_HIT:'bt-t2',T3_HIT:'bt-t3',SL_HIT:'bt-sl',OPEN:'bt-open'};
+    tr.className = clsMap[t.outcome]||'';
+    tr.innerHTML = `
+      <td class="sym">${t.sym}</td>
+      <td style="text-align:left;font-size:.68rem">—</td>
+      <td>${t.sigDate}</td>
+      <td>${Math.round(t.score)}</td>
+      <td style="font-size:.68rem">${t.swingTrend}</td>
+      <td style="font-size:.68rem">${t.niftyTrend}</td>
+      <td>₹${t.entry.toFixed(2)}</td>
+      <td>${t.sl?'₹'+t.sl.toFixed(2):'—'}</td>
+      <td>${t.t1?'₹'+t.t1.toFixed(2):'—'}</td>
+      <td>${t.rr1!=null?t.rr1.toFixed(2):'—'}</td>
+      <td>${t.hv20!=null?t.hv20.toFixed(0)+'%':'—'}</td>
+      <td style="font-weight:700">${t.outcome}</td>
+      <td>₹${t.exitPrice.toFixed(2)}</td>
+      <td>${t.sessions}</td>
+      <td style="color:${t.pnlPct>=0?'var(--green)':'var(--red)'};font-weight:700">${t.pnlPct>=0?'+':''}${t.pnlPct}%</td>
+      <td>${t.maxAdverse}%</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('bt-status').textContent =
+    `✓ Backtest complete — ${n} setups tested.`;
+  document.getElementById('bt-status').style.color = 'var(--green)';
+}
+
+function btExportCSV(){
+  if(!btResults.length){ showToast('Run a backtest first','warning'); return; }
+  const headers=['Symbol','SignalDate','Score','SwingTrend','NiftyTrend','Entry','SL','T1',
+                 'RR1','HV20','Outcome','ExitPrice','Sessions','PnL%','MaxAdverse%'];
+  let csv = headers.join(',')+'\n';
+  btResults.forEach(t=>{
+    csv += [t.sym,t.sigDate,t.score,t.swingTrend,t.niftyTrend,t.entry,t.sl,t.t1,
+            t.rr1,t.hv20,t.outcome,t.exitPrice,t.sessions,t.pnlPct,t.maxAdverse].join(',')+'\n';
+  });
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `backtest_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// Helper: get universe of symbols for backtest (reuse swing scan universe logic)
+function swGetUniverse(){
+  const idxOnly = document.getElementById('sw-idx-only')?.checked ?? true;
+  if(idxOnly){
+    const set = new Set();
+    Object.values(indexMap||{}).forEach(arr=>arr.forEach(s=>set.add(s)));
+    return set;
+  }
+  const set = new Set();
+  Object.values(historicalData||{}).forEach(rows=>rows.forEach(r=>set.add(r.SYMBOL)));
+  return set;
+}
+
+// Helper: build Nifty proxy from arbitrary date slice (for backtest)
+function swBuildNiftyProxyForDates(dateSlice){
+  if(!niftyConstituents || !niftyConstituents.size) return [];
+  const proxy = [];
+  dateSlice.forEach(d=>{
+    const rows = historicalData[d]||[];
+    const vals = rows.filter(r=>niftyConstituents.has(r.SYMBOL)).map(r=>r.CLOSE).filter(v=>v>0);
+    if(vals.length) proxy.push(vals.reduce((a,b)=>a+b,0)/vals.length);
+  });
+  return proxy;
+}
+
 
 // ══════════════════════════════════════════════════
 //  INIT CALLS
