@@ -2334,27 +2334,37 @@ function swComputeATR14(highs, lows, closes){
 // original overly-strict 15%/20% that made almost everything "flat").
 // ══ Demand / Supply Zone Engine ══════════════════════════════════════════
 function computeDemandSupplyZones(dates, opens, highs, lows, closes,
-                                   lookback=250, bouncePct=3.0,
-                                   bounceSessions=3, bufPct=0.5){
+                                   lookback=250, bouncePct=2.5,
+                                   bounceSessions=4, bufPct=0.5){
   const n=closes.length;
-  if(n<20) return {demand:[],supply:[],nearestDemand:null,nearestSupply:null};
+  if(n<15) return {demand:[],supply:[],nearestDemand:null,nearestSupply:null};
   const startI=Math.max(0,n-lookback);
   const demand=[],supply=[];
   const entry=closes[n-1];
   const buf=bufPct/100;
 
-  for(let i=startI+5;i<n-1;i++){
+  // Pivot window auto-shrinks for short series so zones can still be found
+  // within a ~25-35 day scanner lookback (vs the full 5-bar window needed
+  // for a proper 1-year chart). 3 bars each side is enough to find a
+  // meaningful local extreme on a 1-month window without over-fitting noise.
+  const pivWin = n < 60 ? 3 : 5;
+
+  for(let i=startI+pivWin; i<n-1; i++){
     const lowI=lows[i];
     // DEMAND: local low?
-    const backL=lows.slice(Math.max(0,i-5),i);
-    const fwdL=lows.slice(i+1,Math.min(n,i+6));
+    const backL=lows.slice(Math.max(0,i-pivWin),i);
+    const fwdL=lows.slice(i+1,Math.min(n,i+1+pivWin));
     if(backL.length && fwdL.length &&
-       lowI<Math.min(...backL) && lowI<Math.min(...fwdL)){
+       lowI<=Math.min(...backL) && lowI<=Math.min(...fwdL)){
       // Bounce check
       const fwdC=closes.slice(i+1,Math.min(n,i+1+bounceSessions));
       if(fwdC.length && Math.max(...fwdC)>=lowI*(1+bouncePct/100)){
         const floor=lowI*(1-buf);
-        if(closes.slice(i+1).every(c=>c>=floor)){
+        // "Unbreached" relaxed to last-N-bars only for short windows —
+        // a 31-day scanner can't reasonably demand "never breached in
+        // the last year", only that it's holding recently.
+        const checkFrom = n < 60 ? Math.max(i+1, n-20) : i+1;
+        if(closes.slice(checkFrom).every(c=>c>=floor)){
           const ceiling=Math.max(opens[i]||lowI*1.005, lowI*1.005);
           const ageDays=n-1-i;
           const touches=closes.slice(i+1).filter((_,j)=>{
@@ -2371,14 +2381,15 @@ function computeDemandSupplyZones(dates, opens, highs, lows, closes,
     }
     // SUPPLY: local high?
     const highI=highs[i];
-    const backH=highs.slice(Math.max(0,i-5),i);
-    const fwdH=highs.slice(i+1,Math.min(n,i+6));
+    const backH=highs.slice(Math.max(0,i-pivWin),i);
+    const fwdH=highs.slice(i+1,Math.min(n,i+1+pivWin));
     if(backH.length && fwdH.length &&
-       highI>Math.max(...backH) && highI>Math.max(...fwdH)){
+       highI>=Math.max(...backH) && highI>=Math.max(...fwdH)){
       const fwdC=closes.slice(i+1,Math.min(n,i+1+bounceSessions));
       if(fwdC.length && Math.min(...fwdC)<=highI*(1-bouncePct/100)){
         const ceiling=highI*(1+buf);
-        if(closes.slice(i+1).every(c=>c<=ceiling)){
+        const checkFrom = n < 60 ? Math.max(i+1, n-20) : i+1;
+        if(closes.slice(checkFrom).every(c=>c<=ceiling)){
           const floor=Math.min(opens[i]||highI*0.995, highI*0.995);
           const ageDays=n-1-i;
           const touches=closes.slice(i+1).filter((_,j)=>{
@@ -2451,7 +2462,8 @@ function updateNiftyRegimeBanner(regime){
 
 // ══ Demand / Supply Zone Engine ══════════════════════════════════════════
 
-function swComputeScore(closes, highs, lows, vols, delivs, niftyCloses){
+function swComputeScore(closes, highs, lows, vols, delivs, niftyCloses, opens){
+  opens = opens || closes; // fallback: use close as open approximation if not passed
   const n = closes.length;
   if(n<25) return {score:null};
 
@@ -2617,11 +2629,10 @@ function swComputeScore(closes, highs, lows, vols, delivs, niftyCloses){
   // R/R at T1
   const rr1 = risk>0 ? Math.round((targets[0].price-entry)/risk*100)/100 : null;
 
-  // Demand / Supply zones
+  // Demand / Supply zones — use real dates if available, else index strings
   const zones = computeDemandSupplyZones(
-    closes.map((_,i)=>i.toString()), // placeholder dates
-    new Array(n).fill(0),             // opens (not available in PWA scorer — use 0)
-    highs, lows, closes, Math.min(n,250));
+    closes.map((_,i)=>i.toString()),
+    opens, highs, lows, closes, Math.min(n,250));
 
   // Zone scoring
   const nd=zones.nearestDemand, ns=zones.nearestSupply;
@@ -2696,9 +2707,9 @@ function swingScanWorker(){
     const minScore = parseFloat(document.getElementById('sw-minscore').value)||0;
     const results = [];
     universe.forEach(sym=>{
-      const {closes,highs,lows,vols,delivs} = swBuildSeriesForSymbol(sym, sortedDates);
+      const {closes,highs,lows,opens,vols,delivs} = swBuildSeriesForSymbol(sym, sortedDates);
       if(closes.length<25) return;
-      const res = swComputeScore(closes,highs,lows,vols,delivs,niftyCloses);
+      const res = swComputeScore(closes,highs,lows,vols,delivs,niftyCloses,opens);
       if(res.score===null || res.score<minScore) return;
       res.symbol = sym;
       res.sector = swGetSector(sym);
@@ -6007,9 +6018,9 @@ async function runBacktest(){
     const niftyTrend  = swComputeNiftyRegime(niftyCloses);
 
     for(const sym of universe){
-      const {closes,highs,lows,vols,delivs} = swBuildSeriesForSymbol(sym, histSlice);
+      const {closes,highs,lows,opens,vols,delivs} = swBuildSeriesForSymbol(sym, histSlice);
       if(closes.length<25) continue;
-      const res = swComputeScore(closes,highs,lows,vols,delivs,niftyCloses);
+      const res = swComputeScore(closes,highs,lows,vols,delivs,niftyCloses,opens);
       if(res.score===null || res.score<minScore) continue;
       if(hhhlOnly && res.swingTrend!=='HH+HL') continue;
 
