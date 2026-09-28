@@ -166,21 +166,6 @@ tbody td.indices-col{text-align:left;font-size:.70rem;color:var(--muted);max-wid
 #sw-table tr.sw-strong{background:var(--green-bg)}
 #sw-table tr.sw-mid{background:#FFF8E1}
 #sw-table tr.sw-extended{background:var(--red-bg)}
-#sw-table tr.sw-on-demand{background:#C8E6C9}
-#sw-table tr.sw-near-supply{background:#FFE0B2}
-.sw-regime-banner{padding:7px 14px;font-size:.78rem;font-weight:700;border-radius:6px;margin-bottom:8px;display:none}
-.sw-regime-hh{background:#1A6B2E;color:#fff}
-.sw-regime-mixed{background:#854F0B;color:#fff}
-.sw-regime-ll{background:#B71C1C;color:#fff}
-.sw-regime-neutral{background:#5F5E5A;color:#fff}
-/* ── Position Tracker ── */
-.pos-mode-btn{padding:5px 14px;font-size:.78rem;font-weight:700;border:1.5px solid var(--border);border-radius:5px;cursor:pointer;background:var(--card);color:var(--muted)}
-.pos-mode-btn.active{background:#1A6B2E;color:#fff;border-color:#1A6B2E}
-.pos-mode-btn.paper.active{background:#0C447C;border-color:#0C447C}
-.pos-open{background:#E8F5E9}.pos-sl{background:#FFEBEE}.pos-profit{background:#E3F2FD}.pos-closed{background:#F5F8FC}
-/* ── Backtest ── */
-.bt-t1{background:#E8F5E9}.bt-t2{background:#C8E6C9}.bt-t3{background:#A5D6A7}
-.bt-sl{background:#FFEBEE}.bt-open{background:#F5F8FC}
 .sw-atr{display:inline-block;padding:1px 6px;border-radius:5px;font-size:.64rem;font-weight:700}
 .sw-atr.tight{background:var(--green-bg);color:var(--green)}
 .sw-atr.wide{background:var(--red-bg);color:var(--red)}
@@ -398,6 +383,41 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
 .sw-api-status{font-size:.65rem;margin-bottom:10px;color:#374151}
 .sw-api-link{font-size:.68rem;color:var(--primary);line-height:2}
 .sw-api-actions{display:flex;gap:6px;margin-top:10px}
+/* ═════ Deals Analysis (Maroon / Beige / White / Gold) — scoped to #sec-dhist ═════ */
+#sec-dhist{--dh-mar:#7B1E2B;--dh-dmar:#5A1420;--dh-beige:#F5EBDD;--dh-gold:#C9A24B;--dh-alt:#FBF6EE;--dh-buy:#EEF5E6;--dh-sell:#FBE9E7}
+#sec-dhist .panel{border-color:var(--dh-gold)}
+#sec-dhist .panel-hdr{background:linear-gradient(135deg,var(--dh-mar),var(--dh-dmar));border-bottom:3px solid var(--dh-gold)}
+#sec-dhist .panel-body{background:var(--dh-beige)}
+.dh-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.dh-lbl{font-size:.72rem;font-weight:700;color:var(--dh-dmar);min-width:48px}
+.dh-chips{display:flex;gap:6px;flex-wrap:wrap}
+.dh-chip{padding:5px 12px;border-radius:16px;border:1.5px solid var(--dh-mar);background:#fff;color:var(--dh-mar);font-size:.78rem;font-weight:700}
+.dh-chip.on{background:var(--dh-mar);color:#fff;border-color:var(--dh-mar)}
+#sec-dhist input[type=text],#sec-dhist select{padding:5px 8px;border:1px solid var(--dh-gold);border-radius:5px;font-size:.82rem;background:#fff;color:var(--text)}
+.dh-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:560px){.dh-sum{grid-template-columns:repeat(2,1fr)}}
+.dh-card{background:#fff;border:1px solid var(--dh-gold);border-radius:8px;padding:7px 10px}
+.dh-card .l{font-size:.66rem;color:var(--muted);font-weight:700;text-transform:uppercase}
+.dh-card .v{font-size:.95rem;font-weight:800;color:var(--dh-dmar)}
+.dh-card .v.pos{color:#2E7D11}.dh-card .v.neg{color:#B71C1C}
+.dh-tabs{display:flex;gap:4px;overflow-x:auto;margin:0 0 8px}
+.dh-tab{padding:8px 14px;font-size:.78rem;font-weight:700;background:#fff;color:var(--dh-mar);border:1.5px solid var(--dh-gold);border-radius:8px 8px 0 0;white-space:nowrap}
+.dh-tab.on{background:var(--dh-mar);color:#fff}
+.dh-btn{padding:3px 10px;font-size:.72rem;font-weight:700;border-radius:5px;background:var(--dh-gold);color:var(--dh-dmar);margin-left:6px}
+#dh-table,.dh-t{width:100%;border-collapse:collapse;font-size:.76rem;background:#fff}
+#dh-table th,.dh-t th{background:var(--dh-mar);color:#fff;padding:6px 8px;font-weight:700;white-space:nowrap;position:sticky;top:0;cursor:pointer;border-bottom:2px solid var(--dh-gold)}
+#dh-table td,.dh-t td{padding:5px 8px;border-bottom:1px solid #eadfcf;white-space:nowrap}
+#dh-table tbody tr:nth-child(even) td,.dh-t tbody tr:nth-child(even) td{background:var(--dh-alt)}
+#dh-table tr.b td,.dh-t tr.b td{background:var(--dh-buy)!important}
+#dh-table tr.s td,.dh-t tr.s td{background:var(--dh-sell)!important}
+#dh-table tbody tr{cursor:pointer}
+.dh-t tbody tr{cursor:default}
+#dh-table td.n,#dh-table th.n,.dh-t td.n,.dh-t th.n{text-align:right}
+#dh-table td:first-child,#dh-table th:first-child{position:sticky;left:0;font-weight:700}
+#dh-table td:first-child{background:#fff}
+.dh-pos{color:#2E7D11;font-weight:700}.dh-neg{color:#B71C1C;font-weight:700}
+.dh-note{padding:8px 12px;font-size:.68rem;color:var(--muted);background:var(--dh-beige);border-top:2px solid var(--dh-gold);line-height:1.5}
+.dh-empty{padding:26px;text-align:center;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -482,10 +502,9 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
   <button class="snav-btn" onclick="showSection('pulse')">⚡ Market Pulse</button>
   <button class="snav-btn" onclick="showSection('swing')">🎯 Swing Setup</button>
   <button class="snav-btn" onclick="showSection('momentum')">🚀 Momentum</button>
-  <button class="snav-btn" onclick="showSection('positions')">💼 Positions</button>
-  <button class="snav-btn" onclick="showSection('backtest')">🔬 Backtest</button>
   <button class="snav-btn" onclick="showSection('history')">📋 History &amp; P&amp;L</button>
   <button class="snav-btn" onclick="showSection('deals')">🔴 Deals</button>
+  <button class="snav-btn" onclick="showSection('dhist')">📚 Deals Analysis</button>
   <button class="snav-btn" onclick="showSection('shortsell')">🔻 Short Sell</button>
   <button class="snav-btn" onclick="showSection('watchlist')">⭐ Watchlist</button>
   <button class="snav-btn" onclick="showSection('alerts')">🔔 Alerts</button>
@@ -762,8 +781,6 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
   <!-- Sector filter strip -->
   <div id="sw-sector-strip" style="display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:6px;margin-bottom:8px;padding-bottom:2px"></div>
 
-  <div id="sw-regime-banner" class="sw-regime-banner"></div>
-
   <div class="panel" id="sw-table-panel">
     <div id="sw-table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
       <table id="sw-table">
@@ -778,13 +795,9 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
           <th>T1 (5%)</th>
           <th>T2 (8%)</th>
           <th>T3 (12%)</th>
-          <th onclick="sortSwTable('rr1')">RR@T1</th>
-          <th onclick="sortSwTable('hv20')">HV20%</th>
           <th onclick="sortSwTable('rsVsNifty')">RS vs N</th>
           <th onclick="sortSwTable('atrTrend')">ATR</th>
           <th onclick="sortSwTable('volRatio')">Vol×</th>
-          <th onclick="sortSwTable('nearestDemand')">Demand</th>
-          <th onclick="sortSwTable('nearestSupply')">Supply</th>
           <th>AI</th>
         </tr></thead>
         <tbody id="sw-table-body"></tbody>
@@ -872,138 +885,6 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
     </div>
   </div>
 
-</div>
-
-<!-- ══════════ POSITIONS SECTION ══════════ -->
-<div id="sec-positions" class="section">
-  <div class="panel" style="margin-top:10px">
-    <div class="panel-hdr" style="background:linear-gradient(135deg,#1A6B2E,#0C447C)">💼 Position Tracker</div>
-    <div style="padding:10px 12px">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">
-        <button class="pos-mode-btn active" id="pos-real-btn" onclick="posSwitchMode('REAL')">📊 Real</button>
-        <button class="pos-mode-btn paper" id="pos-paper-btn" onclick="posSwitchMode('PAPER')">📝 Paper</button>
-        <button class="btn btn-primary" style="margin-left:auto;font-size:.78rem;padding:5px 12px" onclick="posShowAddDialog()">➕ Add Position</button>
-        <button class="btn btn-outline" style="font-size:.78rem;padding:5px 12px" onclick="posExportCSV()">💾 CSV</button>
-      </div>
-      <div id="pos-summary" style="font-size:.76rem;color:var(--muted);padding:4px 0;border-top:1px solid var(--border)">
-        No positions yet. Add your first trade or paper trade above.
-      </div>
-    </div>
-  </div>
-
-  <div class="panel" id="pos-table-panel">
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-      <table id="pos-table">
-        <thead><tr>
-          <th style="text-align:left">Symbol</th>
-          <th style="text-align:left">Sector</th>
-          <th>Entry Dt</th><th>Entry ₹</th><th>Qty</th>
-          <th>SL ₹</th><th>T1 ₹</th><th>RR@T1</th><th>HV20%</th>
-          <th>CMP ₹</th><th>P&amp;L ₹</th><th>P&amp;L%</th>
-          <th>→SL%</th><th>→T1%</th>
-          <th>Score</th><th>Trend</th><th>Status</th><th>Action</th>
-        </tr></thead>
-        <tbody id="pos-table-body"></tbody>
-      </table>
-    </div>
-    <div id="pos-empty" style="padding:24px;text-align:center;color:var(--muted);font-size:.85rem">
-      No positions in this mode. Click '➕ Add Position' to add your first trade.
-    </div>
-  </div>
-
-  <!-- Add/Edit modal -->
-  <div id="pos-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
-    <div style="background:#fff;border-radius:10px;padding:20px;width:min(440px,94vw);max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.25)">
-      <div style="font-size:.95rem;font-weight:800;color:#111;margin-bottom:14px" id="pos-modal-title">➕ Add Position</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="pos-modal-fields"></div>
-      <div style="margin-top:8px">
-        <label style="font-size:.75rem;color:#6b7280;display:block;margin-bottom:2px">Notes</label>
-        <input id="pos-notes-inp" style="width:100%;padding:7px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box" placeholder="Optional notes">
-      </div>
-      <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
-        <button class="btn btn-outline" onclick="posCloseModal()">Cancel</button>
-        <button class="btn btn-primary" onclick="posSavePosition()">💾 Save</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Close position modal -->
-  <div id="pos-close-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center">
-    <div style="background:#fff;border-radius:10px;padding:20px;width:min(340px,94vw);box-shadow:0 8px 32px rgba(0,0,0,.25)">
-      <div style="font-size:.95rem;font-weight:800;color:#111;margin-bottom:14px">✅ Close Position</div>
-      <label style="font-size:.75rem;color:#6b7280">Exit Price (₹)</label>
-      <input id="pos-exit-price" style="width:100%;padding:7px;border:1px solid #d1d5db;border-radius:5px;font-size:.85rem;margin-bottom:8px;box-sizing:border-box">
-      <label style="font-size:.75rem;color:#6b7280">Exit Date</label>
-      <input id="pos-exit-date" style="width:100%;padding:7px;border:1px solid #d1d5db;border-radius:5px;font-size:.85rem;margin-bottom:8px;box-sizing:border-box">
-      <label style="font-size:.75rem;color:#6b7280">Reason</label>
-      <select id="pos-exit-reason" style="width:100%;padding:7px;border:1px solid #d1d5db;border-radius:5px;font-size:.85rem;margin-bottom:14px">
-        <option>T1_HIT</option><option>T2_HIT</option><option>T3_HIT</option>
-        <option>SL_HIT</option><option>MANUAL</option><option>TRAIL_SL</option>
-      </select>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button class="btn btn-outline" onclick="posCloseCloseModal()">Cancel</button>
-        <button class="btn" style="background:#1A6B2E;color:#fff;border:none" onclick="posConfirmClose()">✅ Confirm</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════ BACKTEST SECTION ══════════ -->
-<div id="sec-backtest" class="section">
-  <div class="panel" style="margin-top:10px">
-    <div class="panel-hdr" style="background:linear-gradient(135deg,#B71C1C,#880E4F)">🔬 Swing Setup Backtester</div>
-    <div style="padding:10px 12px">
-      <div style="font-size:.74rem;color:var(--muted);margin-bottom:8px">
-        Simulates every qualifying setup in your history · checks if SL or T1/T2/T3 was hit first · saves results permanently
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
-        <label style="font-size:.76rem;font-weight:700;color:var(--muted)">Min Score:
-          <select id="bt-minscore" style="padding:5px;border:1px solid var(--border);border-radius:4px;font-size:.78rem;background:var(--bg);color:var(--text)">
-            <option value="45">45</option><option value="50">50</option>
-            <option value="55" selected>55</option><option value="60">60</option>
-            <option value="65">65</option>
-          </select>
-        </label>
-        <label style="font-size:.76rem;font-weight:700;color:var(--muted)">Fwd window:
-          <input id="bt-fwd" type="number" value="20" min="5" max="40"
-                 style="width:50px;padding:5px;border:1px solid var(--border);border-radius:4px;font-size:.78rem;background:var(--bg);color:var(--text)">
-        </label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:.76rem;font-weight:700;color:var(--muted)">
-          <input type="checkbox" id="bt-hhhl-only" checked style="width:auto"> HH+HL Only
-        </label>
-        <button class="btn" style="margin-left:auto;background:#B71C1C;color:#fff;border:none;font-size:.78rem;padding:6px 14px" onclick="runBacktest()">▶ Run Backtest</button>
-        <button class="btn btn-outline" style="font-size:.78rem;padding:6px 12px" onclick="btExportCSV()">💾 CSV</button>
-      </div>
-      <div id="bt-status" style="font-size:.76rem;color:var(--muted);padding:6px 0;border-top:1px solid var(--border)">
-        Uses your loaded history.json data. Results show how past setups would have performed.
-      </div>
-      <div style="height:6px;background:var(--border);border-radius:3px;margin-top:6px;overflow:hidden">
-        <div id="bt-progress" style="height:100%;background:#B71C1C;width:0%;transition:width .3s"></div>
-      </div>
-    </div>
-  </div>
-
-  <div id="bt-summary" style="padding:8px 14px;font-size:.82rem;font-weight:700;color:var(--text);display:none"></div>
-
-  <div class="panel">
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-      <table id="bt-table">
-        <thead><tr>
-          <th style="text-align:left">Symbol</th>
-          <th style="text-align:left">Sector</th>
-          <th>Signal</th><th>Score</th><th>Trend</th><th>Nifty</th>
-          <th>Entry</th><th>SL</th><th>T1</th>
-          <th>RR@T1</th><th>HV20%</th>
-          <th>Outcome</th><th>Exit ₹</th><th>Sessions</th>
-          <th>P&amp;L%</th><th>MaxAdv%</th>
-        </tr></thead>
-        <tbody id="bt-table-body"></tbody>
-      </table>
-    </div>
-    <div id="bt-empty" style="padding:24px;text-align:center;color:var(--muted);font-size:.85rem">
-      Run a backtest to see results. Uses data already loaded in history.json.
-    </div>
-  </div>
 </div>
 
 <!-- ══════════ HISTORY SECTION ══════════ -->
@@ -1111,15 +992,12 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
       <div class="panel-hdr">
         <!-- Period selector -->
         <div style="display:flex;gap:4px;flex-wrap:wrap" id="period-btns">
-          <button class="period-btn" data-p="7"    onclick="setChartPeriod(7)">7D</button>
-          <button class="period-btn" data-p="15"   onclick="setChartPeriod(15)">15D</button>
-          <button class="period-btn" data-p="30"   onclick="setChartPeriod(30)">1M</button>
-          <button class="period-btn active" data-p="65"  onclick="setChartPeriod(65)">3M</button>
-          <button class="period-btn" data-p="130"  onclick="setChartPeriod(130)">6M</button>
-          <button class="period-btn" data-p="250"  onclick="setChartPeriod(250)">1Y</button>
-          <button class="period-btn" data-p="500"  onclick="setChartPeriod(500)">2Y</button>
-          <button class="period-btn" data-p="750"  onclick="setChartPeriod(750)">3Y</button>
-          <button class="period-btn" data-p="9999" onclick="setChartPeriod(9999)">Max</button>
+          <button class="period-btn" data-p="7" onclick="setChartPeriod(7)">7D</button>
+          <button class="period-btn" data-p="15" onclick="setChartPeriod(15)">15D</button>
+          <button class="period-btn" data-p="30" onclick="setChartPeriod(30)">1M</button>
+          <button class="period-btn active" data-p="65" onclick="setChartPeriod(65)">3M</button>
+          <button class="period-btn" data-p="130" onclick="setChartPeriod(130)">6M</button>
+          <button class="period-btn" data-p="250" onclick="setChartPeriod(250)">1Y</button>
         </div>
         <!-- MA selector -->
         <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
@@ -1267,6 +1145,34 @@ thead th.sort-desc::after{content:' ▼';font-size:.60rem;color:var(--primary)}
 <!-- Toast container -->
 <div id="toast-container"></div>
 
+<!-- ══════════ DEALS ANALYSIS (HISTORY) SECTION ══════════ -->
+<div id="sec-dhist" class="section">
+  <div class="panel" style="margin-top:10px">
+    <div class="panel-hdr"><span>📚 Deals Analysis — Bulk &amp; Block</span><span id="dh-meta" style="font-size:.7rem;opacity:.85">—</span></div>
+    <div class="panel-body">
+      <div class="dh-row"><span class="dh-lbl">Period</span><div id="dh-periods" class="dh-chips"></div></div>
+      <div class="dh-row"><span class="dh-lbl">Type</span><div id="dh-types" class="dh-chips"></div></div>
+      <div class="dh-row">
+        <input type="text" id="dh-q" placeholder="Search stock / party…" oninput="dhSearch()" style="flex:1;min-width:160px"/>
+        <label class="dh-lbl">Top N <select id="dh-topn" onchange="dhParams()"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></label>
+        <label class="dh-lbl">Repeat ≥ stocks <select id="dh-ms" onchange="dhParams()"></select></label>
+        <label class="dh-lbl">days <select id="dh-md" onchange="dhParams()"></select></label>
+      </div>
+      <div class="dh-sum" id="dh-sum"></div>
+    </div>
+  </div>
+  <div class="dh-tabs" id="dh-tabs"></div>
+  <div class="panel">
+    <div class="panel-hdr"><span id="dh-title">—</span><span><button class="dh-btn" onclick="dhExportCsv()">💾 CSV</button><button class="dh-btn" onclick="dhLoad(true)">🔄 Reload</button></span></div>
+    <div id="dh-scroll" style="overflow-x:auto;max-height:70vh;-webkit-overflow-scrolling:touch">
+      <div id="dh-empty" class="dh-empty">Loading…</div>
+      <table id="dh-table" style="display:none"></table>
+    </div>
+    <div class="dh-note" id="dh-note"></div>
+  </div>
+  <div id="dh-drill" class="panel" style="display:none"></div>
+</div>
+
 <!-- ══ SHORT SELLING SECTION ══ -->
 <div id="sec-shortsell" class="section">
   <div style="margin-top:10px" class="panel">
@@ -1375,10 +1281,6 @@ const STORAGE_KEY_HIST  = 'nse_scan_history_v1';
 const GITHUB_PAGES_BASE = 'https://capavankumarjagiasi.github.io/nse-delivery-scanner';
 const SNAPSHOT_URL      = `${GITHUB_PAGES_BASE}/snapshot.json`;
 const HISTORY_URL       = `${GITHUB_PAGES_BASE}/history.json`;
-const CHART_YEAR_URL    = (yr) => `${GITHUB_PAGES_BASE}/chart_${yr}.json`;
-
-// Cache of already-loaded year files: {2024: {SYM: [[D,O,H,L,C,V,DP],...], ...}, ...}
-const chartYearCache = {};
 
 let PROXY_URL = localStorage.getItem(STORAGE_KEY_PROXY) || '';
 
@@ -2332,138 +2234,7 @@ function swComputeATR14(highs, lows, closes){
 // Core 0-100 swing-setup score — mirrors desktop _compute_swing_score
 // exactly, including the corrected ATR thresholds (8%/10% — NOT the
 // original overly-strict 15%/20% that made almost everything "flat").
-// ══ Demand / Supply Zone Engine ══════════════════════════════════════════
-function computeDemandSupplyZones(dates, opens, highs, lows, closes,
-                                   lookback=250, bouncePct=2.5,
-                                   bounceSessions=4, bufPct=0.5){
-  const n=closes.length;
-  if(n<15) return {demand:[],supply:[],nearestDemand:null,nearestSupply:null};
-  const startI=Math.max(0,n-lookback);
-  const demand=[],supply=[];
-  const entry=closes[n-1];
-  const buf=bufPct/100;
-
-  // Pivot window auto-shrinks for short series so zones can still be found
-  // within a ~25-35 day scanner lookback (vs the full 5-bar window needed
-  // for a proper 1-year chart). 3 bars each side is enough to find a
-  // meaningful local extreme on a 1-month window without over-fitting noise.
-  const pivWin = n < 60 ? 3 : 5;
-
-  for(let i=startI+pivWin; i<n-1; i++){
-    const lowI=lows[i];
-    // DEMAND: local low?
-    const backL=lows.slice(Math.max(0,i-pivWin),i);
-    const fwdL=lows.slice(i+1,Math.min(n,i+1+pivWin));
-    if(backL.length && fwdL.length &&
-       lowI<=Math.min(...backL) && lowI<=Math.min(...fwdL)){
-      // Bounce check
-      const fwdC=closes.slice(i+1,Math.min(n,i+1+bounceSessions));
-      if(fwdC.length && Math.max(...fwdC)>=lowI*(1+bouncePct/100)){
-        const floor=lowI*(1-buf);
-        // "Unbreached" relaxed to last-N-bars only for short windows —
-        // a 31-day scanner can't reasonably demand "never breached in
-        // the last year", only that it's holding recently.
-        const checkFrom = n < 60 ? Math.max(i+1, n-20) : i+1;
-        if(closes.slice(checkFrom).every(c=>c>=floor)){
-          const ceiling=Math.max(opens[i]||lowI*1.005, lowI*1.005);
-          const ageDays=n-1-i;
-          const touches=closes.slice(i+1).filter((_,j)=>{
-            const lo=lows[i+1+j]||0;
-            return lo<=ceiling*1.01 && closes[i+1+j]>=floor;
-          }).length;
-          const strength=touches+Math.max(0,5-Math.floor(ageDays/25));
-          demand.push({floor:Math.round(floor*100)/100,
-                       ceiling:Math.round(ceiling*100)/100,
-                       ageDays,touches,strength,
-                       low:Math.round(lowI*100)/100});
-        }
-      }
-    }
-    // SUPPLY: local high?
-    const highI=highs[i];
-    const backH=highs.slice(Math.max(0,i-pivWin),i);
-    const fwdH=highs.slice(i+1,Math.min(n,i+1+pivWin));
-    if(backH.length && fwdH.length &&
-       highI>=Math.max(...backH) && highI>=Math.max(...fwdH)){
-      const fwdC=closes.slice(i+1,Math.min(n,i+1+bounceSessions));
-      if(fwdC.length && Math.min(...fwdC)<=highI*(1-bouncePct/100)){
-        const ceiling=highI*(1+buf);
-        const checkFrom = n < 60 ? Math.max(i+1, n-20) : i+1;
-        if(closes.slice(checkFrom).every(c=>c<=ceiling)){
-          const floor=Math.min(opens[i]||highI*0.995, highI*0.995);
-          const ageDays=n-1-i;
-          const touches=closes.slice(i+1).filter((_,j)=>{
-            const hi=highs[i+1+j]||0;
-            return hi>=floor*0.99 && closes[i+1+j]<=ceiling;
-          }).length;
-          const strength=touches+Math.max(0,5-Math.floor(ageDays/25));
-          supply.push({floor:Math.round(floor*100)/100,
-                       ceiling:Math.round(ceiling*100)/100,
-                       ageDays,touches,strength,
-                       high:Math.round(highI*100)/100});
-        }
-      }
-    }
-  }
-
-  demand.sort((a,b)=>b.strength-a.strength||a.ageDays-b.ageDays);
-  supply.sort((a,b)=>b.strength-a.strength||a.ageDays-b.ageDays);
-  const topDemand=demand.slice(0,5), topSupply=supply.slice(0,5);
-
-  // Nearest demand below entry, nearest supply above entry
-  let nearestDemand=null;
-  for(const z of [...topDemand].sort((a,b)=>b.ceiling-a.ceiling)){
-    if(z.ceiling<entry){nearestDemand=z.ceiling;break;}
-  }
-  let nearestSupply=null;
-  for(const z of [...topSupply].sort((a,b)=>a.floor-b.floor)){
-    if(z.floor>entry){nearestSupply=z.floor;break;}
-  }
-  return {demand:topDemand,supply:topSupply,nearestDemand,nearestSupply};
-}
-
-function swComputeNiftyRegime(niftyCloses){
-  if(!niftyCloses||niftyCloses.length<10) return 'NEUTRAL';
-  const n=niftyCloses.length;
-  const win=2;
-  const sHi=[],sLo=[];
-  for(let i=win;i<n-win;i++){
-    const wh=niftyCloses.slice(i-win,i+win+1);
-    if(niftyCloses[i]===Math.max(...wh)) sHi.push(niftyCloses[i]);
-    if(niftyCloses[i]===Math.min(...wh)) sLo.push(niftyCloses[i]);
-  }
-  if(sHi.length>=2&&sLo.length>=2){
-    const hh=sHi[sHi.length-1]>sHi[sHi.length-2];
-    const hl=sLo[sLo.length-1]>sLo[sLo.length-2];
-    if(hh&&hl)return'HH+HL';
-    if(!hh&&!hl)return'LH+LL';
-    if(hh&&!hl)return'HH+LL';
-    return'LH+HL';
-  }
-  return'NEUTRAL';
-}
-
-function updateNiftyRegimeBanner(regime){
-  const el=document.getElementById('sw-regime-banner');
-  if(!el)return;
-  const cfg={
-    'HH+HL':['🟢 Nifty HH+HL — Uptrend. Full size (1% risk/trade).','sw-regime-hh'],
-    'HH+LL':['🟡 Nifty Mixed (HH+LL) — Cautious. Use 0.5% risk.','sw-regime-mixed'],
-    'LH+HL':['🟡 Nifty Mixed (LH+HL) — Cautious. Use 0.5% risk.','sw-regime-mixed'],
-    'LH+LL':['🔴 Nifty LH+LL — Downtrend. Avoid new longs or 0.25% risk.','sw-regime-ll'],
-    'NEUTRAL':['⚪ Nifty Neutral — No clear trend. Use smallest size only.','sw-regime-neutral'],
-  };
-  const [text,cls]=cfg[regime]||cfg['NEUTRAL'];
-  el.textContent=text;
-  el.className='sw-regime-banner '+cls;
-  el.style.display='block';
-  window._swNiftyRegime=regime; // store for position sizing hints
-}
-
-// ══ Demand / Supply Zone Engine ══════════════════════════════════════════
-
-function swComputeScore(closes, highs, lows, vols, delivs, niftyCloses, opens){
-  opens = opens || closes; // fallback: use close as open approximation if not passed
+function swComputeScore(closes, highs, lows, vols, delivs, niftyCloses){
   const n = closes.length;
   if(n<25) return {score:null};
 
@@ -2612,55 +2383,11 @@ function swComputeScore(closes, highs, lows, vols, delivs, niftyCloses, opens){
     return {level:i+1, price:tgtPrice, pctGain:pct, estSessions};
   });
 
-  // HV20: 20-day annualised historical volatility
-  let hv20 = null;
-  if(n>=21){
-    const dailyRets=[];
-    for(let i=n-20;i<n;i++){
-      if(closes[i-1]>0) dailyRets.push(Math.log(closes[i]/closes[i-1]));
-    }
-    if(dailyRets.length>=15){
-      const mean=dailyRets.reduce((a,b)=>a+b,0)/dailyRets.length;
-      const variance=dailyRets.reduce((s,r)=>s+(r-mean)**2,0)/(dailyRets.length-1);
-      hv20=Math.round(Math.sqrt(variance*252)*1000)/10; // annualised %
-    }
-  }
-
-  // R/R at T1
-  const rr1 = risk>0 ? Math.round((targets[0].price-entry)/risk*100)/100 : null;
-
-  // Demand / Supply zones — use real dates if available, else index strings
-  const zones = computeDemandSupplyZones(
-    closes.map((_,i)=>i.toString()),
-    opens, highs, lows, closes, Math.min(n,250));
-
-  // Zone scoring
-  const nd=zones.nearestDemand, ns=zones.nearestSupply;
-  if(nd!==null){
-    const distPct=(entry-nd)/entry*100;
-    if(distPct<=2.0){ score=Math.min(100,score+8); reasons.push(`On demand ₹${nd.toFixed(0)}`); }
-    else if(distPct<=5.0){ score=Math.min(100,score+4); }
-  }
-  if(ns!==null){
-    const distPct=(ns-entry)/entry*100;
-    if(distPct<=2.0){ score=Math.max(0,score-8); reasons.push(`Supply ₹${ns.toFixed(0)} overhead`); }
-    else if(distPct<=4.0){ score=Math.max(0,score-3); }
-  }
-  score=Math.max(0,Math.min(100,Math.round(score*10)/10));
-
   return {
     score, reasons, entry: Math.round(entry*100)/100, stopLoss,
     riskPerShare: Math.round(risk*100)/100, targets,
     rsVsNifty: rs!==null ? Math.round(rs*10)/10 : null,
-    atrTrend, extended,
-    volRatio: volRatio!==null ? Math.round(volRatio*10)/10 : null,
-    swingTrend: trend,
-    hv20, rr1,
-    demandZones:    zones.demand,
-    supplyZones:    zones.supply,
-    nearestDemand:  nd,
-    nearestSupply:  ns,
-    delPctToday:    delivs.length ? Math.round(delivs[delivs.length-1]*10)/10 : null,
+    atrTrend, extended, volRatio: volRatio!==null ? Math.round(volRatio*10)/10 : null,
   };
 }
 
@@ -2700,20 +2427,15 @@ function swingScanWorker(){
       console.warn('Swing scan: Nifty 50 proxy unavailable — RS component skipped, max score capped at 85.');
     }
 
-    // Nifty regime banner
-    const niftyRegime = swComputeNiftyRegime(niftyCloses);
-    updateNiftyRegimeBanner(niftyRegime);
-
     const minScore = parseFloat(document.getElementById('sw-minscore').value)||0;
     const results = [];
     universe.forEach(sym=>{
-      const {closes,highs,lows,opens,vols,delivs} = swBuildSeriesForSymbol(sym, sortedDates);
+      const {closes,highs,lows,vols,delivs} = swBuildSeriesForSymbol(sym, sortedDates);
       if(closes.length<25) return;
-      const res = swComputeScore(closes,highs,lows,vols,delivs,niftyCloses,opens);
+      const res = swComputeScore(closes,highs,lows,vols,delivs,niftyCloses);
       if(res.score===null || res.score<minScore) return;
       res.symbol = sym;
       res.sector = swGetSector(sym);
-      res.niftyRegime = niftyRegime;
       results.push(res);
     });
 
@@ -2726,12 +2448,8 @@ function swingScanWorker(){
     renderSwingSetups();
 
     const strong = results.filter(r=>r.score>=70).length;
-    const hhhl   = results.filter(r=>r.swingTrend==='HH+HL').length;
-    const onDem  = results.filter(r=>r.nearestDemand!==null &&
-                     (r.entry-r.nearestDemand)/r.entry<=0.03).length;
     document.getElementById('sw-status').textContent =
-      `✓ ${results.length} setups scored  |  ${strong} strong (≥70)  |  `+
-      `${hhhl} HH+HL  |  ${onDem} on/near demand zone  |  Sorted by score — tap a row for its Chart.`;
+      `✓ ${results.length} setups scored  |  ${strong} strong (≥70)  |  Sorted by score — tap a row for its Chart.`;
     document.getElementById('sw-status').style.color = 'var(--green)';
   }catch(e){
     document.getElementById('sw-status').textContent = '⚠ Scan failed: '+e.message;
@@ -2809,12 +2527,6 @@ function renderSwingTable(){
         const va = order[a.atrTrend] ?? 3, vb = order[b.atrTrend] ?? 3;
         return asc ? (va-vb) : (vb-va);
       });
-    } else if(col==='nearestDemand' || col==='nearestSupply'){
-      rows.sort((a,b)=>{
-        const na = a[col]===null||a[col]===undefined ? -999 : a[col];
-        const nb = b[col]===null||b[col]===undefined ? -999 : b[col];
-        return asc ? (na-nb) : (nb-na);
-      });
     } else {
       rows.sort((a,b)=>{
         const va = a[col]; const vb = b[col];
@@ -2839,17 +2551,9 @@ function renderSwingTable(){
     const atrCls = r.atrTrend==='contracting'?'tight':r.atrTrend==='expanding'?'wide':'flat';
     const atrLbl = r.atrTrend==='contracting'?'tight':r.atrTrend==='expanding'?'wide':(r.atrTrend?'flat':'—');
     const volTxt = r.volRatio!==null ? r.volRatio.toFixed(1)+'×' : '—';
-    const rr1Txt = r.rr1!==null ? r.rr1.toFixed(2) : '—';
-    const hv20Txt = r.hv20!==null ? r.hv20.toFixed(0)+'%' : '—';
-    const demandTxt = r.nearestDemand!==null ? '₹'+r.nearestDemand.toFixed(2) : '—';
-    const supplyTxt = r.nearestSupply!==null ? '₹'+r.nearestSupply.toFixed(2) : '—';
 
     const tr=document.createElement('tr');
-    const onDemand  = r.nearestDemand!==null && (r.entry-r.nearestDemand)/r.entry<=0.02;
-    const nearSupply= r.nearestSupply!==null && (r.nearestSupply-r.entry)/r.entry<=0.02;
-    if(onDemand) tr.className='sw-on-demand';
-    else if(nearSupply) tr.className='sw-near-supply';
-    else if(r.extended) tr.className='sw-extended';
+    if(r.extended) tr.className='sw-extended';
     else if(r.score>=70) tr.className='sw-strong';
     else if(r.score>=50) tr.className='sw-mid';
 
@@ -2864,17 +2568,10 @@ function renderSwingTable(){
       <td>₹${t[0].price.toFixed(2)} (${t[0].estSessions}d)</td>
       <td>₹${t[1].price.toFixed(2)} (${t[1].estSessions}d)</td>
       <td>₹${t[2].price.toFixed(2)} (${t[2].estSessions}d)</td>
-      <td style="font-weight:700">${rr1Txt}</td>
-      <td>${hv20Txt}</td>
       <td>${rsTxt}</td>
       <td><span class="sw-atr ${atrCls}">${atrLbl}</span></td>
       <td>${volTxt}</td>
-      <td style="font-size:.68rem;color:#1A6B2E;font-weight:${onDemand?'800':'400'}">${demandTxt}</td>
-      <td style="font-size:.68rem;color:#B71C1C;font-weight:${nearSupply?'800':'400'}">${supplyTxt}</td>
-      <td>
-        <button class="btn" style="font-size:.65rem;padding:3px 8px;background:#1a6b2e;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;margin-bottom:2px" onclick="swAIAnalyseSingle('${r.symbol}',${i})">🤖 AI</button>
-        <button class="btn" style="font-size:.65rem;padding:3px 8px;background:#0C447C;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap" onclick='posAddFromSwing(${JSON.stringify(r).replace(/'/g,"&apos;")})'>➕ Pos</button>
-      </td>
+      <td><button class="btn" style="font-size:.65rem;padding:3px 8px;background:#1a6b2e;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap" onclick="swAIAnalyseSingle('${r.symbol}',${i})">🤖 AI</button></td>
     `;
     tbody.appendChild(tr);
   });
@@ -3488,11 +3185,10 @@ function showSection(id){
   });
   if(id==='history')renderHistory();
   if(id==='deals')loadDealsData();
+  if(id==='dhist')dhInit();
   if(id==='pulse'){mpPopulateIndexFilter();renderMarketPulse();}
   if(id==='swing'){renderSwingSetups();}
   if(id==='momentum'){renderMomentumSetups();}
-  if(id==='positions'){renderPositions();}
-  if(id==='backtest'){renderBacktestResults();}
 }
 
 // ══════════════════════════════════════════════════
@@ -3832,146 +3528,67 @@ function renderDetailStats(stock, pctChange){
 }
 
 // ── Load chart data ────────────────────────────
-async function loadChartYear(year){
-  if(chartYearCache[year]) return chartYearCache[year];
-  try{
-    const resp = await fetch(`${CHART_YEAR_URL(year)}?_t=${year}`,{cache:'force-cache'});
-    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const pkg  = await resp.json();
-    chartYearCache[year] = pkg.data || {};
-    console.log(`chart_${year}.json loaded: ${Object.keys(chartYearCache[year]).length} symbols`);
-    return chartYearCache[year];
-  }catch(e){
-    console.warn(`chart_${year}.json not available:`, e.message);
-    chartYearCache[year] = {}; // mark as attempted so we don't retry
-    return {};
-  }
-}
-
-// Build full OHLCV array for a symbol from all loaded year caches + historicalData
-function buildChartSeriesFromYears(sym, yearsNeeded){
-  const rows = []; // will dedup by date
-  const seenDates = new Set();
-
-  // 1. From year JSON files (oldest years first)
-  for(const yr of yearsNeeded.slice().sort()){
-    const ydata = chartYearCache[yr];
-    if(!ydata) continue;
-    const symRows = ydata[sym];
-    if(!symRows) continue;
-    for(const [dc, o, h, l, c, v, dp] of symRows){
-      // dc = DDMMYYYY
-      const dateStr = `${dc.slice(0,2)}-${dc.slice(2,4)}-${dc.slice(4,8)}`;
-      if(seenDates.has(dateStr)) continue;
-      seenDates.add(dateStr);
-      rows.push({
-        date: dateStr,
-        dateObj: new Date(+dc.slice(4,8), +dc.slice(2,4)-1, +dc.slice(0,2)),
-        open: o, high: h, low: l, close: c, vol: v, delPer: dp,
-        pctChg: 0, delivVol: 0,
-      });
-    }
-  }
-
-  // 2. From historicalData (recent 31 days) — fill any gaps and add today
-  const histDates = Object.keys(historicalData||{}).sort((a,b)=>{
-    const pa=a.split('-'), pb=b.split('-');
-    return new Date(+pa[2],+pa[1]-1,+pa[0]) - new Date(+pb[2],+pb[1]-1,+pb[0]);
-  });
-  for(const dateStr of histDates){
-    if(seenDates.has(dateStr)) continue;
-    const row = (historicalData[dateStr]||[]).find(r=>r.SYMBOL===sym);
-    if(row){
-      seenDates.add(dateStr);
-      const p=dateStr.split('-');
-      rows.push({
-        date: dateStr,
-        dateObj: new Date(+p[2],+p[1]-1,+p[0]),
-        open: row.OPEN, high: row.HIGH, low: row.LOW, close: row.CLOSE,
-        vol: row.TTL_TRD_QNTY, delPer: row.DELIV_PER, delivVol: row.DELIV_QTY||0,
-        pctChg: row.PREV_CLOSE>0?((row.CLOSE-row.PREV_CLOSE)/row.PREV_CLOSE)*100:0,
-      });
-    }
-  }
-
-  // Sort oldest→newest
-  rows.sort((a,b)=>a.dateObj-b.dateObj);
-  return rows;
-}
-
 async function loadChartData(sym, days){
-  // Check full cache — if we already have enough bars, just slice
-  if(chartDataFull[sym] && chartDataFull[sym].length >= days){
+  // Check full cache first
+  if(chartDataFull[sym] && chartDataFull[sym].length>=days){
     chartData = chartDataFull[sym].slice(-days);
-    redrawChart(); renderPeriodStats(chartData); return;
+    redrawChart();
+    renderPeriodStats(chartData);
+    return;
   }
 
   document.getElementById('chart-loading').style.display='block';
   document.getElementById('chart-container').style.display='none';
 
-  // Ensure recent history (31 days) is loaded
+  // If history not yet loaded, wait for it
   if(!historyLoaded && snapshotData){
-    document.getElementById('chart-loading-msg').textContent='Loading recent history…';
+    document.getElementById('chart-loading-msg').textContent='Waiting for history data…';
     await loadHistoryBackground();
   }
 
-  // Determine which year files we need
-  const curYear  = new Date().getFullYear();
-  const needYears = [];
-  if(days > 31){
-    // Work out how many years back we need
-    const today     = new Date();
-    const startDate = new Date(today); startDate.setDate(today.getDate() - days - 30);
-    for(let yr = startDate.getFullYear(); yr <= curYear; yr++){
-      needYears.push(yr);
+  // If still need Drive files (Drive fallback path only)
+  if(!snapshotData){
+    const needed = bhavFiles.slice(0, days+5);
+    const toLoad = needed.filter(f=>!historicalData[f.dateStr]);
+    let loaded=0;
+    for(const f of toLoad){
+      try{
+        document.getElementById('chart-loading-msg').textContent =
+          `Loading ${f.dateStr} (${loaded+1}/${toLoad.length})…`;
+        document.getElementById('chart-progress').style.width =
+          Math.round((loaded/Math.max(toLoad.length,1))*100)+'%';
+        historicalData[f.dateStr] = await loadBhavcopy(f);
+        loaded++;
+      }catch(e){ console.warn('Skip chart file:',f.dateStr); }
     }
   }
 
-  // Lazy-load any year files not yet in cache
-  for(let i=0; i<needYears.length; i++){
-    const yr = needYears[i];
-    if(!chartYearCache[yr]){
-      document.getElementById('chart-loading-msg').textContent =
-        `Loading ${yr} chart data… (${i+1}/${needYears.length})`;
-      document.getElementById('chart-progress').style.width =
-        Math.round(((i+1)/needYears.length)*100)+'%';
-      await loadChartYear(yr);
-    }
-  }
-
-  // Build the full series
-  let arr;
-  if(needYears.length > 0){
-    arr = buildChartSeriesFromYears(sym, needYears);
-  } else {
-    // Short period — use existing historicalData + bhavFiles (original path)
-    if(!snapshotData){
-      const needed = bhavFiles.slice(0, days+5);
-      const toLoad = needed.filter(f=>!historicalData[f.dateStr]);
-      let loaded=0;
-      for(const f of toLoad){
-        try{
-          document.getElementById('chart-loading-msg').textContent =
-            `Loading ${f.dateStr} (${loaded+1}/${toLoad.length})…`;
-          historicalData[f.dateStr] = await loadBhavcopy(f);
-          loaded++;
-        }catch(e){ console.warn('Skip chart file:',f.dateStr); }
-      }
-    }
-    const seenDays = new Set();
-    const allDays = bhavFiles.slice().reverse().filter(f=>{
-      if(seenDays.has(f.dateStr)) return false;
-      seenDays.add(f.dateStr); return true;
-    });
-    arr = [];
-    for(const f of allDays){
-      const src = f===bhavFiles[0] ? todayData : (historicalData[f.dateStr]||[]);
-      const row = src.find(r=>r.SYMBOL===sym);
-      if(row) arr.push({
-        date: f.dateStr, dateObj: f.date,
-        open: row.OPEN, high: row.HIGH, low: row.LOW, close: row.CLOSE,
-        vol: row.TTL_TRD_QNTY, delivVol: row.DELIV_QTY||0, delPer: row.DELIV_PER,
-        pctChg: row.PREV_CLOSE>0?((row.CLOSE-row.PREV_CLOSE)/row.PREV_CLOSE)*100:0,
+  // Build full OHLCV array for this symbol: oldest→newest
+  // (allDays is deduped by date as a second safety net, in case
+  // bhavFiles ever picks up a repeated date from another code path —
+  // the primary fix is in loadAllData where bhavFiles is built)
+  const seenDays = new Set();
+  const allDays = bhavFiles.slice().reverse().filter(f=>{
+    if(seenDays.has(f.dateStr)) return false;
+    seenDays.add(f.dateStr);
+    return true;
+  });
+  const arr = [];
+  for(const f of allDays){
+    const src = f===bhavFiles[0] ? todayData : (historicalData[f.dateStr]||[]);
+    const row = src.find(r=>r.SYMBOL===sym);
+    if(row){
+      arr.push({
+        date:    f.dateStr,
+        dateObj: f.date,
+        open:    row.OPEN,
+        high:    row.HIGH,
+        low:     row.LOW,
+        close:   row.CLOSE,
+        vol:     row.TTL_TRD_QNTY,
+        delivVol:row.DELIV_QTY||0,
+        delPer:  row.DELIV_PER,
+        pctChg:  row.PREV_CLOSE>0?((row.CLOSE-row.PREV_CLOSE)/row.PREV_CLOSE)*100:0,
       });
     }
   }
@@ -3983,7 +3600,8 @@ async function loadChartData(sym, days){
   document.getElementById('chart-container').style.display='block';
   document.getElementById('chart-progress').style.width='0%';
 
-  redrawChart(); renderPeriodStats(chartData);
+  redrawChart();
+  renderPeriodStats(chartData);
 }
 
 function setChartPeriod(days){
@@ -3992,15 +3610,12 @@ function setChartPeriod(days){
     b.classList.toggle('active', +b.dataset.p===days);
   });
   if(detailSymbol){
-    const cached = chartDataFull[detailSymbol];
-    if(cached && cached.length >= days){
-      // Already have enough bars — just re-slice
-      chartData = days >= 9999 ? cached : cached.slice(-days);
-      redrawChart(); renderPeriodStats(chartData);
+    // Clear cached slice for this symbol so loadChartData rebuilds from full array
+    if(chartDataFull[detailSymbol]){
+      chartData = chartDataFull[detailSymbol].slice(-days);
+      redrawChart();
+      renderPeriodStats(chartData);
     } else {
-      // Need more data — clear cache for this symbol so loadChartData
-      // will fetch the required year files
-      if(days > 31) delete chartDataFull[detailSymbol];
       loadChartData(detailSymbol, days);
     }
   }
@@ -4081,33 +3696,6 @@ function redrawChart(){
   html += `<text x="${PAD_L+2}" y="${labelY1}" font-size="8" fill="#8090A0" font-weight="700">VOL</text>`;
   const labelY2 = PAD_TOP + H_CANDLE + GAP + H_VOL + GAP + 10;
   html += `<text x="${PAD_L+2}" y="${labelY2}" font-size="8" fill="#E65100" font-weight="700">DEL%</text>`;
-
-  // ── Demand / Supply Zones ───────────────────
-  try{
-    const zOpens  = chartData.map(d=>d.open);
-    const zHighs  = highs, zLows = lows, zCloses = closes;
-    const zones = computeDemandSupplyZones(
-      chartData.map(d=>d.date), zOpens, zHighs, zLows, zCloses,
-      Math.min(n,250));
-    zones.demand.slice(0,4).forEach(z=>{
-      const yTop = scaleP(Math.min(z.ceiling,priceMax));
-      const yBot = scaleP(Math.max(z.floor,priceMin));
-      if(yBot>yTop){
-        html += `<rect x="${PAD_L}" y="${yTop}" width="${W-PAD_L-PAD_R}" height="${yBot-yTop}" fill="#1A6B2E" opacity="0.10"/>`;
-        html += `<line x1="${PAD_L}" y1="${yTop}" x2="${W-PAD_R}" y2="${yTop}" stroke="#1A6B2E" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.6"/>`;
-        html += `<text x="${PAD_L+4}" y="${yTop+10}" font-size="7.5" fill="#1A6B2E" font-weight="700">D ₹${z.ceiling.toFixed(0)} (${z.touches}T)</text>`;
-      }
-    });
-    zones.supply.slice(0,4).forEach(z=>{
-      const yTop = scaleP(Math.min(z.ceiling,priceMax));
-      const yBot = scaleP(Math.max(z.floor,priceMin));
-      if(yBot>yTop){
-        html += `<rect x="${PAD_L}" y="${yTop}" width="${W-PAD_L-PAD_R}" height="${yBot-yTop}" fill="#B71C1C" opacity="0.08"/>`;
-        html += `<line x1="${PAD_L}" y1="${yBot}" x2="${W-PAD_R}" y2="${yBot}" stroke="#B71C1C" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.6"/>`;
-        html += `<text x="${PAD_L+4}" y="${yBot-3}" font-size="7.5" fill="#B71C1C" font-weight="700">S ₹${z.floor.toFixed(0)} (${z.touches}T)</text>`;
-      }
-    });
-  }catch(e){ console.warn('Zone overlay error:',e); }
 
   // ── Candlesticks ───────────────────────────
   for(let i=0;i<n;i++){
@@ -5733,433 +5321,6 @@ function swCopyLevels(sym,entry,sl,t1,t2,qty){
   };
 })();
 
-
-// ══════════════════════════════════════════════════
-//  POSITION TRACKER (localStorage based)
-// ══════════════════════════════════════════════════
-const POS_STORAGE_KEY = 'nse_scanner_positions_v1';
-let posMode = 'REAL';
-let posEditId = null;
-
-function getPositions(){
-  try{ return JSON.parse(localStorage.getItem(POS_STORAGE_KEY)||'[]'); }
-  catch(e){ return []; }
-}
-function savePositions(arr){
-  localStorage.setItem(POS_STORAGE_KEY, JSON.stringify(arr));
-}
-
-function posSwitchMode(mode){
-  posMode = mode;
-  document.getElementById('pos-real-btn').classList.toggle('active', mode==='REAL');
-  document.getElementById('pos-paper-btn').classList.toggle('active', mode==='PAPER');
-  renderPositions();
-}
-
-function renderPositions(){
-  const all = getPositions();
-  const rows = all.filter(p=>p.mode===posMode);
-  const tbody = document.getElementById('pos-table-body');
-  tbody.innerHTML = '';
-
-  const todayMap = {};
-  if(typeof todayData!=='undefined'){
-    todayData.forEach(r=>{ todayMap[r.SYMBOL]=r; });
-  }
-
-  let openCnt=0, closedCnt=0, totalPnl=0;
-  rows.sort((a,b)=>{
-    if(a.status==='OPEN' && b.status!=='OPEN') return -1;
-    if(a.status!=='OPEN' && b.status==='OPEN') return 1;
-    return (b.entryDate||'').localeCompare(a.entryDate||'');
-  });
-
-  rows.forEach(p=>{
-    const live = todayMap[p.symbol];
-    const cmp = live ? live.CLOSE : (p.exitPrice || p.entryPrice);
-    const isOpen = p.status==='OPEN';
-    const plRs  = isOpen ? Math.round((cmp-p.entryPrice)*p.qty*100)/100 : (p.pnl||0);
-    const plPct = isOpen ? Math.round((cmp-p.entryPrice)/p.entryPrice*10000)/100 : (p.pnlPct||0);
-    const distSl = p.slPrice ? Math.round((p.slPrice-p.entryPrice)/p.entryPrice*1000)/10 : null;
-    const distT1 = p.t1Price ? Math.round((p.t1Price-p.entryPrice)/p.entryPrice*1000)/10 : null;
-
-    if(isOpen){ openCnt++; totalPnl+=plRs; } else closedCnt++;
-
-    let cls = isOpen ? 'pos-open' : 'pos-closed';
-    if(p.status==='SL_HIT') cls='pos-sl';
-    else if(!isOpen && plPct>0) cls='pos-profit';
-
-    const tr = document.createElement('tr');
-    tr.className = cls;
-    tr.innerHTML = `
-      <td class="sym" style="cursor:pointer" onclick="openDetail('${p.symbol}')">📈 ${p.symbol}</td>
-      <td style="text-align:left;font-size:.68rem">${p.sector||'—'}</td>
-      <td>${p.entryDate||'—'}</td>
-      <td>₹${p.entryPrice.toFixed(2)}</td>
-      <td>${p.qty}</td>
-      <td>${p.slPrice?'₹'+p.slPrice.toFixed(2):'—'}</td>
-      <td>${p.t1Price?'₹'+p.t1Price.toFixed(2):'—'}</td>
-      <td>${p.rr1!=null?p.rr1.toFixed(2):'—'}</td>
-      <td>${p.hv20!=null?p.hv20.toFixed(0)+'%':'—'}</td>
-      <td>₹${cmp?cmp.toFixed(2):'—'}</td>
-      <td style="color:${plRs>=0?'var(--green)':'var(--red)'};font-weight:700">₹${plRs>=0?'+':''}${plRs.toFixed(2)}</td>
-      <td style="color:${plPct>=0?'var(--green)':'var(--red)'};font-weight:700">${plPct>=0?'+':''}${plPct.toFixed(2)}%</td>
-      <td>${distSl!=null?distSl.toFixed(1)+'%':'—'}</td>
-      <td>${distT1!=null?distT1.toFixed(1)+'%':'—'}</td>
-      <td>${p.score!=null?Math.round(p.score):'—'}</td>
-      <td style="font-size:.68rem">${p.swingTrend||'—'}</td>
-      <td style="font-size:.7rem;font-weight:700">${p.status}</td>
-      <td>
-        ${isOpen?`<button class="btn" style="font-size:.62rem;padding:2px 6px;background:#1A6B2E;color:#fff;border:none;border-radius:3px;cursor:pointer" onclick="posShowCloseModal('${p.id}')">Close</button>`:''}
-        <button class="btn" style="font-size:.62rem;padding:2px 6px;background:#B71C1C;color:#fff;border:none;border-radius:3px;cursor:pointer" onclick="posDeletePosition('${p.id}')">Del</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  document.getElementById('pos-empty').style.display = rows.length ? 'none' : 'block';
-  document.getElementById('pos-summary').textContent =
-    `${posMode==='REAL'?'Real':'Paper'} — ${openCnt} open  |  ${closedCnt} closed  |  Open P&L: ₹${totalPnl>=0?'+':''}${totalPnl.toFixed(0)}`;
-  document.getElementById('pos-summary').style.color = totalPnl>=0 ? 'var(--green)' : 'var(--red)';
-}
-
-function posShowAddDialog(prefill){
-  posEditId = null;
-  const pf = prefill || {};
-  const fieldsHtml = `
-    <div style="grid-column:1/-1"><label style="font-size:.72rem;color:#6b7280">Mode</label>
-      <select id="pos-f-mode" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem">
-        <option value="REAL" ${posMode==='REAL'?'selected':''}>📊 Real</option>
-        <option value="PAPER" ${posMode==='PAPER'?'selected':''}>📝 Paper</option>
-      </select>
-    </div>
-    <div><label style="font-size:.72rem;color:#6b7280">Symbol</label>
-      <input id="pos-f-symbol" value="${pf.symbol||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
-    <div><label style="font-size:.72rem;color:#6b7280">Sector</label>
-      <input id="pos-f-sector" value="${pf.sector||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
-    <div><label style="font-size:.72rem;color:#6b7280">Entry Date</label>
-      <input id="pos-f-entrydate" value="${new Date().toLocaleDateString('en-GB').replace(/\//g,'-')}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
-    <div><label style="font-size:.72rem;color:#6b7280">Entry Price</label>
-      <input id="pos-f-entryprice" type="number" step="0.01" value="${pf.entry||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
-    <div><label style="font-size:.72rem;color:#6b7280">Qty</label>
-      <input id="pos-f-qty" type="number" value="1" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
-    <div><label style="font-size:.72rem;color:#6b7280">Stop Loss</label>
-      <input id="pos-f-sl" type="number" step="0.01" value="${pf.stopLoss||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
-    <div><label style="font-size:.72rem;color:#6b7280">T1 Target</label>
-      <input id="pos-f-t1" type="number" step="0.01" value="${pf.t1||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
-    <div><label style="font-size:.72rem;color:#6b7280">T2 Target</label>
-      <input id="pos-f-t2" type="number" step="0.01" value="${pf.t2||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
-    <div><label style="font-size:.72rem;color:#6b7280">Score</label>
-      <input id="pos-f-score" type="number" value="${pf.score||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
-    <div><label style="font-size:.72rem;color:#6b7280">Trend</label>
-      <input id="pos-f-trend" value="${pf.swingTrend||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
-    <div><label style="font-size:.72rem;color:#6b7280">HV20%</label>
-      <input id="pos-f-hv20" type="number" step="0.1" value="${pf.hv20||''}" style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:5px;font-size:.82rem;box-sizing:border-box"></div>
-  `;
-  document.getElementById('pos-modal-fields').innerHTML = fieldsHtml;
-  document.getElementById('pos-notes-inp').value = '';
-  document.getElementById('pos-modal-title').textContent = '➕ Add Position';
-  document.getElementById('pos-modal').style.display = 'flex';
-}
-
-function posCloseModal(){ document.getElementById('pos-modal').style.display='none'; }
-
-function posSavePosition(){
-  try{
-    const mode = document.getElementById('pos-f-mode').value;
-    const symbol = document.getElementById('pos-f-symbol').value.trim().toUpperCase();
-    const entryPrice = parseFloat(document.getElementById('pos-f-entryprice').value)||0;
-    if(!symbol || !entryPrice){ showToast('Symbol and Entry Price required','warning'); return; }
-    const pos = {
-      id: Date.now().toString(),
-      mode, symbol,
-      sector: document.getElementById('pos-f-sector').value.trim(),
-      entryDate: document.getElementById('pos-f-entrydate').value.trim(),
-      entryPrice, qty: parseInt(document.getElementById('pos-f-qty').value)||1,
-      slPrice: parseFloat(document.getElementById('pos-f-sl').value)||null,
-      t1Price: parseFloat(document.getElementById('pos-f-t1').value)||null,
-      t2Price: parseFloat(document.getElementById('pos-f-t2').value)||null,
-      score: parseFloat(document.getElementById('pos-f-score').value)||null,
-      swingTrend: document.getElementById('pos-f-trend').value.trim(),
-      hv20: parseFloat(document.getElementById('pos-f-hv20').value)||null,
-      notes: document.getElementById('pos-notes-inp').value.trim(),
-      status: 'OPEN', createdAt: new Date().toISOString(),
-    };
-    if(pos.t1Price && pos.slPrice && (entryPrice-pos.slPrice)>0){
-      pos.rr1 = Math.round((pos.t1Price-entryPrice)/(entryPrice-pos.slPrice)*100)/100;
-    }
-    const all = getPositions();
-    all.push(pos);
-    savePositions(all);
-    posCloseModal();
-    posSwitchMode(mode);
-    showToast(`${symbol} added to ${mode==='REAL'?'Real':'Paper'} positions`,'success');
-  }catch(e){ showToast('Error saving position: '+e.message,'warning'); }
-}
-
-function posAddFromSwing(r){
-  const t = r.targets||[];
-  posShowAddDialog({
-    symbol: r.symbol, sector: r.sector, entry: r.entry, stopLoss: r.stopLoss,
-    t1: t[0]?t[0].price:null, t2: t[1]?t[1].price:null,
-    score: r.score, swingTrend: r.swingTrend, hv20: r.hv20,
-  });
-}
-
-let posCloseTargetId = null;
-function posShowCloseModal(id){
-  posCloseTargetId = id;
-  document.getElementById('pos-exit-price').value='';
-  document.getElementById('pos-exit-date').value=new Date().toLocaleDateString('en-GB').replace(/\//g,'-');
-  document.getElementById('pos-exit-reason').value='MANUAL';
-  document.getElementById('pos-close-modal').style.display='flex';
-}
-function posCloseCloseModal(){ document.getElementById('pos-close-modal').style.display='none'; }
-
-function posConfirmClose(){
-  const xp = parseFloat(document.getElementById('pos-exit-price').value)||0;
-  if(!xp){ showToast('Enter exit price','warning'); return; }
-  const xdate = document.getElementById('pos-exit-date').value.trim();
-  const reason = document.getElementById('pos-exit-reason').value;
-  const all = getPositions();
-  const pos = all.find(p=>p.id===posCloseTargetId);
-  if(pos){
-    pos.exitPrice = xp; pos.exitDate = xdate; pos.exitReason = reason;
-    pos.pnl = Math.round((xp-pos.entryPrice)*pos.qty*100)/100;
-    pos.pnlPct = Math.round((xp-pos.entryPrice)/pos.entryPrice*10000)/100;
-    pos.status = ['T1_HIT','T2_HIT','T3_HIT','SL_HIT'].includes(reason) ? reason : 'CLOSED';
-    savePositions(all);
-  }
-  posCloseCloseModal();
-  renderPositions();
-}
-
-function posDeletePosition(id){
-  if(!confirm('Delete this position?')) return;
-  let all = getPositions();
-  all = all.filter(p=>p.id!==id);
-  savePositions(all);
-  renderPositions();
-}
-
-function posExportCSV(){
-  const rows = getPositions().filter(p=>p.mode===posMode);
-  if(!rows.length){ showToast('No positions to export','warning'); return; }
-  const headers = ['Symbol','Sector','EntryDate','EntryPrice','Qty','SL','T1','T2','RR1','HV20',
-                    'Score','Trend','Status','ExitDate','ExitPrice','PnL','PnL%','Notes'];
-  let csv = headers.join(',')+'\n';
-  rows.forEach(p=>{
-    csv += [p.symbol,p.sector,p.entryDate,p.entryPrice,p.qty,p.slPrice,p.t1Price,p.t2Price,
-            p.rr1,p.hv20,p.score,p.swingTrend,p.status,p.exitDate||'',p.exitPrice||'',
-            p.pnl||'',p.pnlPct||'',`"${(p.notes||'').replace(/"/g,'""')}"`].join(',')+'\n';
-  });
-  const blob = new Blob([csv],{type:'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `positions_${posMode}_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-}
-
-// ══════════════════════════════════════════════════
-//  BACKTEST (client-side, uses loaded history.json)
-// ══════════════════════════════════════════════════
-const BT_STORAGE_KEY = 'nse_scanner_backtest_v1';
-let btResults = [];
-
-async function runBacktest(){
-  if(!historyLoaded){
-    showToast('Loading history data first…','warning');
-    await loadHistoryBackground();
-  }
-  const sortedDates = swGetSortedHistDates();
-  if(sortedDates.length < 30){
-    document.getElementById('bt-status').textContent =
-      '⚠ Not enough history loaded (need 30+ days). Open Swing Setup first to load data.';
-    document.getElementById('bt-status').style.color = 'var(--red)';
-    return;
-  }
-
-  const minScore = parseFloat(document.getElementById('bt-minscore').value)||55;
-  const fwdWindow = parseInt(document.getElementById('bt-fwd').value)||20;
-  const hhhlOnly = document.getElementById('bt-hhhl-only').checked;
-
-  document.getElementById('bt-status').textContent = '⏳ Running backtest…';
-  document.getElementById('bt-status').style.color = 'var(--muted)';
-  document.getElementById('bt-progress').style.width = '0%';
-
-  // Need at least 25 days history + fwdWindow forward days to test a date
-  const testableDates = sortedDates.slice(25, sortedDates.length - fwdWindow);
-  if(!testableDates.length){
-    document.getElementById('bt-status').textContent =
-      '⚠ Not enough forward data — reduce forward window or load more history.';
-    document.getElementById('bt-status').style.color = 'var(--red)';
-    return;
-  }
-
-  const universe = swGetUniverse ? swGetUniverse() :
-    new Set(sortedDates.flatMap(d=>(historicalData[d]||[]).map(r=>r.SYMBOL)));
-
-  const trades = [];
-  for(let di=0; di<testableDates.length; di++){
-    const sigDate = testableDates[di];
-    if(di % 5 === 0){
-      const pct = Math.round(di/testableDates.length*100);
-      document.getElementById('bt-progress').style.width = pct+'%';
-      document.getElementById('bt-status').textContent = `⏳ Testing ${sigDate} (${di}/${testableDates.length})…`;
-      await new Promise(r=>setTimeout(r,0)); // yield to UI
-    }
-
-    const dateIdx = sortedDates.indexOf(sigDate);
-    const histSlice = sortedDates.slice(0, dateIdx+1);
-    const fwdSlice  = sortedDates.slice(dateIdx+1, dateIdx+1+fwdWindow);
-    if(!fwdSlice.length) continue;
-
-    const niftyCloses = swBuildNiftyProxyForDates ? swBuildNiftyProxyForDates(histSlice) : [];
-    const niftyTrend  = swComputeNiftyRegime(niftyCloses);
-
-    for(const sym of universe){
-      const {closes,highs,lows,opens,vols,delivs} = swBuildSeriesForSymbol(sym, histSlice);
-      if(closes.length<25) continue;
-      const res = swComputeScore(closes,highs,lows,vols,delivs,niftyCloses,opens);
-      if(res.score===null || res.score<minScore) continue;
-      if(hhhlOnly && res.swingTrend!=='HH+HL') continue;
-
-      const entry=res.entry, sl=res.stopLoss;
-      const t1=res.targets[0]?.price, t2=res.targets[1]?.price, t3=res.targets[2]?.price;
-
-      let outcome='OPEN', exitPrice=entry, sessions=fwdSlice.length, mae=0;
-      for(let si=0; si<fwdSlice.length; si++){
-        const fd = fwdSlice[si];
-        const frow = (historicalData[fd]||[]).find(r=>r.SYMBOL===sym);
-        if(!frow) continue;
-        const fmae = (frow.LOW-entry)/entry*100;
-        if(fmae<mae) mae=fmae;
-        if(sl && frow.LOW<=sl){ outcome='SL_HIT'; exitPrice=sl; sessions=si+1; break; }
-        if(t3 && frow.CLOSE>=t3){ outcome='T3_HIT'; exitPrice=t3; sessions=si+1; break; }
-        if(t2 && frow.CLOSE>=t2){ outcome='T2_HIT'; exitPrice=t2; sessions=si+1; break; }
-        if(t1 && frow.CLOSE>=t1){ outcome='T1_HIT'; exitPrice=t1; sessions=si+1; break; }
-      }
-      const pnlPct = entry ? Math.round((exitPrice-entry)/entry*10000)/100 : 0;
-
-      trades.push({
-        sym, sigDate, score:res.score, swingTrend:res.swingTrend,
-        niftyTrend, entry, sl, t1, rr1:res.rr1, hv20:res.hv20,
-        outcome, exitPrice, sessions, pnlPct, maxAdverse:Math.round(mae*100)/100,
-      });
-    }
-  }
-
-  btResults = trades;
-  localStorage.setItem(BT_STORAGE_KEY, JSON.stringify({
-    runDate:new Date().toISOString(), params:{minScore,fwdWindow,hhhlOnly}, trades
-  }));
-  document.getElementById('bt-progress').style.width='100%';
-  renderBacktestResults();
-}
-
-function renderBacktestResults(){
-  if(!btResults.length){
-    const saved = localStorage.getItem(BT_STORAGE_KEY);
-    if(saved){
-      try{ btResults = JSON.parse(saved).trades || []; }catch(e){}
-    }
-  }
-  const tbody = document.getElementById('bt-table-body');
-  tbody.innerHTML='';
-  document.getElementById('bt-empty').style.display = btResults.length ? 'none' : 'block';
-  if(!btResults.length) return;
-
-  const n=btResults.length;
-  const t1h=btResults.filter(t=>t.outcome==='T1_HIT').length;
-  const t2h=btResults.filter(t=>t.outcome==='T2_HIT').length;
-  const t3h=btResults.filter(t=>t.outcome==='T3_HIT').length;
-  const slh=btResults.filter(t=>t.outcome==='SL_HIT').length;
-  const ope=btResults.filter(t=>t.outcome==='OPEN').length;
-  const wr = n ? Math.round((t1h+t2h+t3h)/n*1000)/10 : 0;
-  const avgPnl = n ? Math.round(btResults.reduce((s,t)=>s+t.pnlPct,0)/n*100)/100 : 0;
-  const avgT1Sess = t1h ? Math.round(btResults.filter(t=>t.outcome==='T1_HIT')
-                        .reduce((s,t)=>s+t.sessions,0)/t1h*10)/10 : 0;
-
-  const summaryEl = document.getElementById('bt-summary');
-  summaryEl.style.display='block';
-  summaryEl.style.color = avgPnl>=0 ? 'var(--green)' : 'var(--red)';
-  summaryEl.innerHTML =
-    `📊 ${n} setups  |  ✅ T1:${t1h}(${Math.round(t1h/n*100)}%) T2:${t2h} T3:${t3h}  |  `+
-    `❌ SL:${slh}(${Math.round(slh/n*100)}%)  |  Open:${ope}  |  `+
-    `Win rate: ${wr}%  |  Avg P&L: ${avgPnl>=0?'+':''}${avgPnl}%  |  Avg sessions to T1: ${avgT1Sess}d`;
-
-  [...btResults].sort((a,b)=>b.pnlPct-a.pnlPct).forEach(t=>{
-    const tr = document.createElement('tr');
-    const clsMap = {T1_HIT:'bt-t1',T2_HIT:'bt-t2',T3_HIT:'bt-t3',SL_HIT:'bt-sl',OPEN:'bt-open'};
-    tr.className = clsMap[t.outcome]||'';
-    tr.innerHTML = `
-      <td class="sym">${t.sym}</td>
-      <td style="text-align:left;font-size:.68rem">—</td>
-      <td>${t.sigDate}</td>
-      <td>${Math.round(t.score)}</td>
-      <td style="font-size:.68rem">${t.swingTrend}</td>
-      <td style="font-size:.68rem">${t.niftyTrend}</td>
-      <td>₹${t.entry.toFixed(2)}</td>
-      <td>${t.sl?'₹'+t.sl.toFixed(2):'—'}</td>
-      <td>${t.t1?'₹'+t.t1.toFixed(2):'—'}</td>
-      <td>${t.rr1!=null?t.rr1.toFixed(2):'—'}</td>
-      <td>${t.hv20!=null?t.hv20.toFixed(0)+'%':'—'}</td>
-      <td style="font-weight:700">${t.outcome}</td>
-      <td>₹${t.exitPrice.toFixed(2)}</td>
-      <td>${t.sessions}</td>
-      <td style="color:${t.pnlPct>=0?'var(--green)':'var(--red)'};font-weight:700">${t.pnlPct>=0?'+':''}${t.pnlPct}%</td>
-      <td>${t.maxAdverse}%</td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  document.getElementById('bt-status').textContent =
-    `✓ Backtest complete — ${n} setups tested.`;
-  document.getElementById('bt-status').style.color = 'var(--green)';
-}
-
-function btExportCSV(){
-  if(!btResults.length){ showToast('Run a backtest first','warning'); return; }
-  const headers=['Symbol','SignalDate','Score','SwingTrend','NiftyTrend','Entry','SL','T1',
-                 'RR1','HV20','Outcome','ExitPrice','Sessions','PnL%','MaxAdverse%'];
-  let csv = headers.join(',')+'\n';
-  btResults.forEach(t=>{
-    csv += [t.sym,t.sigDate,t.score,t.swingTrend,t.niftyTrend,t.entry,t.sl,t.t1,
-            t.rr1,t.hv20,t.outcome,t.exitPrice,t.sessions,t.pnlPct,t.maxAdverse].join(',')+'\n';
-  });
-  const blob = new Blob([csv],{type:'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `backtest_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-}
-
-// Helper: get universe of symbols for backtest (reuse swing scan universe logic)
-function swGetUniverse(){
-  const idxOnly = document.getElementById('sw-idx-only')?.checked ?? true;
-  if(idxOnly){
-    const set = new Set();
-    Object.values(indexMap||{}).forEach(arr=>arr.forEach(s=>set.add(s)));
-    return set;
-  }
-  const set = new Set();
-  Object.values(historicalData||{}).forEach(rows=>rows.forEach(r=>set.add(r.SYMBOL)));
-  return set;
-}
-
-// Helper: build Nifty proxy from arbitrary date slice (for backtest)
-function swBuildNiftyProxyForDates(dateSlice){
-  if(!niftyConstituents || !niftyConstituents.size) return [];
-  const proxy = [];
-  dateSlice.forEach(d=>{
-    const rows = historicalData[d]||[];
-    const vals = rows.filter(r=>niftyConstituents.has(r.SYMBOL)).map(r=>r.CLOSE).filter(v=>v>0);
-    if(vals.length) proxy.push(vals.reduce((a,b)=>a+b,0)/vals.length);
-  });
-  return proxy;
-}
-
-
 // ══════════════════════════════════════════════════
 //  INIT CALLS
 // ══════════════════════════════════════════════════
@@ -6170,6 +5331,200 @@ document.addEventListener('DOMContentLoaded',()=>{
   swUpdateKeyStatus();
 });
 
+</script>
+<script>
+/*DH_CORE_START*/
+// Pure functions (no DOM). Mirrors deals_history.py exactly:
+//  value(Rs L)=SUM(qty*px)/1e5 ; window = date > latest - N calendar months ; round-trip if |B-S|/(B+S)*100 < churn
+// Row r = [dateIdx, symIdx, clientIdx, type(0 bulk/1 block), side(0 buy/1 sell), qty, px]
+function dhMonthsBack(iso,n){
+  let y=+iso.slice(0,4), m=+iso.slice(5,7)-n; const d=+iso.slice(8,10);
+  while(m<=0){m+=12;y--;}
+  const dim=new Date(Date.UTC(y,m,0)).getUTCDate();
+  return y+'-'+String(m).padStart(2,'0')+'-'+String(Math.min(d,dim)).padStart(2,'0');
+}
+function dhR2(x){return Math.round((x+(x>=0?1e-9:-1e-9))*100)/100;}
+function dhL(v){return dhR2(v/1e5);}
+function dhCmp(a,b){return a<b?-1:a>b?1:0;}
+function dhWindow(D,months,typ){            // typ: null | 0 | 1
+  let rows=D.r; if(typ!==null) rows=rows.filter(r=>r[3]===typ);
+  if(!rows.length) return {rows:[],start:null,latest:null};
+  let mx=-1; for(const r of rows) if(r[0]>mx) mx=r[0];
+  const latest=D.dates[mx], start=dhMonthsBack(latest,months);
+  const cut=D.dates.findIndex(x=>x>start);
+  return {rows:rows.filter(r=>r[0]>=cut), start, latest};
+}
+function dhNewAcc(){return {bq:0,bv:0,sq:0,sv:0,n:0,nb:0,nk:0,days:new Set(),parties:new Set(),syms:new Set(),first:1e9,last:-1};}
+function dhAdd(a,r){
+  const v=r[5]*r[6];
+  if(r[4]===0){a.bq+=r[5];a.bv+=v;}else{a.sq+=r[5];a.sv+=v;}
+  a.n++; if(r[3]===0)a.nb++;else a.nk++;
+  a.days.add(r[0]);a.parties.add(r[2]);a.syms.add(r[1]);
+  if(r[0]<a.first)a.first=r[0]; if(r[0]>a.last)a.last=r[0];
+}
+function dhGroup(rows,kf){const m=new Map();for(const r of rows){const k=kf(r);let a=m.get(k);if(!a){a=dhNewAcc();m.set(k,a);}dhAdd(a,r);}return m;}
+function dhNet(a){return a.bv-a.sv;}
+function dhChurn(a,churn){const g=a.bv+a.sv;return g?Math.abs(a.bv-a.sv)/g*100<churn:false;}
+function dhTotals(rows){const a=dhNewAcc();for(const r of rows)dhAdd(a,r);
+  return {deals:a.n,buy_qty:a.bq,buy_l:dhL(a.bv),sell_qty:a.sq,sell_l:dhL(a.sv),net_l:dhL(a.bv-a.sv),stocks:a.syms.size,parties:a.parties.size,days:a.days.size};}
+const DH_PK=65536;
+function dhReports(D,rows,o){
+  const churn=o.churn, top=o.top, ms=o.minSyms, md=o.minDays, dt=i=>D.dates[i];
+  const symbol=[...dhGroup(rows,r=>r[1]).entries()].map(([si,a])=>({symbol:D.syms[si],name:D.names[si]||'',deals:a.n,bulk:a.nb,block:a.nk,
+    buy_qty:a.bq,buy_l:dhL(a.bv),sell_qty:a.sq,sell_l:dhL(a.sv),net_qty:a.bq-a.sq,net_l:dhL(a.bv-a.sv),parties:a.parties.size,days:a.days.size,last:dt(a.last),_si:si}));
+  symbol.sort((x,y)=>dhCmp(-Math.abs(x.net_l),-Math.abs(y.net_l))||dhCmp(x.symbol,y.symbol));
+  const party=[...dhGroup(rows,r=>r[2]).entries()].map(([ci,a])=>({party:D.clients[ci],deals:a.n,stocks:a.syms.size,days:a.days.size,
+    buy_qty:a.bq,buy_l:dhL(a.bv),sell_qty:a.sq,sell_l:dhL(a.sv),net_qty:a.bq-a.sq,net_l:dhL(a.bv-a.sv),gross_l:dhL(a.bv+a.sv),last:dt(a.last),_ci:ci}));
+  party.sort((x,y)=>dhCmp(-x.gross_l,-y.gross_l)||dhCmp(x.party,y.party));
+  const pairs=dhGroup(rows,r=>r[2]*DH_PK+r[1]);
+  const acc=[],dist=[],rep=[],per=new Map();
+  for(const [k,a] of pairs){
+    const ci=Math.floor(k/DH_PK), si=k%DH_PK, net=dhNet(a);
+    if(dhChurn(a,churn)||net===0) continue;
+    const row={party:D.clients[ci],symbol:D.syms[si],name:D.names[si]||'',buy_qty:a.bq,buy_l:dhL(a.bv),sell_qty:a.sq,sell_l:dhL(a.sv),
+      net_qty:a.bq-a.sq,net_l:dhL(net),days:a.days.size,first:dt(a.first),last:dt(a.last),_ci:ci,_si:si};
+    (net>0?acc:dist).push(row);
+    let p=per.get(ci); if(!p){p={B:[],S:[]};per.set(ci,p);} p[net>0?'B':'S'].push([si,a]);
+    if(a.days.size>=md) rep.push({kind:'REPEAT-DAYS',party:D.clients[ci],direction:net>0?'BUY':'SELL',stocks:1,days:a.days.size,detail:D.syms[si],net_l:dhL(net),_ci:ci});
+  }
+  acc.sort((x,y)=>dhCmp(-x.net_l,-y.net_l)||dhCmp(x.party,y.party)||dhCmp(x.symbol,y.symbol));
+  dist.sort((x,y)=>dhCmp(x.net_l,y.net_l)||dhCmp(x.party,y.party)||dhCmp(x.symbol,y.symbol));
+  for(const [ci,p] of per){
+    for(const [side,label] of [['B','BUY'],['S','SELL']]){
+      const lst=p[side]; if(lst.length<ms) continue;
+      lst.sort((u,v)=>Math.abs(dhNet(v[1]))-Math.abs(dhNet(u[1])));
+      let tot=0; const days=new Set(); for(const [,a] of lst){tot+=dhNet(a);a.days.forEach(d=>days.add(d));}
+      rep.push({kind:'MULTI-STOCK',party:D.clients[ci],direction:label,stocks:lst.length,days:days.size,
+        detail:lst.slice(0,3).map(t=>D.syms[t[0]]).join(', ')+(lst.length>3?' …':''),net_l:dhL(tot),_ci:ci});
+    }
+  }
+  rep.sort((x,y)=>((x.kind!=='MULTI-STOCK')-(y.kind!=='MULTI-STOCK'))||(y.stocks-x.stocks)||(y.days-x.days)||dhCmp(x.party,y.party));
+  return {symbol,party,accdist:[...acc.slice(0,top).map(r=>({side:'ACCUMULATE',...r})),...dist.slice(0,top).map(r=>({side:'DISTRIBUTE',...r}))],repeat:rep};
+}
+/*DH_CORE_END*/
+
+// ── UI (DOM) ─────────────────────────────────────────────────────────────
+const DH_URL = `${GITHUB_PAGES_BASE}/deals_hist.json`;
+const dh = {data:null, months:3, typ:null, view:'symbol', q:'', sort:{}, win:null, rep:null, params:{churn:10,top:25,minSyms:3,minDays:3}, drill:null};
+const DH_TITLES = {symbol:'Symbol-wise', party:'Party-wise', accdist:'Accumulators / Distributors', repeat:'Repeat Parties'};
+const DH_COLS = {
+  symbol:[['symbol','Symbol','t'],['name','Company','t'],['deals','Deals','n'],['parties','Parties','n'],['buy_qty','Buy Qty','q'],['buy_l','Buy ₹L','l'],['sell_qty','Sell Qty','q'],['sell_l','Sell ₹L','l'],['net_qty','Net Qty','q'],['net_l','Net ₹L','l'],['days','Days','n'],['last','Last','t']],
+  party:[['party','Party / Client','t'],['stocks','Stocks','n'],['deals','Deals','n'],['days','Days','n'],['buy_l','Buy ₹L','l'],['sell_l','Sell ₹L','l'],['net_l','Net ₹L','l'],['gross_l','Gross ₹L','l'],['last','Last','t']],
+  accdist:[['party','Party','t'],['side','Side','t'],['symbol','Symbol','t'],['buy_qty','Buy Qty','q'],['buy_l','Buy ₹L','l'],['sell_l','Sell ₹L','l'],['net_qty','Net Qty','q'],['net_l','Net ₹L','l'],['days','Days','n'],['first','First','t'],['last','Last','t']],
+  repeat:[['party','Party','t'],['kind','Alert','t'],['direction','Dir','t'],['stocks','Stocks','n'],['days','Days','n'],['detail','Stocks (top by value)','t'],['net_l','Net ₹L','l']]
+};
+const dhEsc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dhInr = (n,d=0) => Number(n).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
+const dhRs  = n => (n<0?'-':'')+'₹'+dhInr(Math.abs(n),2)+'L';
+const dhFmt = (v,k) => k==='l'?dhInr(v,2):(k==='q'||k==='n')?dhInr(v):dhEsc(v);
+const dhDate = iso => iso?iso.slice(8,10)+'-'+iso.slice(5,7)+'-'+iso.slice(0,4):'—';
+
+function dhBuildChips(){
+  document.getElementById('dh-periods').innerHTML=[1,2,3,6,9,12].map(m=>`<button class="dh-chip${m===dh.months?' on':''}" onclick="dhSetMonths(${m})">${m}M</button>`).join('');
+  document.getElementById('dh-types').innerHTML=[[null,'Both'],[0,'Bulk'],[1,'Block']].map(([v,t])=>`<button class="dh-chip${v===dh.typ?' on':''}" onclick="dhSetType(${v})">${t}</button>`).join('');
+  document.getElementById('dh-tabs').innerHTML=Object.keys(DH_TITLES).map(k=>`<button class="dh-tab${k===dh.view?' on':''}" onclick="dhSetView('${k}')">${DH_TITLES[k]}</button>`).join('');
+}
+function dhInit(){ dhBuildChips(); if(!dh.data) dhLoad(false); else dhRender(); }
+async function dhLoad(force){
+  const empty=document.getElementById('dh-empty'); empty.style.display='block'; empty.textContent='Loading deals history…';
+  document.getElementById('dh-table').style.display='none';
+  try{
+    const resp=await fetch(`${DH_URL}?_t=${Date.now()}`,{cache:'no-store'});
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const D=await resp.json();
+    if(!D||!D.r||!D.dates) throw new Error('unexpected file format');
+    dh.data=D;
+    const p=D.params||{};
+    dh.params.churn=p.churn??10;
+    const fill=(id,v)=>{const s=document.getElementById(id);s.innerHTML=[2,3,4,5,6,8,10].map(n=>`<option${n===v?' selected':''}>${n}</option>`).join('');};
+    dh.params.minSyms=p.min_syms??3; dh.params.minDays=p.min_days??3;
+    fill('dh-ms',dh.params.minSyms); fill('dh-md',dh.params.minDays);
+    document.getElementById('dh-meta').textContent=`${dhDate(D.from)} → ${dhDate(D.to)} • ${dhInr(D.count)} rows • pushed ${D.generated}`;
+    dhBuildChips(); dhCompute();
+  }catch(e){
+    empty.innerHTML=`⚠ Could not load <b>deals_hist.json</b> (${dhEsc(e.message)}).<br><small>Desktop app → Bulk/Block Deals → 📚 Deals History → Export JSON &amp; Push GitHub.</small>`;
+  }
+}
+function dhCompute(){
+  const D=dh.data; if(!D) return;
+  dh.params.top=+document.getElementById('dh-topn').value||25;
+  dh.params.minSyms=+document.getElementById('dh-ms').value||3;
+  dh.params.minDays=+document.getElementById('dh-md').value||3;
+  dh.win=dhWindow(D,dh.months,dh.typ);
+  dh.rep=dhReports(D,dh.win.rows,dh.params);
+  dh.drill=null; document.getElementById('dh-drill').style.display='none';
+  dhRender();
+}
+function dhSetMonths(m){dh.months=m;dhBuildChips();dhCompute();}
+function dhSetType(t){dh.typ=t;dhBuildChips();dhCompute();}
+function dhSetView(v){dh.view=v;dhBuildChips();dhRender();}
+function dhParams(){dhCompute();}
+function dhSearch(){dh.q=document.getElementById('dh-q').value.trim().toUpperCase();dhRender();}
+function dhSort(col){const s=dh.sort[dh.view];dh.sort[dh.view]=(s&&s.col===col)?{col,rev:!s.rev}:{col,rev:true};dhRender();}
+function dhRows(){
+  let rows=(dh.rep&&dh.rep[dh.view])||[];
+  if(dh.q) rows=rows.filter(r=>Object.values(r).some(v=>typeof v==='string'&&v.toUpperCase().includes(dh.q)));
+  const s=dh.sort[dh.view];
+  if(s) rows=[...rows].sort((a,b)=>{const x=a[s.col],y=b[s.col];return (s.rev?-1:1)*(x<y?-1:x>y?1:0);});
+  return rows;
+}
+function dhRender(){
+  const D=dh.data; if(!D||!dh.win) return;
+  const w=dh.win, empty=document.getElementById('dh-empty'), tbl=document.getElementById('dh-table');
+  document.getElementById('dh-title').textContent=`${DH_TITLES[dh.view]} • last ${dh.months}M`;
+  if(!w.rows.length){document.getElementById('dh-sum').innerHTML='';empty.style.display='block';empty.textContent='No deals in this window.';tbl.style.display='none';return;}
+  const t=dhTotals(w.rows), cl=n=>n>0?'pos':n<0?'neg':'';
+  document.getElementById('dh-sum').innerHTML=[
+    ['Deals',dhInr(t.deals),''],['Stocks / Parties',dhInr(t.stocks)+' / '+dhInr(t.parties),''],
+    ['Buy',dhRs(t.buy_l),''],['Sell',dhRs(t.sell_l),''],['Net (B−S)',dhRs(t.net_l),cl(t.net_l)],
+    ['Window',dhDate(w.start)+' (excl.) →',''],['Latest',dhDate(w.latest),''],['Trading days',t.days,'']
+  ].map(([l,v,c])=>`<div class="dh-card"><div class="l">${l}</div><div class="v ${c}">${v}</div></div>`).join('');
+  const cols=DH_COLS[dh.view], rows=dhRows(), s=dh.sort[dh.view];
+  if(!rows.length){empty.style.display='block';empty.textContent=dh.view==='repeat'?'No repeat-party alerts for these settings.':'No matching rows.';tbl.style.display='none';return;}
+  empty.style.display='none'; tbl.style.display='table';
+  const head='<thead><tr>'+cols.map(([k,h,kind])=>`<th class="${kind==='t'?'':'n'}" onclick="dhSort('${k}')">${h}${s&&s.col===k?(s.rev?' ▼':' ▲'):''}</th>`).join('')+'</tr></thead>';
+  const body='<tbody>'+rows.slice(0,1500).map((r,i)=>{
+    const cls=(r.side==='ACCUMULATE'||r.direction==='BUY')?'b':(r.side==='DISTRIBUTE'||r.direction==='SELL')?'s':'';
+    const tds=cols.map(([k,,kind])=>{const v=r[k];const c=(k==='net_l'||k==='net_qty')?(v>0?' dh-pos':v<0?' dh-neg':''):'';return `<td class="${kind==='t'?'':'n'}${c}">${dhFmt(v,kind)}</td>`;}).join('');
+    return `<tr class="${cls}" onclick="dhDrillRow(${i})">${tds}</tr>`;}).join('')+'</tbody>';
+  tbl.innerHTML=head+body; dh._shown=rows.slice(0,1500);
+  document.getElementById('dh-note').innerHTML=
+    `${rows.length>1500?'Showing first 1,500 rows. ':''}Value = Σ(Qty × Price) in ₹ Lakh. Window = deals after (latest date − ${dh.months} month${dh.months>1?'s':''}). `+
+    `<b>Round-trip</b> (|Buy−Sell| &lt; ${dh.params.churn}% of Buy+Sell for a party in a stock) is excluded from Accumulators, Distributors and Repeat alerts. `+
+    `Bulk deal = a day’s total traded quantity in a scrip above 0.5% of the company’s listed equity shares (SEBI/NSE). Source: NSE; informational only, not investment advice. Tap a row for trades.`;
+}
+function dhDrillRow(i){
+  const r=dh._shown[i]; if(!r) return;
+  if(dh.view==='symbol') dhDrill('sym',r._si);
+  else if(dh.view==='party'||dh.view==='repeat') dhDrill('cl',r._ci);
+  else dhDrill('pair',r._ci,r._si);
+}
+function dhDrill(kind,a,b){
+  const D=dh.data, rows=dh.win.rows;
+  let sub,title,groupKey,label;
+  if(kind==='sym'){sub=rows.filter(r=>r[1]===a);title=`${D.syms[a]} — ${D.names[a]||''}`;groupKey=r=>r[2];label=k=>D.clients[k];}
+  else if(kind==='cl'){sub=rows.filter(r=>r[2]===a);title=D.clients[a];groupKey=r=>r[1];label=k=>D.syms[k];}
+  else{sub=rows.filter(r=>r[2]===a&&r[1]===b);title=`${D.clients[a]} × ${D.syms[b]}`;groupKey=null;}
+  const t=dhTotals(sub); let html=`<div class="panel-hdr"><span>${dhEsc(title)}</span><span><button class="dh-btn" onclick="document.getElementById('dh-drill').style.display='none'">✕ Close</button></span></div>`;
+  html+=`<div class="dh-note" style="border-top:0">Deals ${dhInr(t.deals)} • Buy ${dhRs(t.buy_l)} • Sell ${dhRs(t.sell_l)} • Net ${dhRs(t.net_l)} • Net qty ${dhInr(t.buy_qty-t.sell_qty)}</div>`;
+  if(groupKey){
+    const g=[...dhGroup(sub,groupKey).entries()].map(([k,x])=>({n:label(k),bq:x.bq,bl:dhL(x.bv),sl:dhL(x.sv),nl:dhL(x.bv-x.sv),nq:x.bq-x.sq,d:x.days.size,rt:dhChurn(x,dh.params.churn)}))
+      .sort((p,q)=>Math.abs(q.nl)-Math.abs(p.nl)||dhCmp(p.n,q.n));
+    html+=`<div style="overflow-x:auto;max-height:40vh"><table class="dh-t"><thead><tr><th>${kind==='sym'?'Party':'Stock'}</th><th class="n">Buy ₹L</th><th class="n">Sell ₹L</th><th class="n">Net ₹L</th><th class="n">Net Qty</th><th class="n">Days</th><th>Round-trip</th></tr></thead><tbody>`+
+      g.map(x=>`<tr class="${x.nl>0?'b':x.nl<0?'s':''}"><td>${dhEsc(x.n)}</td><td class="n">${dhInr(x.bl,2)}</td><td class="n">${dhInr(x.sl,2)}</td><td class="n">${dhInr(x.nl,2)}</td><td class="n">${dhInr(x.nq)}</td><td class="n">${x.d}</td><td>${x.rt?'Yes':'—'}</td></tr>`).join('')+`</tbody></table></div>`;
+  }
+  const tr=[...sub].sort((p,q)=>q[0]-p[0]).slice(0,300);
+  html+=`<div class="panel-hdr" style="font-size:.74rem">Trades (latest ${tr.length} of ${sub.length})</div><div style="overflow-x:auto;max-height:40vh"><table class="dh-t"><thead><tr><th>Date</th><th>Type</th>${kind==='sym'?'<th>Party</th>':kind==='cl'?'<th>Stock</th>':''}<th>B/S</th><th class="n">Qty</th><th class="n">Price ₹</th><th class="n">Value ₹L</th></tr></thead><tbody>`+
+    tr.map(r=>`<tr class="${r[4]===0?'b':'s'}"><td>${dhDate(D.dates[r[0]])}</td><td>${r[3]===0?'Bulk':'Block'}</td>${kind==='sym'?`<td>${dhEsc(D.clients[r[2]])}</td>`:kind==='cl'?`<td>${dhEsc(D.syms[r[1]])}</td>`:''}<td>${r[4]===0?'BUY':'SELL'}</td><td class="n">${dhInr(r[5])}</td><td class="n">${dhInr(r[6],2)}</td><td class="n">${dhInr(dhL(r[5]*r[6]),2)}</td></tr>`).join('')+`</tbody></table></div>`;
+  const el=document.getElementById('dh-drill'); el.innerHTML=html; el.style.display='block'; el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function dhExportCsv(){
+  const cols=DH_COLS[dh.view], rows=dhRows(); if(!rows.length) return;
+  const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const csv='\ufeff'+[cols.map(c=>q(c[1])).join(',')].concat(rows.map(r=>cols.map(c=>q(r[c[0]])).join(','))).join('\r\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=`deals_${dh.view}_${dh.months}m.csv`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
 </script>
 </body>
 </html>
