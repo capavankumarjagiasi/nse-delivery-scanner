@@ -5345,6 +5345,7 @@ function dhMonthsBack(iso,n){
 }
 function dhR2(x){return Math.round((x+(x>=0?1e-9:-1e-9))*100)/100;}
 function dhL(v){return dhR2(v/1e5);}
+function dhRate(v,q){return q?dhR2(v/q):0;}
 function dhCmp(a,b){return a<b?-1:a>b?1:0;}
 function dhWindow(D,months,typ){            // typ: null | 0 | 1
   let rows=D.r; if(typ!==null) rows=rows.filter(r=>r[3]===typ);
@@ -5371,17 +5372,18 @@ const DH_PK=65536;
 function dhReports(D,rows,o){
   const churn=o.churn, top=o.top, ms=o.minSyms, md=o.minDays, dt=i=>D.dates[i];
   const symbol=[...dhGroup(rows,r=>r[1]).entries()].map(([si,a])=>({symbol:D.syms[si],name:D.names[si]||'',deals:a.n,bulk:a.nb,block:a.nk,
-    buy_qty:a.bq,buy_l:dhL(a.bv),sell_qty:a.sq,sell_l:dhL(a.sv),net_qty:a.bq-a.sq,net_l:dhL(a.bv-a.sv),parties:a.parties.size,days:a.days.size,last:dt(a.last),_si:si}));
+    buy_qty:a.bq,buy_rate:dhRate(a.bv,a.bq),buy_l:dhL(a.bv),sell_qty:a.sq,sell_rate:dhRate(a.sv,a.sq),sell_l:dhL(a.sv),net_qty:a.bq-a.sq,net_l:dhL(a.bv-a.sv),parties:a.parties.size,days:a.days.size,last:dt(a.last),_si:si}));
   symbol.sort((x,y)=>dhCmp(-Math.abs(x.net_l),-Math.abs(y.net_l))||dhCmp(x.symbol,y.symbol));
   const party=[...dhGroup(rows,r=>r[2]).entries()].map(([ci,a])=>({party:D.clients[ci],deals:a.n,stocks:a.syms.size,days:a.days.size,
-    buy_qty:a.bq,buy_l:dhL(a.bv),sell_qty:a.sq,sell_l:dhL(a.sv),net_qty:a.bq-a.sq,net_l:dhL(a.bv-a.sv),gross_l:dhL(a.bv+a.sv),last:dt(a.last),_ci:ci}));
+    buy_qty:a.bq,buy_rate:dhRate(a.bv,a.bq),buy_l:dhL(a.bv),sell_qty:a.sq,sell_rate:dhRate(a.sv,a.sq),sell_l:dhL(a.sv),net_qty:a.bq-a.sq,net_l:dhL(a.bv-a.sv),gross_l:dhL(a.bv+a.sv),last:dt(a.last),_ci:ci}));
   party.sort((x,y)=>dhCmp(-x.gross_l,-y.gross_l)||dhCmp(x.party,y.party));
   const pairs=dhGroup(rows,r=>r[2]*DH_PK+r[1]);
   const acc=[],dist=[],rep=[],per=new Map();
   for(const [k,a] of pairs){
     const ci=Math.floor(k/DH_PK), si=k%DH_PK, net=dhNet(a);
     if(dhChurn(a,churn)||net===0) continue;
-    const row={party:D.clients[ci],symbol:D.syms[si],name:D.names[si]||'',buy_qty:a.bq,buy_l:dhL(a.bv),sell_qty:a.sq,sell_l:dhL(a.sv),
+    const row={party:D.clients[ci],symbol:D.syms[si],name:D.names[si]||'',buy_qty:a.bq,buy_rate:dhRate(a.bv,a.bq),buy_l:dhL(a.bv),
+      sell_qty:a.sq,sell_rate:dhRate(a.sv,a.sq),sell_l:dhL(a.sv),
       net_qty:a.bq-a.sq,net_l:dhL(net),days:a.days.size,first:dt(a.first),last:dt(a.last),_ci:ci,_si:si};
     (net>0?acc:dist).push(row);
     let p=per.get(ci); if(!p){p={B:[],S:[]};per.set(ci,p);} p[net>0?'B':'S'].push([si,a]);
@@ -5408,9 +5410,9 @@ const DH_URL = `${GITHUB_PAGES_BASE}/deals_hist.json`;
 const dh = {data:null, months:3, typ:null, view:'symbol', q:'', sort:{}, win:null, rep:null, params:{churn:10,top:25,minSyms:3,minDays:3}, drill:null};
 const DH_TITLES = {symbol:'Symbol-wise', party:'Party-wise', accdist:'Accumulators / Distributors', repeat:'Repeat Parties'};
 const DH_COLS = {
-  symbol:[['symbol','Symbol','t'],['name','Company','t'],['deals','Deals','n'],['parties','Parties','n'],['buy_qty','Buy Qty','q'],['buy_l','Buy ₹L','l'],['sell_qty','Sell Qty','q'],['sell_l','Sell ₹L','l'],['net_qty','Net Qty','q'],['net_l','Net ₹L','l'],['days','Days','n'],['last','Last','t']],
-  party:[['party','Party / Client','t'],['stocks','Stocks','n'],['deals','Deals','n'],['days','Days','n'],['buy_l','Buy ₹L','l'],['sell_l','Sell ₹L','l'],['net_l','Net ₹L','l'],['gross_l','Gross ₹L','l'],['last','Last','t']],
-  accdist:[['party','Party','t'],['side','Side','t'],['symbol','Symbol','t'],['buy_qty','Buy Qty','q'],['buy_l','Buy ₹L','l'],['sell_l','Sell ₹L','l'],['net_qty','Net Qty','q'],['net_l','Net ₹L','l'],['days','Days','n'],['first','First','t'],['last','Last','t']],
+  symbol:[['symbol','Symbol','t'],['name','Company','t'],['deals','Deals','n'],['parties','Parties','n'],['buy_qty','Buy Qty','q'],['buy_rate','Buy Rate ₹','l'],['buy_l','Buy ₹L','l'],['sell_qty','Sell Qty','q'],['sell_rate','Sell Rate ₹','l'],['sell_l','Sell ₹L','l'],['net_qty','Net Qty','q'],['net_l','Net ₹L','l'],['days','Days','n'],['last','Last','t']],
+  party:[['party','Party / Client','t'],['stocks','Stocks','n'],['deals','Deals','n'],['days','Days','n'],['buy_qty','Buy Qty','q'],['buy_rate','Buy Rate ₹','l'],['buy_l','Buy ₹L','l'],['sell_qty','Sell Qty','q'],['sell_rate','Sell Rate ₹','l'],['sell_l','Sell ₹L','l'],['net_l','Net ₹L','l'],['gross_l','Gross ₹L','l'],['last','Last','t']],
+  accdist:[['party','Party','t'],['side','Side','t'],['symbol','Symbol','t'],['buy_qty','Buy Qty','q'],['buy_rate','Buy Rate ₹','l'],['buy_l','Buy ₹L','l'],['sell_qty','Sell Qty','q'],['sell_rate','Sell Rate ₹','l'],['sell_l','Sell ₹L','l'],['net_qty','Net Qty','q'],['net_l','Net ₹L','l'],['days','Days','n'],['first','First','t'],['last','Last','t']],
   repeat:[['party','Party','t'],['kind','Alert','t'],['direction','Dir','t'],['stocks','Stocks','n'],['days','Days','n'],['detail','Stocks (top by value)','t'],['net_l','Net ₹L','l']]
 };
 const dhEsc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -5508,10 +5510,10 @@ function dhDrill(kind,a,b){
   const t=dhTotals(sub); let html=`<div class="panel-hdr"><span>${dhEsc(title)}</span><span><button class="dh-btn" onclick="document.getElementById('dh-drill').style.display='none'">✕ Close</button></span></div>`;
   html+=`<div class="dh-note" style="border-top:0">Deals ${dhInr(t.deals)} • Buy ${dhRs(t.buy_l)} • Sell ${dhRs(t.sell_l)} • Net ${dhRs(t.net_l)} • Net qty ${dhInr(t.buy_qty-t.sell_qty)}</div>`;
   if(groupKey){
-    const g=[...dhGroup(sub,groupKey).entries()].map(([k,x])=>({n:label(k),bq:x.bq,bl:dhL(x.bv),sl:dhL(x.sv),nl:dhL(x.bv-x.sv),nq:x.bq-x.sq,d:x.days.size,rt:dhChurn(x,dh.params.churn)}))
+    const g=[...dhGroup(sub,groupKey).entries()].map(([k,x])=>({n:label(k),bq:x.bq,br:dhRate(x.bv,x.bq),bl:dhL(x.bv),sq:x.sq,sr:dhRate(x.sv,x.sq),sl:dhL(x.sv),nl:dhL(x.bv-x.sv),nq:x.bq-x.sq,d:x.days.size,rt:dhChurn(x,dh.params.churn)}))
       .sort((p,q)=>Math.abs(q.nl)-Math.abs(p.nl)||dhCmp(p.n,q.n));
-    html+=`<div style="overflow-x:auto;max-height:40vh"><table class="dh-t"><thead><tr><th>${kind==='sym'?'Party':'Stock'}</th><th class="n">Buy ₹L</th><th class="n">Sell ₹L</th><th class="n">Net ₹L</th><th class="n">Net Qty</th><th class="n">Days</th><th>Round-trip</th></tr></thead><tbody>`+
-      g.map(x=>`<tr class="${x.nl>0?'b':x.nl<0?'s':''}"><td>${dhEsc(x.n)}</td><td class="n">${dhInr(x.bl,2)}</td><td class="n">${dhInr(x.sl,2)}</td><td class="n">${dhInr(x.nl,2)}</td><td class="n">${dhInr(x.nq)}</td><td class="n">${x.d}</td><td>${x.rt?'Yes':'—'}</td></tr>`).join('')+`</tbody></table></div>`;
+    html+=`<div style="overflow-x:auto;max-height:40vh"><table class="dh-t"><thead><tr><th>${kind==='sym'?'Party':'Stock'}</th><th class="n">Buy Qty</th><th class="n">Buy Rate ₹</th><th class="n">Buy ₹L</th><th class="n">Sell Qty</th><th class="n">Sell Rate ₹</th><th class="n">Sell ₹L</th><th class="n">Net ₹L</th><th class="n">Days</th><th>Round-trip</th></tr></thead><tbody>`+
+      g.map(x=>`<tr class="${x.nl>0?'b':x.nl<0?'s':''}"><td>${dhEsc(x.n)}</td><td class="n">${dhInr(x.bq)}</td><td class="n">${dhInr(x.br,2)}</td><td class="n">${dhInr(x.bl,2)}</td><td class="n">${dhInr(x.sq)}</td><td class="n">${dhInr(x.sr,2)}</td><td class="n">${dhInr(x.sl,2)}</td><td class="n">${dhInr(x.nl,2)}</td><td class="n">${x.d}</td><td>${x.rt?'Yes':'—'}</td></tr>`).join('')+`</tbody></table></div>`;
   }
   const tr=[...sub].sort((p,q)=>q[0]-p[0]).slice(0,300);
   html+=`<div class="panel-hdr" style="font-size:.74rem">Trades (latest ${tr.length} of ${sub.length})</div><div style="overflow-x:auto;max-height:40vh"><table class="dh-t"><thead><tr><th>Date</th><th>Type</th>${kind==='sym'?'<th>Party</th>':kind==='cl'?'<th>Stock</th>':''}<th>B/S</th><th class="n">Qty</th><th class="n">Price ₹</th><th class="n">Value ₹L</th></tr></thead><tbody>`+
